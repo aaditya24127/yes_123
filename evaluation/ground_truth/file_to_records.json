@@ -1,0 +1,1533 @@
+{
+ "data/schools/S01_ZP_Wadgaon/audio/2026-07-06_class3_maths_lesson_recording.mp3": [
+  {
+   "type": "observation",
+   "id": "922b89d7-b03f-50fe-b8cb-01d2efab0470",
+   "locator": "audio 02:19-03:09"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/audio/2026-08-27_class4_maths_lesson_recording.mp3": [
+  {
+   "type": "observation",
+   "id": "abd9e565-8881-5488-8315-38d8f3be0292",
+   "locator": "audio 01:39-02:04"
+  },
+  {
+   "type": "intervention",
+   "id": "2c668a56-5a88-5950-8848-6ddd1d68c98b",
+   "locator": "audio 01:39-02:04"
+  }
+ ],
+ "data/schools/S08_ZP_Mhasoba_Wadi/audio/2026-09-01_class3_english_reading_recording.mp3": [
+  {
+   "type": "observation",
+   "id": "9b9f2072-9d58-50e9-87b5-20c3703930ea",
+   "locator": "audio 00:15-03:38"
+  }
+ ],
+ "data/schools/S07_St_Marys_English_School_Takali/audio/2026-06-27_class6_science_lesson_recording.mp3": [
+  {
+   "type": "observation",
+   "id": "c210b9bb-7a60-5e3c-bfb2-7181c0b4b2fa",
+   "locator": "audio 01:28-02:03"
+  },
+  {
+   "type": "intervention",
+   "id": "6439c0c5-2ded-5862-9276-98ac911ef2b1",
+   "locator": "audio 01:28-02:03"
+  }
+ ],
+ "data/schools/S01_ZP_Wadgaon/assessments/2026-06-30_first_unit_test_marks_scan.pdf": [
+  {
+   "type": "assessment",
+   "id": "9fc4f757-84c3-59a9-b843-8a4aafd6e6db",
+   "locator": "page 1, Sr. 1"
+  },
+  {
+   "type": "assessment",
+   "id": "36bfbdf7-5097-5c80-9d41-f71d4199c2b4",
+   "locator": "page 1, Sr. 2"
+  },
+  {
+   "type": "assessment",
+   "id": "ec3edec4-6d2e-5142-840c-051aaed03e3a",
+   "locator": "page 1, Sr. 3"
+  },
+  {
+   "type": "assessment",
+   "id": "17de9edf-8b0e-5057-99ed-8511cf8d83cb",
+   "locator": "page 1, Sr. 4"
+  },
+  {
+   "type": "assessment",
+   "id": "d119c238-2e89-5117-b5fa-6e1de0c9b3bc",
+   "locator": "page 1, Sr. 5"
+  },
+  {
+   "type": "assessment",
+   "id": "99a53f96-8797-5335-8afe-f713b2afcfb0",
+   "locator": "page 1, Sr. 6"
+  },
+  {
+   "type": "assessment",
+   "id": "fe9330f4-9650-5625-87e9-32c09d7004d2",
+   "locator": "page 1, Sr. 7"
+  },
+  {
+   "type": "assessment",
+   "id": "07b0c000-cbc8-50d5-ac2e-982971fef4d7",
+   "locator": "page 1, Sr. 8"
+  },
+  {
+   "type": "assessment",
+   "id": "173d885b-9ad5-53f3-aa7c-3746aa221668",
+   "locator": "page 1, Sr. 9"
+  },
+  {
+   "type": "assessment",
+   "id": "85a9b89e-10b4-5969-983f-c79cef3d0815",
+   "locator": "page 1, Sr. 10"
+  },
+  {
+   "type": "assessment",
+   "id": "7bbd24ce-ec6e-53c9-878d-650604448b4d",
+   "locator": "page 1, Sr. 11"
+  },
+  {
+   "type": "assessment",
+   "id": "4bc84870-5343-560e-94d8-e8c76b785592",
+   "locator": "page 1, Sr. 12"
+  },
+  {
+   "type": "assessment",
+   "id": "8abdd27f-a7e4-5891-9bbe-b7a700a5a7ef",
+   "locator": "page 1, Sr. 13"
+  },
+  {
+   "type": "assessment",
+   "id": "cc428e87-17a2-556f-ab95-816141331d56",
+   "locator": "page 1, Sr. 14"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/assessments/2026-06-30_first_unit_test_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "aa7e4509-06fa-5653-b4cc-5675c9e96847",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "cba8ba51-b255-5965-8888-bf80265bb71b",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "1c8aa236-b528-5504-b839-9fcd0070fbb3",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "4c8038b0-29b1-5d7d-9fe0-fc9d5a8ee084",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "9f3ad36a-83c5-577d-a18f-66ffe2701409",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "65365be6-0359-5f4d-9044-1c0e3d1ce59d",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "380c9e49-0389-5d8f-80cf-4fe05127e7c9",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "a618d6c8-c827-5ad2-b514-23ea158a5bae",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "3005b840-7ef5-5ab9-b5bc-07baba2198d1",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "8955a9be-6d4c-5d0f-88ee-7c3cb26f8006",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "73871eb1-94cd-575c-8d68-48ce70d3a0f2",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "a3008a09-80e1-5cc8-87ed-72d4a690f8c3",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "236519a2-66ea-59e6-b20b-9cb5b934628f",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  },
+  {
+   "type": "assessment",
+   "id": "7d042ec7-2420-517a-b909-5df371498998",
+   "locator": "Sheet 'Class-wise Results', row 21"
+  },
+  {
+   "type": "assessment",
+   "id": "ee3643b7-8667-5781-bd9f-127b7c3c3f6b",
+   "locator": "Sheet 'Class-wise Results', row 22"
+  },
+  {
+   "type": "assessment",
+   "id": "75dc7684-fb56-5647-928b-f26157c50aeb",
+   "locator": "Sheet 'Class-wise Results', row 23"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/assessments/2026-09-03_first_term_exam_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "9907a2f9-b4e3-5515-a3a8-200d67c4320f",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "3300568e-4f16-5556-9977-1031ea9e6a32",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "119c2ef2-cbf9-59ea-aed0-31e21940931a",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "9d0e4a98-234f-539b-b129-54cd6e3ba0fc",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "51c433e8-3cf6-5ad5-8a9b-17a8a91db7aa",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "d2638c63-f232-5868-a5eb-e2e0d9843ffd",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "6043941d-916c-5402-85f5-8d3e6fd6cbaa",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "d77fa81a-652c-5aab-a3ed-ddea45ef3198",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "b3d6bcad-54dc-5ab0-bcfd-e9bfd7f48283",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "50947ee1-7a65-5bf6-a598-288aa422cccd",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "51bf8e04-06eb-5f5d-b5dd-05ca26417fd4",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "0e376cec-3d17-5864-b746-218e53106b9a",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "c34983cb-29c5-5f3f-a0d1-ca110bd2c8ff",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  },
+  {
+   "type": "assessment",
+   "id": "acd42f95-7bf6-549c-80b2-199b67ab4e2d",
+   "locator": "Sheet 'Class-wise Results', row 21"
+  },
+  {
+   "type": "assessment",
+   "id": "b86e333c-5a28-5675-9971-b64b91916407",
+   "locator": "Sheet 'Class-wise Results', row 22"
+  },
+  {
+   "type": "assessment",
+   "id": "8038bd3d-e09f-545a-9fa0-40882aa74706",
+   "locator": "Sheet 'Class-wise Results', row 23"
+  }
+ ],
+ "data/schools/S03_ZP_Nandur/assessments/2026-06-30_unit_test_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "8d4e4b10-ef71-5c04-ae37-5e4e5f92ba69",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "5ed633ee-2bda-5b92-aa36-302fc10d9c36",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "4bc9c7b7-6b77-5999-beae-de94d78eb770",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "91defccc-50aa-585d-8dc4-e5e48ed5471e",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "8f638c50-cbf0-504d-a43d-3f26ba6c337d",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "2be375e8-cc92-556a-8261-28dccd4ea732",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "39280089-8701-5c83-ba2b-c68cccc07b55",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "c8f49dcd-1017-545a-a314-a887283ceb90",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "9223583e-0f43-5a10-9cad-3353da3eda36",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "fca8ba77-e680-5e88-b59a-c381a7660c67",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "29191659-a4e3-5f29-8f47-a6f48a6ac529",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "c2d7793c-9ebf-5a15-8624-2d1ac9ee7fc9",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "a378e3c1-f927-5519-b276-6097aec4cb8c",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  }
+ ],
+ "data/schools/S04_Rock_Public_School_Hinjewadi/assessments/2026-07-01_unit_test_results.csv": [
+  {
+   "type": "assessment",
+   "id": "d24d0970-469e-5e4b-97d1-7b5115e38bb6",
+   "locator": "row 2"
+  },
+  {
+   "type": "assessment",
+   "id": "4fe18b11-3a2c-5116-adb7-d91340e2f0d9",
+   "locator": "row 3"
+  },
+  {
+   "type": "assessment",
+   "id": "f59b5d4b-8870-51a7-9853-ac12e75d7947",
+   "locator": "row 4"
+  },
+  {
+   "type": "assessment",
+   "id": "8c0f0895-9fb0-5264-a916-6f866c9834f5",
+   "locator": "row 5"
+  },
+  {
+   "type": "assessment",
+   "id": "9033924d-d347-519c-b34c-701b32739ed4",
+   "locator": "row 6"
+  },
+  {
+   "type": "assessment",
+   "id": "5e05d182-fdbd-543d-ad75-faa0bcb9e705",
+   "locator": "row 7"
+  },
+  {
+   "type": "assessment",
+   "id": "0b87f323-5a55-579a-a27c-64a65056eca9",
+   "locator": "row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "3af4348e-c1e9-5d4f-9d0a-38af4469fe5e",
+   "locator": "row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "028ab42f-7c89-5f68-bcae-b4f8af8c9b73",
+   "locator": "row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "f747e27c-6d1b-51a2-a233-1c21512ab697",
+   "locator": "row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "73283fe4-1871-5d05-9fa5-0ccef3dd91bb",
+   "locator": "row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "449b54a5-5bff-5b7d-848e-a15f97b966da",
+   "locator": "row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "b499f13b-53b3-558b-9b40-296003724ee1",
+   "locator": "row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "5e083e5a-49d9-5286-adb2-881b33150485",
+   "locator": "row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "a4743087-bec4-50e0-b457-5e04c390c84d",
+   "locator": "row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "a3e7487f-3cfd-5c21-acc0-13bd81383235",
+   "locator": "row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "7042a9c9-78bf-5526-9735-e19439cb4fdc",
+   "locator": "row 18"
+  }
+ ],
+ "data/schools/S04_Rock_Public_School_Hinjewadi/assessments/2026-09-02_term_exam_results.csv": [
+  {
+   "type": "assessment",
+   "id": "5efdcd8f-787b-5757-839a-4067e4055446",
+   "locator": "row 2"
+  },
+  {
+   "type": "assessment",
+   "id": "13e45328-3d73-5472-b378-ea594d9b92f3",
+   "locator": "row 3"
+  },
+  {
+   "type": "assessment",
+   "id": "303be49b-45c7-5a23-9020-7dfebb69c79c",
+   "locator": "row 4"
+  },
+  {
+   "type": "assessment",
+   "id": "ac4dba44-3375-5268-bec0-6fa272e60f14",
+   "locator": "row 5"
+  },
+  {
+   "type": "assessment",
+   "id": "60307ae5-0371-5f27-a365-3f60f9627c4d",
+   "locator": "row 6"
+  },
+  {
+   "type": "assessment",
+   "id": "81dfffc0-7933-54aa-b744-44fc5329955d",
+   "locator": "row 7"
+  },
+  {
+   "type": "assessment",
+   "id": "4e6e17c6-6169-5132-ba4d-8975c89b7c08",
+   "locator": "row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "978f212b-14ab-599a-8483-a8f04763ce1b",
+   "locator": "row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "9e2c3d47-4e2d-51ea-a8a2-acaee95f4135",
+   "locator": "row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "fa3fb691-7339-540a-8eb0-03f0f926dbaa",
+   "locator": "row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "fa0f9c80-8831-562e-98d3-59bc17f493e1",
+   "locator": "row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "0a57572a-723a-57a2-a982-1d2997022f68",
+   "locator": "row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "3c5da8ae-6a3a-534a-9772-8c73301a14f5",
+   "locator": "row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "a54d4c10-3587-5ca7-b249-6be9b2905013",
+   "locator": "row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "2374b830-d218-5673-a050-959237099a48",
+   "locator": "row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "7d02cd91-10e4-5839-a48e-ea7746beed85",
+   "locator": "row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "26bd38e8-21bd-586a-8e18-504627721d55",
+   "locator": "row 18"
+  }
+ ],
+ "data/schools/S06_Shri_Ganesh_Vidyalaya_Ambegaon/assessments/2026-07-02_unit_test_results_note.pdf": [
+  {
+   "type": "assessment",
+   "id": "a809a49b-7b98-5b87-9ec8-9f037ebd971c",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "assessment",
+   "id": "52762dcc-d78e-52cf-a902-2d5161651f55",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "assessment",
+   "id": "160a19ce-df45-5ab9-9cc0-ce63d7ca1d29",
+   "locator": "paragraph 4"
+  },
+  {
+   "type": "assessment",
+   "id": "8615bf8c-8e97-53f0-9013-03bf52b5faf8",
+   "locator": "paragraph 5"
+  },
+  {
+   "type": "assessment",
+   "id": "523fb606-fe75-5df3-b026-e2d8d20fd05d",
+   "locator": "paragraph 6"
+  },
+  {
+   "type": "assessment",
+   "id": "fe129057-8d79-5e5c-a00a-a18e2074ae27",
+   "locator": "paragraph 7"
+  },
+  {
+   "type": "assessment",
+   "id": "d4dcc990-7ca8-5a8a-a3e1-d5075926584a",
+   "locator": "paragraph 8"
+  },
+  {
+   "type": "assessment",
+   "id": "6aabf493-f4b3-5d6b-9460-590e9c5a2f3b",
+   "locator": "paragraph 9"
+  },
+  {
+   "type": "assessment",
+   "id": "c70cfa95-29d0-5c92-8ec4-5752940d6f22",
+   "locator": "paragraph 10"
+  },
+  {
+   "type": "assessment",
+   "id": "4d64db39-7909-5615-90b5-b687385223ad",
+   "locator": "paragraph 11"
+  },
+  {
+   "type": "assessment",
+   "id": "f233a7b8-03e7-5e6c-884d-e006397c932c",
+   "locator": "paragraph 12"
+  },
+  {
+   "type": "assessment",
+   "id": "9c68a5c9-dbf2-5a7b-bdbf-fc920d1ec184",
+   "locator": "paragraph 13"
+  },
+  {
+   "type": "assessment",
+   "id": "9dd06e05-9b14-5f3e-adc0-3327eb2dd6fe",
+   "locator": "paragraph 14"
+  },
+  {
+   "type": "assessment",
+   "id": "d3850297-d74a-5d52-89ba-7e0cf7c8514b",
+   "locator": "paragraph 15"
+  },
+  {
+   "type": "assessment",
+   "id": "66c4614b-7be8-569d-a06b-c758b77eb459",
+   "locator": "paragraph 16"
+  },
+  {
+   "type": "assessment",
+   "id": "95489722-c1cb-5920-9a29-206178f8782c",
+   "locator": "paragraph 17"
+  },
+  {
+   "type": "assessment",
+   "id": "9e93ec11-4fbf-5f01-87cb-121ccdb2cbc6",
+   "locator": "paragraph 18"
+  }
+ ],
+ "data/schools/S06_Shri_Ganesh_Vidyalaya_Ambegaon/assessments/2026-09-02_term_exam_results_statement.pdf": [
+  {
+   "type": "assessment",
+   "id": "c514c1ee-2648-567e-8ad3-bfeb850e526b",
+   "locator": "page 1, Sr. 1"
+  },
+  {
+   "type": "assessment",
+   "id": "1495dc4a-3b00-5127-b890-f116606895a4",
+   "locator": "page 1, Sr. 2"
+  },
+  {
+   "type": "assessment",
+   "id": "dccac2ec-b4f0-524d-bd05-2487af0596c4",
+   "locator": "page 1, Sr. 3"
+  },
+  {
+   "type": "assessment",
+   "id": "4083c854-5328-56bc-bc9f-64891e4baa6a",
+   "locator": "page 1, Sr. 4"
+  },
+  {
+   "type": "assessment",
+   "id": "c92acb91-a34b-51bb-9b3c-dce584202f17",
+   "locator": "page 1, Sr. 5"
+  },
+  {
+   "type": "assessment",
+   "id": "0305430e-2ab7-5dd1-9311-5866a8a1b509",
+   "locator": "page 1, Sr. 6"
+  },
+  {
+   "type": "assessment",
+   "id": "49480da7-ad38-576f-bc6c-1af7b5887509",
+   "locator": "page 1, Sr. 7"
+  },
+  {
+   "type": "assessment",
+   "id": "c2e01636-61a0-5dfd-a63c-f1e3dd7021d7",
+   "locator": "page 1, Sr. 8"
+  },
+  {
+   "type": "assessment",
+   "id": "63c2ce87-103d-5695-9025-6a21f6b4ee96",
+   "locator": "page 1, Sr. 9"
+  },
+  {
+   "type": "assessment",
+   "id": "67c25a21-5e46-54af-9db8-7e2e8e38a58b",
+   "locator": "page 1, Sr. 10"
+  },
+  {
+   "type": "assessment",
+   "id": "1bdc0b16-68b7-5744-acfd-168d15d33805",
+   "locator": "page 1, Sr. 11"
+  },
+  {
+   "type": "assessment",
+   "id": "d2fa60d5-0af0-591c-8754-4276067fc5f5",
+   "locator": "page 1, Sr. 12"
+  },
+  {
+   "type": "assessment",
+   "id": "4e6922ed-fa4c-509f-b56a-7a74e2d4037b",
+   "locator": "page 1, Sr. 13"
+  },
+  {
+   "type": "assessment",
+   "id": "73e0db58-fdca-57ae-8e1b-d2d3b96ef657",
+   "locator": "page 1, Sr. 14"
+  },
+  {
+   "type": "assessment",
+   "id": "0863e6a2-5f04-5e96-b682-0168c5de716b",
+   "locator": "page 2, Sr. 15"
+  },
+  {
+   "type": "assessment",
+   "id": "59795a2f-3687-5018-8d2f-99b1d89d2ec1",
+   "locator": "page 2, Sr. 16"
+  },
+  {
+   "type": "assessment",
+   "id": "bbdf3991-03d0-5c33-9421-552020842d36",
+   "locator": "page 2, Sr. 17"
+  }
+ ],
+ "data/schools/S07_St_Marys_English_School_Takali/assessments/2026-06-30_unit_test_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "e40dcb39-ba32-58df-ab0d-d14a66cac581",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "aaee3a47-48e3-5549-a9bb-1e17d74dfc37",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "94b52e88-3e25-56f2-a5d5-8a1c2fde58f6",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "0cc99147-06f1-5d4c-8624-151a8ed2706b",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "9defcbe2-880d-540b-b940-ad35963003ee",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "87b66640-9531-50e5-8d14-2b6bea0f72c1",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "ade42b72-9709-5d57-ae63-c9423637e33e",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "e4d51be7-0181-5891-b1c5-fa4b6180b83d",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "82661249-63c7-545d-b643-3dbf57d824cb",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "b0f22d31-d60e-587a-b7eb-7e6b60d5ee56",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "24a85b74-8cef-52ed-874c-082d7168719f",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "04ae4e6a-f200-579d-97a7-1b79ea9c9fbf",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "4ac5f544-0788-5277-a489-1b07d8162879",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  },
+  {
+   "type": "assessment",
+   "id": "4301a9ba-8a57-5590-a8a0-bbbd332fdc29",
+   "locator": "Sheet 'Class-wise Results', row 21"
+  },
+  {
+   "type": "assessment",
+   "id": "f3f2a6e7-9e10-5b8c-a0c6-737ae1fc6a4a",
+   "locator": "Sheet 'Class-wise Results', row 22"
+  },
+  {
+   "type": "assessment",
+   "id": "743fb405-a276-5f98-9bcc-e5ff00050069",
+   "locator": "Sheet 'Class-wise Results', row 23"
+  }
+ ],
+ "data/schools/S07_St_Marys_English_School_Takali/assessments/2026-07-03_result_summary_for_crp.pdf": [
+  {
+   "type": "assessment",
+   "id": "f2aa3d0a-06d7-5c89-a7b9-48e32f3926bf",
+   "locator": "page 1, Sr. 1"
+  },
+  {
+   "type": "assessment",
+   "id": "df74473f-f919-500f-b735-281b014ceec9",
+   "locator": "page 1, Sr. 2"
+  },
+  {
+   "type": "assessment",
+   "id": "d8cf16d7-1e83-5288-b255-7642ca338958",
+   "locator": "page 1, Sr. 3"
+  }
+ ],
+ "data/schools/S07_St_Marys_English_School_Takali/assessments/2026-09-03_first_term_exam_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "2d17a6e7-bb4e-5845-bb66-086d42533e60",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "17829813-1ed2-55c2-a726-c10cf625dbdf",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "810fd94a-a94a-5e0c-84f5-97d95e6b1b1c",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "64064016-b0a7-5625-b565-22acc51cb054",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "702e90bd-2359-5fae-b49b-728a117f5438",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "9d3bea79-6a00-5136-b99a-b64b19bbd7f4",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "ab9a2073-f336-5840-a603-82eccb830eb6",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "4042e225-9eaa-5cb9-a953-3fbc949300c7",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "11cdc59f-b89b-5596-aa72-93c5a93287d7",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "26df6577-b2d8-5b15-8893-a4c352404407",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "7a2c7567-c115-59ed-a82b-2b3c9f42cb22",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "6d9168b6-365d-5221-9944-f6be43948dbd",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "5492e15c-5127-5f99-9f0c-8765917c3721",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  },
+  {
+   "type": "assessment",
+   "id": "d0c63a6d-dd17-5714-b435-9aa0dea6e383",
+   "locator": "Sheet 'Class-wise Results', row 21"
+  },
+  {
+   "type": "assessment",
+   "id": "5cd69f0d-46bc-5df3-a3cf-3eebe5af4702",
+   "locator": "Sheet 'Class-wise Results', row 22"
+  },
+  {
+   "type": "assessment",
+   "id": "4fb5df42-953f-5f21-9a91-8639e8f702f3",
+   "locator": "Sheet 'Class-wise Results', row 23"
+  }
+ ],
+ "data/schools/S08_ZP_Mhasoba_Wadi/assessments/2026-07-01_unit_test_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "c904c601-d073-58cb-a1d7-c5ffa2318f86",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "203cf44f-988c-56e3-8a62-9f8e3f0e9883",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "46e47a35-37e2-5055-97b6-00e12547e8af",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "f8b87965-686b-542e-8713-38657d18ac46",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "d3635098-83f4-5ee3-b840-7db6a5cb771e",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "ac4df087-1281-58fe-98d1-f304c7c32f38",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "291c94ac-575a-5666-bced-2b6937f6528c",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "3331fb36-e40d-54bf-8bac-f793b7f65042",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "6f471ebf-bd79-5382-a796-64bc2383b746",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "afbbb619-88aa-5774-9ffc-86c3c3b87294",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "dfd4caea-9093-54e5-97a7-fe56f90e4044",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "4152a711-528e-5339-a637-e927034d5fd9",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "acf89fe2-837d-564a-89c0-3d0624b1489e",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  },
+  {
+   "type": "assessment",
+   "id": "12e1dd3d-a2ee-5c7c-9202-acda06cbddda",
+   "locator": "Sheet 'Class-wise Results', row 21"
+  }
+ ],
+ "data/schools/S08_ZP_Mhasoba_Wadi/assessments/2026-09-04_first_term_results_scan.pdf": [
+  {
+   "type": "assessment",
+   "id": "3f53b342-de2f-59f8-8865-7c269985783a",
+   "locator": "page 1, Sr. 1"
+  },
+  {
+   "type": "assessment",
+   "id": "9ced424e-cb55-5249-be14-0b01f3c30f33",
+   "locator": "page 1, Sr. 2"
+  },
+  {
+   "type": "assessment",
+   "id": "508f98b6-201a-520b-a4f4-e656e7641784",
+   "locator": "page 1, Sr. 3"
+  },
+  {
+   "type": "assessment",
+   "id": "93d7254f-760b-59b8-9f53-f3ac29dacf54",
+   "locator": "page 1, Sr. 4"
+  },
+  {
+   "type": "assessment",
+   "id": "89afaf11-751d-55bb-a9ba-a8dfcf3947a0",
+   "locator": "page 1, Sr. 5"
+  },
+  {
+   "type": "assessment",
+   "id": "e08e73d6-3c9c-5756-924e-fb921f8bbed2",
+   "locator": "page 1, Sr. 6"
+  },
+  {
+   "type": "assessment",
+   "id": "860d92f8-3f69-5371-9468-c072ad9110d3",
+   "locator": "page 1, Sr. 7"
+  },
+  {
+   "type": "assessment",
+   "id": "bc0f07d3-6ace-5bea-8862-b26103855c62",
+   "locator": "page 1, Sr. 8"
+  },
+  {
+   "type": "assessment",
+   "id": "2df8f57b-d39f-5947-be8a-da0cc14c54c3",
+   "locator": "page 1, Sr. 9"
+  },
+  {
+   "type": "assessment",
+   "id": "5fcdf170-d3e8-5892-a9b3-82a162fa5c9b",
+   "locator": "page 1, Sr. 10"
+  },
+  {
+   "type": "assessment",
+   "id": "9e505e90-2733-5b56-ba55-7e441f07be44",
+   "locator": "page 1, Sr. 11"
+  },
+  {
+   "type": "assessment",
+   "id": "e7ef4da4-5e37-56a4-9516-04b33eb074bc",
+   "locator": "page 1, Sr. 12"
+  },
+  {
+   "type": "assessment",
+   "id": "ac0d1655-2885-5546-bc15-6c8da32b7910",
+   "locator": "page 1, Sr. 13"
+  },
+  {
+   "type": "assessment",
+   "id": "f275e56c-388f-5233-8178-6061d998e305",
+   "locator": "page 1, Sr. 14"
+  }
+ ],
+ "data/schools/S10_New_English_School_Palshi/assessments/2026-07-02_unit_test_results.xlsx": [
+  {
+   "type": "assessment",
+   "id": "5cf9bbd7-65da-587a-b2fa-57f8ed95e49c",
+   "locator": "Sheet 'Class-wise Results', row 8"
+  },
+  {
+   "type": "assessment",
+   "id": "5a1bf924-98e5-5b61-887e-73314cbd88ad",
+   "locator": "Sheet 'Class-wise Results', row 9"
+  },
+  {
+   "type": "assessment",
+   "id": "f8b367be-5e5b-5b25-993d-63c9db1fb49b",
+   "locator": "Sheet 'Class-wise Results', row 10"
+  },
+  {
+   "type": "assessment",
+   "id": "ded522d1-c9a3-56d3-a936-f76417a3c704",
+   "locator": "Sheet 'Class-wise Results', row 11"
+  },
+  {
+   "type": "assessment",
+   "id": "ba0f37c5-5629-5dbb-809d-7a3a4df73e9f",
+   "locator": "Sheet 'Class-wise Results', row 12"
+  },
+  {
+   "type": "assessment",
+   "id": "fe85c036-ea42-577e-aa77-aa39d68caaab",
+   "locator": "Sheet 'Class-wise Results', row 13"
+  },
+  {
+   "type": "assessment",
+   "id": "2387f090-752e-50f8-8d1d-dcf75d886b71",
+   "locator": "Sheet 'Class-wise Results', row 14"
+  },
+  {
+   "type": "assessment",
+   "id": "678fcb13-2891-55d3-affd-9ca6a14337d5",
+   "locator": "Sheet 'Class-wise Results', row 15"
+  },
+  {
+   "type": "assessment",
+   "id": "0029cfc1-0145-538d-b050-32ebdb5f71a8",
+   "locator": "Sheet 'Class-wise Results', row 16"
+  },
+  {
+   "type": "assessment",
+   "id": "2808841d-d1e3-5a57-8487-0da1017a19c8",
+   "locator": "Sheet 'Class-wise Results', row 17"
+  },
+  {
+   "type": "assessment",
+   "id": "4d4b36ba-16fa-533f-b8c6-187d61b0c410",
+   "locator": "Sheet 'Class-wise Results', row 18"
+  },
+  {
+   "type": "assessment",
+   "id": "1c53d653-a7ef-52df-a526-c2537fdcec95",
+   "locator": "Sheet 'Class-wise Results', row 19"
+  },
+  {
+   "type": "assessment",
+   "id": "059f7107-f42f-5c7d-a290-9605f778bde8",
+   "locator": "Sheet 'Class-wise Results', row 20"
+  },
+  {
+   "type": "assessment",
+   "id": "d8bce366-7591-5fcf-9e20-d397e44b5b4f",
+   "locator": "Sheet 'Class-wise Results', row 21"
+  },
+  {
+   "type": "assessment",
+   "id": "334470dd-a878-5571-a69d-1a92f1efb9ea",
+   "locator": "Sheet 'Class-wise Results', row 22"
+  },
+  {
+   "type": "assessment",
+   "id": "38ccdd7b-907b-5c32-ad91-3a03bd01502f",
+   "locator": "Sheet 'Class-wise Results', row 23"
+  }
+ ],
+ "data/schools/S01_ZP_Wadgaon/observations/2026-06-22_field_note_scan.jpg": [
+  {
+   "type": "observation",
+   "id": "4ca31cf3-95eb-53f9-a627-249dde787464",
+   "locator": "note item 1"
+  },
+  {
+   "type": "observation",
+   "id": "4f690982-0258-5647-ae7d-961f491488ee",
+   "locator": "note item 2"
+  },
+  {
+   "type": "observation",
+   "id": "ed3e4840-8458-5612-bd1b-09c38eaa780d",
+   "locator": "note item 3"
+  },
+  {
+   "type": "intervention",
+   "id": "7421bc95-075c-56cb-bf3f-aa8c2e315302",
+   "locator": "note item 4"
+  },
+  {
+   "type": "intervention",
+   "id": "d36c56ae-bad8-50cc-b6a2-7c4383b87961",
+   "locator": "note item 5"
+  },
+  {
+   "type": "intervention",
+   "id": "7e6d7d2a-3e98-55e9-ac83-3315f78df8db",
+   "locator": "note item 6"
+  }
+ ],
+ "data/schools/S01_ZP_Wadgaon/observations/2026-07-06_visit_report.docx": [
+  {
+   "type": "observation",
+   "id": "66aa6f9a-ee70-5aee-8992-595795988ead",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "a90ce7e2-8338-553f-a590-fc85a10d43d3",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "observation",
+   "id": "8d8cd33b-1041-5353-a61a-5ff5a5310275",
+   "locator": "paragraph 4"
+  },
+  {
+   "type": "observation",
+   "id": "c621fc33-b336-5dce-b963-03792e30235a",
+   "locator": "paragraph 5"
+  }
+ ],
+ "data/schools/S03_ZP_Nandur/observations/2026-06-25_visit_report.pdf": [
+  {
+   "type": "observation",
+   "id": "029370fb-cc29-54b2-966d-55cbaf066c16",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "fb106fb8-e72c-57f2-b8e8-dcd6c2189e86",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "intervention",
+   "id": "2cdfcd0d-300b-5370-87e5-0c2334f613b2",
+   "locator": "paragraph 4"
+  }
+ ],
+ "data/schools/S03_ZP_Nandur/observations/2026-07-08_followup_visit_form.pdf": [
+  {
+   "type": "observation",
+   "id": "4e191a8e-b98e-54df-ac72-4b9c25bbf50b",
+   "locator": "table 1, row 1"
+  },
+  {
+   "type": "intervention",
+   "id": "f60323b5-7a58-52de-a253-3820e14bbd4b",
+   "locator": "table 2, row 1"
+  }
+ ],
+ "data/schools/S05_PCMC_Primary_Wakad/observations/2026-06-23_visit_notes.txt": [
+  {
+   "type": "observation",
+   "id": "0cb45376-4d88-5c11-b96d-13f7eed70164",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "496e7a52-0c2b-5cd8-9816-06a4d92bf5b6",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "observation",
+   "id": "ecd012f8-48e2-537f-b2d8-d82b15668708",
+   "locator": "paragraph 4"
+  },
+  {
+   "type": "intervention",
+   "id": "fa1db364-87d1-54ee-b37c-f319c2f5c537",
+   "locator": "paragraph 5"
+  },
+  {
+   "type": "intervention",
+   "id": "948dba80-05f2-527c-b6d6-ed0375fd4f54",
+   "locator": "paragraph 6"
+  }
+ ],
+ "data/schools/S05_PCMC_Primary_Wakad/observations/2026-07-03_visit_notes.txt": [
+  {
+   "type": "observation",
+   "id": "2ed1554e-6bcb-5496-91da-36911955a929",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "9f528559-301d-5024-8b5e-31e46ad07157",
+   "locator": "paragraph 3"
+  }
+ ],
+ "data/schools/S10_New_English_School_Palshi/observations/2026-06-24_visit_report.docx": [
+  {
+   "type": "observation",
+   "id": "02180cce-a7c4-5864-8ec0-53c6a0a4cf36",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "3f232d3f-a232-51c4-822b-775c0a7fdbdc",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "intervention",
+   "id": "2509d464-0f0f-5f55-b8f5-1b8cbdd53b44",
+   "locator": "paragraph 4"
+  },
+  {
+   "type": "intervention",
+   "id": "c8eefa80-1ff7-5e5d-bf41-94f807d695b0",
+   "locator": "paragraph 5"
+  }
+ ],
+ "data/schools/S10_New_English_School_Palshi/observations/2026-07-07_visit_report.docx": [
+  {
+   "type": "observation",
+   "id": "ac803c05-c6d2-52f6-9e06-862b653883b4",
+   "locator": "paragraph 2"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/observations/2026-06-22_classroom_observation_form.pdf": [
+  {
+   "type": "observation",
+   "id": "858576f5-f38c-5747-bbcf-c272cb213fca",
+   "locator": "table 1, row 1"
+  },
+  {
+   "type": "observation",
+   "id": "de790847-c3dd-5b25-b581-c7c40688b656",
+   "locator": "table 1, row 2"
+  },
+  {
+   "type": "observation",
+   "id": "ba97f07d-6092-5e42-ba44-e2db8428f73b",
+   "locator": "table 1, row 3"
+  },
+  {
+   "type": "intervention",
+   "id": "ebd4da74-5d9d-5743-8c13-44c63c7c1d63",
+   "locator": "table 2, row 1"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/observations/2026-07-05_classroom_observation_form.pdf": [
+  {
+   "type": "observation",
+   "id": "8344677c-0c16-5d9d-b72c-29aea3f72b62",
+   "locator": "table 1, row 1"
+  },
+  {
+   "type": "intervention",
+   "id": "d363c48b-f3b5-571d-9c51-e5a98c575add",
+   "locator": "table 2, row 1"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/observations/2026-08-27_visit_report.pdf": [
+  {
+   "type": "observation",
+   "id": "de2a7a44-b2e5-50d0-bcd2-9004573c983b",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "942d2aaa-7558-518e-9aaf-f8473e51df28",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "observation",
+   "id": "7ae25723-847f-590a-8b92-f41d695ff5b8",
+   "locator": "paragraph 4"
+  }
+ ],
+ "data/schools/S04_Rock_Public_School_Hinjewadi/observations/2026-06-26_visit_notes.md": [
+  {
+   "type": "observation",
+   "id": "08fe6907-8c30-5183-a851-d9d618b59d27",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "bc655204-5055-5433-9308-8b6140d3eabb",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "intervention",
+   "id": "48fb0f70-0ae6-5bdf-a264-d3002f14cc92",
+   "locator": "paragraph 4"
+  }
+ ],
+ "data/schools/S04_Rock_Public_School_Hinjewadi/observations/2026-09-02_visit_notes.md": [
+  {
+   "type": "observation",
+   "id": "17814ecf-d4a8-5457-a0ec-a2ed99c6f94e",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "578e76d1-0d80-5f03-8c40-2ea1417f8932",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "intervention",
+   "id": "468dc308-cb39-5a44-9b32-d979247b8c0b",
+   "locator": "paragraph 4"
+  }
+ ],
+ "data/schools/S06_Shri_Ganesh_Vidyalaya_Ambegaon/observations/2026-06-24_visit_report.pdf": [
+  {
+   "type": "observation",
+   "id": "dc83e0d1-d185-555e-b44c-40ddf4df670d",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "bdca8852-cdfe-564c-a3c3-a0e7f6dc0ec3",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "intervention",
+   "id": "11e20861-e147-5e21-a68a-c9f58a7d6a19",
+   "locator": "paragraph 4"
+  }
+ ],
+ "data/schools/S06_Shri_Ganesh_Vidyalaya_Ambegaon/observations/2026-08-26_visit_report_classes_7_to_9.docx": [
+  {
+   "type": "observation",
+   "id": "7c95f7e7-79bb-5d8a-b33c-d237733ff4e6",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "968e5c27-cdf9-5715-8492-d91010e6d0c8",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "intervention",
+   "id": "0f89c858-0694-5ccc-bb22-374250d92387",
+   "locator": "paragraph 4"
+  },
+  {
+   "type": "intervention",
+   "id": "7a8e0869-fd33-5640-96da-692ac55641eb",
+   "locator": "paragraph 5"
+  }
+ ],
+ "data/schools/S06_Shri_Ganesh_Vidyalaya_Ambegaon/observations/2026-08-26_visit_report_classes_7_to_9 (1).docx": [
+  {
+   "type": "observation",
+   "id": "2a8ed10d-a6d4-5690-926b-ab95d69d4773",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "e81cf496-a244-5d03-80c5-ff1fdee1bc8d",
+   "locator": "paragraph 3"
+  }
+ ],
+ "data/schools/S06_Shri_Ganesh_Vidyalaya_Ambegaon/observations/2026-08-28_visit_report_resubmitted.pdf": [
+  {
+   "type": "observation",
+   "id": "b6aaae74-8b42-56e1-9dbd-452eb88cf93f",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "6fb61cc5-9e31-5362-9802-8bb8c6ace9c5",
+   "locator": "paragraph 3"
+  }
+ ],
+ "data/schools/S07_St_Marys_English_School_Takali/observations/2026-06-27_visit_notes.txt": [
+  {
+   "type": "observation",
+   "id": "1b90fc60-aad7-555a-8df1-88651ff9845a",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "intervention",
+   "id": "18ca6a39-48d4-5f37-a141-9b4c85a69343",
+   "locator": "paragraph 3"
+  }
+ ],
+ "data/schools/S07_St_Marys_English_School_Takali/observations/2026-09-01_visit_notes.txt": [
+  {
+   "type": "observation",
+   "id": "4e43ac16-eb0a-5f20-8c13-61e276d7f42d",
+   "locator": "paragraph 2"
+  },
+  {
+   "type": "observation",
+   "id": "df220788-c771-5ea9-b362-540dd550fb9f",
+   "locator": "paragraph 3"
+  },
+  {
+   "type": "observation",
+   "id": "ac8de3fd-1c88-5492-a9da-6eae6c5d1d6f",
+   "locator": "paragraph 4"
+  },
+  {
+   "type": "intervention",
+   "id": "39353e8c-3084-583d-87c5-e7ee26656208",
+   "locator": "paragraph 5"
+  },
+  {
+   "type": "intervention",
+   "id": "9bceba1d-82e7-554e-8735-1d117b652bd3",
+   "locator": "paragraph 6"
+  },
+  {
+   "type": "intervention",
+   "id": "f8ffc82f-64c3-577b-9ee2-ff26e3694896",
+   "locator": "paragraph 7"
+  }
+ ],
+ "data/schools/S08_ZP_Mhasoba_Wadi/observations/2026-06-28_field_note_scan.jpg": [
+  {
+   "type": "observation",
+   "id": "f8faa706-b93e-53c1-a837-cfd3024794f0",
+   "locator": "note item 1"
+  },
+  {
+   "type": "observation",
+   "id": "4b95ab00-3c06-5674-827c-a1782fb63551",
+   "locator": "note item 2"
+  },
+  {
+   "type": "intervention",
+   "id": "66b54860-efb2-5c05-bf41-5c808cf09133",
+   "locator": "note item 3"
+  },
+  {
+   "type": "intervention",
+   "id": "d9617b10-6215-5c5c-8966-5a3bb5ba1106",
+   "locator": "note item 4"
+  }
+ ],
+ "data/schools/S08_ZP_Mhasoba_Wadi/observations/2026-09-01_visit_report_scan.pdf": [
+  {
+   "type": "observation",
+   "id": "0a55bb1b-5a4f-5639-bc1b-d52ff079a6d7",
+   "locator": "paragraph 2"
+  }
+ ],
+ "data/schools/S05_PCMC_Primary_Wakad/visits/2026-07-03_crp_visit_log.csv": [],
+ "data/schools/S09_Sant_Dnyaneshwar_English_School_Karanje/visits/2026-07-02_onboarding_visit_note.md": [],
+ "data/schools/S09_Sant_Dnyaneshwar_English_School_Karanje/roster/2026-07-02_teacher_roster.xlsx": [],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/followups/2026-08-28_followup_tracker.xlsx": [],
+ "data/schools/S08_ZP_Mhasoba_Wadi/followups/2026-09-03_interventions_register.csv": [],
+ "data/schools/S01_ZP_Wadgaon/attendance/2026-07-08_attendance_summary.xlsx": [
+  {
+   "type": "attendance",
+   "id": "4d1c12b9-e10c-5b64-8df0-e79143cd133d",
+   "locator": "Sheet 'Attendance', row 5"
+  },
+  {
+   "type": "attendance",
+   "id": "34fc3e56-3165-547e-b94b-cc075771fea9",
+   "locator": "Sheet 'Attendance', row 6"
+  }
+ ],
+ "data/schools/S02_Mahavir_Jaideep_English_Medium/attendance/2026-09-03_attendance_summary.xlsx": [
+  {
+   "type": "attendance",
+   "id": "bb656b14-2203-5c8d-ad07-26402df63449",
+   "locator": "Sheet 'Attendance', row 5"
+  },
+  {
+   "type": "attendance",
+   "id": "af940d99-d705-5c99-8cdb-ca0db70a59f1",
+   "locator": "Sheet 'Attendance', row 6"
+  },
+  {
+   "type": "attendance",
+   "id": "5b0427c2-3c3e-580d-a6c9-8d720674aac1",
+   "locator": "Sheet 'Attendance', row 7"
+  }
+ ],
+ "data/schools/S04_Rock_Public_School_Hinjewadi/attendance/2026-09-02_attendance_summary.csv": [
+  {
+   "type": "attendance",
+   "id": "1e9261a8-1111-5534-9a20-6db3e33690fc",
+   "locator": "row 2"
+  },
+  {
+   "type": "attendance",
+   "id": "a0a72ca6-d7c6-5f7d-b4ed-d8d105150808",
+   "locator": "row 3"
+  },
+  {
+   "type": "attendance",
+   "id": "824066c0-22cf-5821-821c-cf2628dd812e",
+   "locator": "row 4"
+  }
+ ],
+ "data/schools/S10_New_English_School_Palshi/attendance/2026-07-07_attendance_summary.csv": [
+  {
+   "type": "attendance",
+   "id": "7e6d98f8-6cf7-5785-a479-ac5bc546e304",
+   "locator": "row 2"
+  },
+  {
+   "type": "attendance",
+   "id": "53778ec7-ca28-549d-8e00-773b791d40bb",
+   "locator": "row 3"
+  }
+ ]
+}

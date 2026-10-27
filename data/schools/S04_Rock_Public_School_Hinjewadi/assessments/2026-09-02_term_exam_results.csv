@@ -1,0 +1,18 @@
+class,division,subject,skill,teacher,students_on_roll,students_assessed,students_below_40pct,max_marks,class_avg_pct,test_date,exam
+3,A,Marathi,reading,Mr. Sandeep Pandey,60,58,2,50,69,2026-09-01,First Term Examination
+3,A,English,reading comprehension,Mr. Sandeep Pandey,60,57,8,50,71,2026-09-01,First Term Examination
+3,A,Mathematics,number operations,Mr. Sandeep Pandey,60,59,10,50,68,2026-09-01,First Term Examination
+3,A,Hindi,reading,Mr. Sandeep Pandey,60,58,5,50,69,2026-09-01,First Term Examination
+3,A,EVS,concept understanding,Mr. Sandeep Pandey,60,59,4,50,71,2026-09-01,First Term Examination
+6,A,Marathi,writing,Ms. Yasmin Inamdar,60,58,3,50,69,2026-09-01,First Term Examination
+6,A,English,reading comprehension,Mrs. Shubhangi Raut,60,57,8,50,65,2026-09-01,First Term Examination
+6,A,Mathematics,problem solving,Mrs. Sushila Yadav,60,57,8,50,71,2026-09-01,First Term Examination
+6,A,Hindi,reading,Ms. Yasmin Inamdar,60,59,6,50,70,2026-09-01,First Term Examination
+6,A,Science,concept understanding,Mrs. Lydia Fernandes,60,57,6,50,69,2026-09-01,First Term Examination
+6,A,Social Science,concept understanding,Mrs. Shubhangi Raut,60,58,5,50,72,2026-09-01,First Term Examination
+9,A,Marathi,writing,Ms. Yasmin Inamdar,60,57,4,50,74,2026-09-01,First Term Examination
+9,A,English,reading comprehension,Mrs. Shubhangi Raut,60,57,5,50,71,2026-09-01,First Term Examination
+9,A,Mathematics,problem solving,Mrs. Sushila Yadav,60,57,10,50,65,2026-09-01,First Term Examination
+9,A,Hindi,reading,Ms. Yasmin Inamdar,60,58,7,50,74,2026-09-01,First Term Examination
+9,A,Science,concept understanding,Mrs. Lydia Fernandes,60,59,3,50,70,2026-09-01,First Term Examination
+9,A,Social Science,concept understanding,Mrs. Shubhangi Raut,60,60,2,50,73,2026-09-01,First Term Examination

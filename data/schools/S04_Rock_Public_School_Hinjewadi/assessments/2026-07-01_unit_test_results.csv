@@ -1,0 +1,18 @@
+class,division,subject,skill,teacher,students_on_roll,students_assessed,students_below_40pct,max_marks,class_avg_pct,test_date,exam
+3,A,Marathi,reading,Mr. Sandeep Pandey,60,58,2,25,71,2026-06-30,First Unit Test
+3,A,English,reading comprehension,Mr. Sandeep Pandey,60,57,10,25,66,2026-06-30,First Unit Test
+3,A,Mathematics,number operations,Mr. Sandeep Pandey,60,58,9,25,68,2026-06-30,First Unit Test
+3,A,Hindi,reading,Mr. Sandeep Pandey,60,59,11,25,65,2026-06-30,First Unit Test
+3,A,EVS,concept understanding,Mr. Sandeep Pandey,60,60,5,25,67,2026-06-30,First Unit Test
+6,A,Marathi,writing,Ms. Yasmin Inamdar,60,58,9,25,70,2026-06-30,First Unit Test
+6,A,English,reading comprehension,Mrs. Shubhangi Raut,60,58,3,25,70,2026-06-30,First Unit Test
+6,A,Mathematics,problem solving,Mrs. Sushila Yadav,60,57,9,25,63,2026-06-30,First Unit Test
+6,A,Hindi,reading,Ms. Yasmin Inamdar,60,57,1,25,71,2026-06-30,First Unit Test
+6,A,Science,concept understanding,Mrs. Lydia Fernandes,60,58,4,25,67,2026-06-30,First Unit Test
+6,A,Social Science,concept understanding,Mrs. Shubhangi Raut,60,57,6,25,67,2026-06-30,First Unit Test
+9,A,Marathi,writing,Ms. Yasmin Inamdar,60,60,9,25,72,2026-06-30,First Unit Test
+9,A,English,reading comprehension,Mrs. Shubhangi Raut,60,57,4,25,75,2026-06-30,First Unit Test
+9,A,Mathematics,problem solving,Mrs. Sushila Yadav,60,58,5,25,71,2026-06-30,First Unit Test
+9,A,Hindi,reading,Ms. Yasmin Inamdar,60,57,11,25,66,2026-06-30,First Unit Test
+9,A,Science,concept understanding,Mrs. Lydia Fernandes,60,60,5,25,70,2026-06-30,First Unit Test
+9,A,Social Science,concept understanding,Mrs. Shubhangi Raut,60,59,5,25,74,2026-06-30,First Unit Test

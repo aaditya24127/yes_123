@@ -1,0 +1,31 @@
+{
+  "generated_on": "2026-10-27",
+  "windows": {
+    "W1": "2026-06-20..2026-07-10",
+    "W2": "2026-08-20..2026-09-05"
+  },
+  "scenarios": {
+    "S01": "Critical: high learning gap, critical recurring issues, long-overdue follow-ups, no visit for ~110 days",
+    "S02": "High learning gap persists across both windows; recently visited; mixed follow-up tiers; attendance below target",
+    "S03": "Low learning gap but follow-ups ~100 days overdue and no visit for ~110 days: deadline alert case",
+    "S04": "Healthy: low gap, issues resolved, follow-up completed, attendance above target",
+    "S05": "No assessment data: provisional score only; recurring needs across two visits",
+    "S06": "Duplicate uploads (exact + near) must not inflate recurring need; science practicals recurring",
+    "S07": "Conflicting Class 5 Maths figures (Excel vs PDF); overdue follow-ups across 7/15/45/88/99-day tiers",
+    "S08": "Improved: Class 3 Marathi reading gap 40% -> 20%; completed intervention; one planned action 7 days overdue",
+    "S09": "New school, no assessments/observations, all teachers never visited: insufficient evidence",
+    "S10": "Invalid/needs-review assessment rows planted; moderate gap"
+  },
+  "cohorts": {
+    "S01": "A",
+    "S02": "B",
+    "S03": "A",
+    "S04": "B",
+    "S05": "A",
+    "S06": "B",
+    "S07": "B",
+    "S08": "B",
+    "S09": "A",
+    "S10": "A"
+  }
+}

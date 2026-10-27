@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html, body { background: rgb(var(--page)); color: rgb(var(--i900)); }
+:root { --surface: 255 255 255; --i900: 11 27 63; --i700: 51 66 95; --i500: 100 116 139; --i400: 148 163 184; --page: 243 246 253; --b50: 239 245 255; --b100: 219 232 254; --b200: 191 213 253; --b300: 147 184 251; --b400: 94 146 247; --b500: 59 115 240; --b600: 37 99 235; --b700: 30 79 208; --b800: 30 64 175; --b900: 27 53 133; }
+body {
+  background-image: radial-gradient(1000px 420px at 85% -10%, rgb(var(--b600) / 0.10), transparent 60%),
+    radial-gradient(800px 380px at -5% 0%, rgb(var(--b400) / 0.12), transparent 55%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Priority sliders */
+.prio-range { -webkit-appearance: none; appearance: none; width: 100%; height: 26px; background: transparent; cursor: pointer; --p: 50%; }
+.prio-range::-webkit-slider-runnable-track { height: 14px; border-radius: 999px; background: linear-gradient(90deg, rgb(var(--b600)) 0%, rgb(var(--b400)) var(--p), rgb(var(--b100)) var(--p), rgb(var(--b100)) 100%); }
+.prio-range::-moz-range-track { height: 14px; border-radius: 999px; background: rgb(var(--b100)); }
+.prio-range::-moz-range-progress { height: 14px; border-radius: 999px; background: linear-gradient(90deg, rgb(var(--b600)), rgb(var(--b400))); }
+.prio-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; margin-top: -6px; width: 26px; height: 26px; border-radius: 999px; background: #fff; border: 3px solid rgb(var(--b600));
+  box-shadow: 0 2px 8px rgb(var(--b600) / 0.45); transition: transform 0.12s; }
+.prio-range::-moz-range-thumb { width: 20px; height: 20px; border-radius: 999px; background: #fff; border: 3px solid rgb(var(--b600)); box-shadow: 0 2px 8px rgb(var(--b600) / 0.45); }
+.prio-range:active::-webkit-slider-thumb { transform: scale(1.12); }
+.prio-range:focus-visible { outline: none; }
+.prio-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgb(var(--b600) / 0.28); }
+
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgb(var(--b200)); border-radius: 99px; }
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+
+.no-bar { scrollbar-width: none; }
+.no-bar::-webkit-scrollbar { display: none; }
+
+/* ---- Languages: each Indian script gets its own professional face (headings and body). Data stays English/Latin. ---- */
+html[lang='hi'] :is(body, .font-serif, .font-sans), html[lang='mr'] :is(body, .font-serif, .font-sans) { font-family: var(--font-deva), var(--font-sans), sans-serif; }
+html[lang='bn'] :is(body, .font-serif, .font-sans) { font-family: var(--font-beng), var(--font-sans), sans-serif; }
+html[lang='te'] :is(body, .font-serif, .font-sans) { font-family: var(--font-telu), var(--font-sans), sans-serif; }
+html[lang='ta'] :is(body, .font-serif, .font-sans) { font-family: var(--font-tami), var(--font-sans), sans-serif; }
+html[lang='gu'] :is(body, .font-serif, .font-sans) { font-family: var(--font-guju), var(--font-sans), sans-serif; }
+html[lang='kn'] :is(body, .font-serif, .font-sans) { font-family: var(--font-knda), var(--font-sans), sans-serif; }
+html[lang='or'] :is(body, .font-serif, .font-sans) { font-family: var(--font-orya), var(--font-sans), sans-serif; }
+html[lang='ml'] :is(body, .font-serif, .font-sans) { font-family: var(--font-mlym), var(--font-sans), sans-serif; }
+html[lang='ur'] :is(body, .font-serif, .font-sans) { font-family: var(--font-arab), var(--font-sans), sans-serif; }
+/* Joined scripts must not be letter-spaced, and tall glyphs need a little more line height. */
+html:not([lang='en']) :is(.tracking-wide, .tracking-wider, .tracking-tight) { letter-spacing: 0; }
+html:not([lang='en']) :is(.uppercase) { text-transform: none; }
+html:not([lang='en']) body { line-height: 1.55; }
+html:not([lang='en']) :is(.leading-snug, .leading-none) { line-height: 1.5; }

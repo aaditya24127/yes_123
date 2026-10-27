@@ -1,0 +1,287 @@
+{
+ "file": "data/schools/S01_ZP_Wadgaon/audio/2026-07-06_class3_maths_lesson_recording.mp3",
+ "duration_seconds": 294.1,
+ "teacher": "S01-T02",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 10.79,
+   "speaker": "T",
+   "text": "Good morning, children. Sit down quietly. Today we will do Mathematics, chapter four, place value. Take out your books.",
+   "tag": null
+  },
+  {
+   "start": 11.25,
+   "end": 13.88,
+   "speaker": "SC",
+   "text": "Good morning, madam.",
+   "tag": null
+  },
+  {
+   "start": 14.33,
+   "end": 25.96,
+   "speaker": "T",
+   "text": "Open page forty-two. Everybody look at the board. I will write a number. Thirty-four. Say it after me. Thirty-four.",
+   "tag": null
+  },
+  {
+   "start": 26.42,
+   "end": 28.31,
+   "speaker": "SC",
+   "text": "Thirty-four.",
+   "tag": "chorus"
+  },
+  {
+   "start": 28.77,
+   "end": 31.8,
+   "speaker": "T",
+   "text": "Again. Thirty-four.",
+   "tag": null
+  },
+  {
+   "start": 32.25,
+   "end": 34.15,
+   "speaker": "SC",
+   "text": "Thirty-four.",
+   "tag": null
+  },
+  {
+   "start": 34.61,
+   "end": 40.97,
+   "speaker": "T",
+   "text": "Three tens and four ones. Say it. Three tens and four ones.",
+   "tag": null
+  },
+  {
+   "start": 41.43,
+   "end": 44.27,
+   "speaker": "SC",
+   "text": "Three tens and four ones.",
+   "tag": null
+  },
+  {
+   "start": 44.73,
+   "end": 48.61,
+   "speaker": "T",
+   "text": "Again. Three tens and four ones.",
+   "tag": null
+  },
+  {
+   "start": 49.06,
+   "end": 51.92,
+   "speaker": "SC",
+   "text": "Three tens and four ones.",
+   "tag": "chorus_end"
+  },
+  {
+   "start": 52.37,
+   "end": 62.85,
+   "speaker": "T",
+   "text": "Good. Now copy the table from the board into your notebooks. Tens, ones. Write neatly. Do not talk.",
+   "tag": null
+  },
+  {
+   "start": 67.37,
+   "end": 72.97,
+   "speaker": "T",
+   "text": "Quiet, quiet. Write fast, we have very little time today.",
+   "tag": null
+  },
+  {
+   "start": 76.47,
+   "end": 85.12,
+   "speaker": "T",
+   "text": "Now we will do addition. Thirty-four plus nineteen. Who can tell me the answer? Raise your hand.",
+   "tag": "ask"
+  },
+  {
+   "start": 90.66,
+   "end": 97.36,
+   "speaker": "T",
+   "text": "Nobody? Rohan, you stand up. What is thirty-four plus nineteen?",
+   "tag": null
+  },
+  {
+   "start": 97.81,
+   "end": 100.56,
+   "speaker": "S1",
+   "text": "Madam... forty... forty-nine?",
+   "tag": "fail1"
+  },
+  {
+   "start": 101.02,
+   "end": 107.16,
+   "speaker": "T",
+   "text": "No. Sit down. Anybody else? Sneha?",
+   "tag": null
+  },
+  {
+   "start": 107.62,
+   "end": 110.93,
+   "speaker": "S2",
+   "text": "Fifty... fifty-seven, madam.",
+   "tag": "fail2"
+  },
+  {
+   "start": 111.39,
+   "end": 130.32,
+   "speaker": "T",
+   "text": "Wrong again. Listen, everyone. You add the ones, four plus nine, thirteen. Write three, carry one. Then three plus one plus one is five. The answer is fifty-three. Say it. Fifty-three.",
+   "tag": null
+  },
+  {
+   "start": 130.78,
+   "end": 132.75,
+   "speaker": "SC",
+   "text": "Fifty-three.",
+   "tag": null
+  },
+  {
+   "start": 133.2,
+   "end": 136.3,
+   "speaker": "T",
+   "text": "Again. Fifty-three.",
+   "tag": null
+  },
+  {
+   "start": 136.76,
+   "end": 138.74,
+   "speaker": "SC",
+   "text": "Fifty-three.",
+   "tag": null
+  },
+  {
+   "start": 139.19,
+   "end": 149.06,
+   "speaker": "T",
+   "text": "Now copy this sum from the board and do five more sums like this one. Do not ask me why we carry. Just remember the rule.",
+   "tag": "norule"
+  },
+  {
+   "start": 149.52,
+   "end": 153.14,
+   "speaker": "S1",
+   "text": "Madam, why do we write the one above the tens?",
+   "tag": null
+  },
+  {
+   "start": 153.6,
+   "end": 160.18,
+   "speaker": "T",
+   "text": "I said do not ask, Rohan. Just copy the rule. Is that clear?",
+   "tag": "dontask"
+  },
+  {
+   "start": 160.63,
+   "end": 162.98,
+   "speaker": "SC",
+   "text": "Yes, madam.",
+   "tag": null
+  },
+  {
+   "start": 167.5,
+   "end": 178.74,
+   "speaker": "T",
+   "text": "Who has finished? Show me your notebooks. Hmm, only four children. The rest are still copying from the board. Fine, fine.",
+   "tag": null
+  },
+  {
+   "start": 179.2,
+   "end": 189.43,
+   "speaker": "T",
+   "text": "Tomorrow we will do thirty-six plus twenty-seven in the same way. Remember, you do not need to understand it, you only need to practise the steps.",
+   "tag": "nounderstand"
+  },
+  {
+   "start": 192.94,
+   "end": 198.91,
+   "speaker": "T",
+   "text": "Now, the table of two. Say with me. Two ones are two.",
+   "tag": null
+  },
+  {
+   "start": 199.36,
+   "end": 208.34,
+   "speaker": "SC",
+   "text": "Two ones are two. Two twos are four. Two threes are six. Two fours are eight.",
+   "tag": "chorus2"
+  },
+  {
+   "start": 208.79,
+   "end": 212.08,
+   "speaker": "T",
+   "text": "Louder! Two ones are two.",
+   "tag": null
+  },
+  {
+   "start": 212.54,
+   "end": 223.75,
+   "speaker": "SC",
+   "text": "Two ones are two. Two twos are four. Two threes are six. Two fours are eight. Two fives are ten.",
+   "tag": null
+  },
+  {
+   "start": 224.2,
+   "end": 228.14,
+   "speaker": "T",
+   "text": "Again from the beginning. Two ones are two.",
+   "tag": null
+  },
+  {
+   "start": 228.6,
+   "end": 242.22,
+   "speaker": "SC",
+   "text": "Two ones are two. Two twos are four. Two threes are six. Two fours are eight. Two fives are ten. Two sixes are twelve.",
+   "tag": null
+  },
+  {
+   "start": 242.68,
+   "end": 248.21,
+   "speaker": "T",
+   "text": "Good. Now the table of three. Three ones are three.",
+   "tag": null
+  },
+  {
+   "start": 248.67,
+   "end": 255.76,
+   "speaker": "SC",
+   "text": "Three ones are three. Three twos are six. Three threes are nine.",
+   "tag": null
+  },
+  {
+   "start": 259.26,
+   "end": 268.3,
+   "speaker": "T",
+   "text": "Shh, shh. The class next door can hear you. Sit properly. Hands on the desk.",
+   "tag": null
+  },
+  {
+   "start": 268.76,
+   "end": 281.59,
+   "speaker": "T",
+   "text": "Homework. Page forty-three, all the questions, and write the table of three ten times. Tomorrow I will check every notebook. Who does not finish will stand outside.",
+   "tag": null
+  },
+  {
+   "start": 282.05,
+   "end": 284.39,
+   "speaker": "SC",
+   "text": "Yes, madam.",
+   "tag": null
+  },
+  {
+   "start": 284.85,
+   "end": 290.72,
+   "speaker": "T",
+   "text": "The bell will ring now. Put your books away. Class dismissed.",
+   "tag": null
+  },
+  {
+   "start": 291.18,
+   "end": 293.66,
+   "speaker": "SC",
+   "text": "Thank you, madam.",
+   "tag": null
+  }
+ ]
+}

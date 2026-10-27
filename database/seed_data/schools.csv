@@ -1,0 +1,11 @@
+id,code,name,school_type,board,medium,grade_from,grade_to,village,taluka,district,udise_code,cluster,is_demo
+559b0369-823e-509c-b019-5501bee76656,S01,"ZP School, Wadgaon",Zilla Parishad,Maharashtra State Board (SSC),Marathi,1,7,Wadgaon,Maval,Pune,27255374105,Hinjewadi-Mulshi Cluster 7,true
+f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02,Mahavir Jaideep English Medium School,Private Unaided,CBSE,English,1,10,Wakad,Mulshi,Pune,27252791172,Hinjewadi-Mulshi Cluster 7,true
+678256fd-b16a-5ff5-847e-4028b677bd5e,S03,"ZP School, Nandur",Zilla Parishad,Maharashtra State Board (SSC),Marathi,1,5,Nandur,Maval,Pune,27253109515,Hinjewadi-Mulshi Cluster 7,true
+7ed2eb4c-8005-5e95-a267-681378e181d6,S04,"Rock Public School, Hinjewadi",Private Unaided,ICSE,English,1,10,Hinjewadi,Mulshi,Pune,27250724212,Hinjewadi-Mulshi Cluster 7,true
+13ff0467-21d1-57a4-8af0-65f135b7532a,S05,"PCMC Primary School, Wakad",Municipal Corporation,Maharashtra State Board (SSC),Marathi,1,7,Wakad,Haveli,Pune,27257971918,Hinjewadi-Mulshi Cluster 7,true
+ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06,"Shri Ganesh Vidyalaya, Ambegaon",Government Aided Private,Maharashtra State Board (SSC),Marathi (semi-English),5,10,Ambegaon,Haveli,Pune,27250148420,Hinjewadi-Mulshi Cluster 7,true
+b1c5faa9-dc04-575d-9803-81d69aaec607,S07,"St. Mary's English School, Takali",Government Aided Private (Minority),ICSE,English,1,10,Takali,Haveli,Pune,27257251862,Hinjewadi-Mulshi Cluster 7,true
+a183ef85-1ec9-59ad-b97e-a3d704b8c611,S08,"ZP School, Mhasoba Wadi",Zilla Parishad,Maharashtra State Board (SSC),Marathi,1,7,Mhasoba Wadi,Mulshi,Pune,27256120838,Hinjewadi-Mulshi Cluster 7,true
+1542e599-38f1-5d70-98e4-3858c0b0c5b5,S09,"Sant Dnyaneshwar English School, Karanje",Private Unaided,CBSE,English,1,5,Karanje,Mulshi,Pune,27259557068,Hinjewadi-Mulshi Cluster 7,true
+709e8e21-1d78-51ae-9112-28e9016cc16f,S10,"New English School, Palshi",Government Aided Private,Maharashtra State Board (SSC),English,1,10,Palshi,Maval,Pune,27254391819,Hinjewadi-Mulshi Cluster 7,true

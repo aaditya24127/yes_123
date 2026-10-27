@@ -1,0 +1,161 @@
+{
+ "file": "data/schools/S07_St_Marys_English_School_Takali/audio/2026-06-27_class6_science_lesson_recording.mp3",
+ "duration_seconds": 237.6,
+ "teacher": "S07-T06",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 11.93,
+   "speaker": "T",
+   "text": "Good morning, class. Please sit. Today we will study the chapter on plants, how plants make their food. Open your Science textbook to page twenty-one.",
+   "tag": null
+  },
+  {
+   "start": 12.39,
+   "end": 15.01,
+   "speaker": "SC",
+   "text": "Good morning, madam.",
+   "tag": null
+  },
+  {
+   "start": 15.46,
+   "end": 36.85,
+   "speaker": "T",
+   "text": "I will read the paragraph aloud. You will follow in your books. Plants make their food by a process called photosynthesis. In the presence of sunlight, the leaves take in carbon dioxide from the air and water from the soil. Using chlorophyll, the green pigment in leaves, they make glucose and release oxygen.",
+   "tag": "read1"
+  },
+  {
+   "start": 37.31,
+   "end": 60.35,
+   "speaker": "T",
+   "text": "Now, underline the word photosynthesis. Photo means light. Synthesis means putting together. So, photosynthesis means making food using light. Write this definition in your notebook. Write: Photosynthesis is the process by which green plants make food using sunlight, water and carbon dioxide.",
+   "tag": null
+  },
+  {
+   "start": 66.86,
+   "end": 83.29,
+   "speaker": "T",
+   "text": "Next, the equation. Carbon dioxide plus water, in the presence of sunlight and chlorophyll, gives glucose plus oxygen. Copy the equation from the board exactly. Do not make mistakes in the spelling of chlorophyll.",
+   "tag": null
+  },
+  {
+   "start": 88.79,
+   "end": 94.05,
+   "speaker": "S1",
+   "text": "Madam, can we see it happening? Like in the picture in the book?",
+   "tag": "canwesee"
+  },
+  {
+   "start": 94.5,
+   "end": 105.9,
+   "speaker": "T",
+   "text": "That is an experiment from the next chapter. Not today. Just learn the definition and the equation. These are the questions that come in the exam.",
+   "tag": "noexp"
+  },
+  {
+   "start": 106.35,
+   "end": 113.13,
+   "speaker": "S2",
+   "text": "Madam, is the science box in the cupboard? Can we use the magnifying glass for the leaf?",
+   "tag": "kitask"
+  },
+  {
+   "start": 113.58,
+   "end": 123.94,
+   "speaker": "T",
+   "text": "The kit is locked. The key is with the headmaster, and there is no time. Please look at the diagram in the book. It is the same thing.",
+   "tag": "kitlocked"
+  },
+  {
+   "start": 124.39,
+   "end": 141.18,
+   "speaker": "T",
+   "text": "Now, read the next paragraph silently. Then I will ask you questions. The factors needed for photosynthesis are sunlight, chlorophyll, carbon dioxide and water. Name the four factors, one by one. Aarav?",
+   "tag": null
+  },
+  {
+   "start": 141.63,
+   "end": 146.76,
+   "speaker": "S1",
+   "text": "Sunlight, chlorophyll, carbon dioxide and water, madam.",
+   "tag": null
+  },
+  {
+   "start": 147.22,
+   "end": 154.42,
+   "speaker": "T",
+   "text": "Correct, you have mugged it up well. Repeat it all together. The four factors.",
+   "tag": null
+  },
+  {
+   "start": 154.88,
+   "end": 159.61,
+   "speaker": "SC",
+   "text": "Sunlight, chlorophyll, carbon dioxide and water.",
+   "tag": "chorus"
+  },
+  {
+   "start": 160.06,
+   "end": 162.92,
+   "speaker": "T",
+   "text": "Again. Louder.",
+   "tag": null
+  },
+  {
+   "start": 163.38,
+   "end": 168.11,
+   "speaker": "SC",
+   "text": "Sunlight, chlorophyll, carbon dioxide and water.",
+   "tag": null
+  },
+  {
+   "start": 168.56,
+   "end": 176.16,
+   "speaker": "T",
+   "text": "Good. Now let me ask a different question. Why are leaves green? Anyone?",
+   "tag": null
+  },
+  {
+   "start": 181.67,
+   "end": 184.58,
+   "speaker": "S2",
+   "text": "Because of chlorophyll, madam.",
+   "tag": null
+  },
+  {
+   "start": 185.03,
+   "end": 193.28,
+   "speaker": "T",
+   "text": "Correct, because of chlorophyll. Why does a plant kept in a dark room die after many days? Think.",
+   "tag": null
+  },
+  {
+   "start": 199.8,
+   "end": 212.96,
+   "speaker": "T",
+   "text": "No one knows? Because it cannot do photosynthesis without light. Write that answer in your notebook, word for word: A plant kept in the dark cannot make its food, so it dies.",
+   "tag": null
+  },
+  {
+   "start": 213.42,
+   "end": 224.69,
+   "speaker": "T",
+   "text": "We have finished page twenty-one and twenty-two. For homework, answer the questions at the end of the chapter, and learn the definition and the four factors for a test on Monday.",
+   "tag": null
+  },
+  {
+   "start": 225.15,
+   "end": 234.19,
+   "speaker": "T",
+   "text": "Next week we will start the chapter on the human digestive system. Please bring your notebooks. That is all for today.",
+   "tag": null
+  },
+  {
+   "start": 234.65,
+   "end": 237.12,
+   "speaker": "SC",
+   "text": "Thank you, madam.",
+   "tag": null
+  }
+ ]
+}

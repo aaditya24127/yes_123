@@ -1,0 +1,126 @@
+{
+ "file": "data/schools/S02_Mahavir_Jaideep_English_Medium/audio/2026-08-27_class4_maths_lesson_recording.mp3",
+ "duration_seconds": 267.1,
+ "teacher": "S02-T02",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 13.42,
+   "speaker": "T",
+   "text": "Good morning, class. Be seated. Today we are studying multiplication of two-digit numbers by a single digit. Please keep your textbooks closed for now and listen carefully.",
+   "tag": null
+  },
+  {
+   "start": 13.87,
+   "end": 16.41,
+   "speaker": "SC",
+   "text": "Good morning, sir.",
+   "tag": null
+  },
+  {
+   "start": 16.86,
+   "end": 37.15,
+   "speaker": "T",
+   "text": "Multiplication is nothing but repeated addition. When I say twelve times three, I mean twelve plus twelve plus twelve. That is thirty-six. Now what do we do when the numbers become bigger? We use the standard method. Let me explain the steps in detail, so listen.",
+   "tag": "mono_start"
+  },
+  {
+   "start": 37.6,
+   "end": 67.01,
+   "speaker": "T",
+   "text": "First, write the two-digit number on top and the single digit below it, aligned with the ones place. Second, multiply the ones digit by the single digit. If the product is more than nine, write the ones digit and carry the tens digit to the next column. Third, multiply the tens digit by the single digit and add the carried number. Fourth, write the result to the left. That is all. Very simple.",
+   "tag": null
+  },
+  {
+   "start": 67.46,
+   "end": 98.63,
+   "speaker": "T",
+   "text": "For example, twenty-four times three. Three times four is twelve. Write two, carry one. Three times two is six, plus one is seven. So the answer is seventy-two. Let me do one more. Thirty-eight times four. Four times eight is thirty-two. Write two, carry three. Four times three is twelve, plus three is fifteen. So the answer is one hundred fifty-two.",
+   "tag": null
+  },
+  {
+   "start": 99.08,
+   "end": 105.17,
+   "speaker": "T",
+   "text": "Is everything clear? Good. I will take your silence as a yes.",
+   "tag": "noq"
+  },
+  {
+   "start": 107.64,
+   "end": 110.63,
+   "speaker": "S1",
+   "text": "Sir, why do we carry the number?",
+   "tag": "studentq"
+  },
+  {
+   "start": 111.08,
+   "end": 124.38,
+   "speaker": "T",
+   "text": "We will see that later, not now. First you must learn the method. Do not worry about why. Now let me explain the second type of problem, which comes in the exam.",
+   "tag": "deflect"
+  },
+  {
+   "start": 124.83,
+   "end": 160.61,
+   "speaker": "T",
+   "text": "In word problems, you must first find the multiplication in the sentence. For example, a box has twenty-five pencils. How many pencils are there in six boxes? You see, the word boxes tells us to multiply. Twenty-five times six. Six times five is thirty. Write zero, carry three. Six times two is twelve, plus three is fifteen. One hundred fifty pencils. Everyone should write this example in the notebook exactly as I have explained it.",
+   "tag": null
+  },
+  {
+   "start": 167.11,
+   "end": 180.16,
+   "speaker": "T",
+   "text": "Now, I have written five sums on the board. Solve them in your notebooks. Meanwhile, I will explain the properties of multiplication, because they are also in the syllabus.",
+   "tag": null
+  },
+  {
+   "start": 180.61,
+   "end": 205.47,
+   "speaker": "T",
+   "text": "The commutative property says that the order does not matter. Four times seven is the same as seven times four. The associative property says that the grouping does not matter. The distributive property says that a times b plus c is equal to a times b plus a times c. You must memorise these three properties, because they will come for two marks.",
+   "tag": "mono_end"
+  },
+  {
+   "start": 205.92,
+   "end": 211.02,
+   "speaker": "S2",
+   "text": "Sir, I got seventy-two for the first one. Is it correct?",
+   "tag": null
+  },
+  {
+   "start": 211.47,
+   "end": 217.78,
+   "speaker": "T",
+   "text": "Check it yourself. I am busy explaining. Everyone, keep working.",
+   "tag": null
+  },
+  {
+   "start": 223.27,
+   "end": 242.66,
+   "speaker": "T",
+   "text": "Time is almost over. So I will quickly give the answers. First one, seventy-two. Second, one hundred twelve. Third, ninety-six. Fourth, one hundred eighty. Fifth, two hundred forty. Correct your own sums.",
+   "tag": null
+  },
+  {
+   "start": 243.11,
+   "end": 255.8,
+   "speaker": "T",
+   "text": "Homework. Exercise five point two, questions one to fifteen. Also learn the three properties by heart. Tomorrow I will take an oral test on the properties.",
+   "tag": null
+  },
+  {
+   "start": 256.25,
+   "end": 258.43,
+   "speaker": "SC",
+   "text": "Yes, sir.",
+   "tag": null
+  },
+  {
+   "start": 258.88,
+   "end": 266.62,
+   "speaker": "T",
+   "text": "That is all for today. Next period, the science teacher will come. Please be quiet till then.",
+   "tag": null
+  }
+ ]
+}

@@ -1,0 +1,53 @@
+id,school_id,teacher_code,full_name,title,designation,qualification,joined_date,classes_taught,subjects_taught,is_demo
+c424ad79-f33a-5025-8faf-94b5f6926d4b,559b0369-823e-509c-b019-5501bee76656,S01-T01,Vaishali Kulkarni,Mrs.,Headmistress,"M.Sc., B.Ed.",2012-08-29,1;2,EVS;English;Marathi;Mathematics,true
+a4769837-a78e-55c0-b72f-da4771e53ca7,559b0369-823e-509c-b019-5501bee76656,S01-T02,Sunita Jadhav,Mrs.,Assistant Teacher,D.Ed.,2017-11-15,3;4,EVS;English;Marathi;Mathematics,true
+427fe327-f735-55a4-9f53-40c3be87fab4,559b0369-823e-509c-b019-5501bee76656,S01-T03,Bhausaheb Ghule,Mr.,Assistant Teacher,"D.Ed., B.Ed.",2013-09-04,5,EVS;English;Hindi;Marathi;Mathematics,true
+0ffb62e9-a22a-5df6-baf0-4d0b38a4dd70,559b0369-823e-509c-b019-5501bee76656,S01-T04,Tukaram Mane,Mr.,Assistant Teacher,"M.Sc., B.Ed.",2014-03-11,6,English;Hindi;Marathi;Mathematics;Science;Social Science,true
+ab539be3-4f98-5da4-9cf7-e40881d5c87c,559b0369-823e-509c-b019-5501bee76656,S01-T05,Dattatray Navale,Mr.,Assistant Teacher,"M.Sc., B.Ed.",2015-10-11,7,English;Hindi;Marathi;Mathematics;Science;Social Science,true
+fb584adf-66b0-529f-9a85-04c63164eb28,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T01,Nirmala Chordia,Mrs.,Headmistress,"B.A., B.Ed.",2011-02-01,1;2,EVS;English;Hindi;Marathi;Mathematics,true
+73a047d1-af47-5e52-8e1a-2c33b8aecae3,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T02,Sachin Nimbalkar,Mr.,Assistant Teacher,"B.A., B.Ed.",2021-02-07,3;4,EVS;English;Hindi;Marathi;Mathematics,true
+283791bf-c134-5272-a2ed-fbdd1084411e,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T03,Sushila Tiwari,Mrs.,Assistant Teacher,"M.A., B.Ed.",2017-03-19,5,EVS;English;Hindi;Marathi;Mathematics,true
+6b508740-fb9d-5631-a386-218a471727f8,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T04,Tukaram Gaikwad,Mr.,Subject Teacher,"M.Sc., B.Ed.",2017-01-26,6;7;8;9;10,Hindi;Marathi,true
+20ca5ca1-1bca-584d-a8c4-8a1edf6e52c5,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T05,Rajesh Chordia,Mr.,Subject Teacher,"B.Sc., B.Ed.",2018-03-16,6;7;8;9;10,English;Social Science,true
+50f22a09-a272-563f-944b-8d1e7327221d,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T06,Rakesh Yadav,Mr.,Subject Teacher,"M.Sc., B.Ed.",2013-12-02,6;7;8;9;10,Mathematics,true
+6b29cbea-6379-5e20-aad5-f5b14dda0534,f596f9bf-15ca-5ac7-a8f0-ec66e3f443c8,S02-T07,Vishal Gawade,Mr.,Subject Teacher,"B.A., B.Ed.",2015-03-03,6;7;8;9;10,Science,true
+d1074117-5e7a-5266-8b8f-7f58fa08c195,678256fd-b16a-5ff5-847e-4028b677bd5e,S03-T01,Suresh Raut,Mr.,Headmaster,D.Ed.,2022-09-02,1;2,EVS;English;Marathi;Mathematics,true
+e03b7fd2-2703-5640-80d6-fbb2506cb2ea,678256fd-b16a-5ff5-847e-4028b677bd5e,S03-T02,Priya Kulkarni,Ms.,Assistant Teacher,"B.A., B.Ed.",2011-04-28,3,EVS;English;Marathi;Mathematics,true
+8e56c200-5c6c-595f-9e67-acf325bcb8d0,678256fd-b16a-5ff5-847e-4028b677bd5e,S03-T03,Pooja Lonkar,Mrs.,Assistant Teacher,"D.Ed., B.Ed.",2013-06-29,4,EVS;English;Marathi;Mathematics,true
+73daa9c5-fbfb-56ec-b1b9-6c9f250b3c28,678256fd-b16a-5ff5-847e-4028b677bd5e,S03-T04,Rajendra Kamble,Mr.,Assistant Teacher,"M.A., B.Ed.",2021-10-23,5,EVS;English;Hindi;Marathi;Mathematics,true
+c855a0f2-ae9d-5016-b42c-2558003a7375,7ed2eb4c-8005-5e95-a267-681378e181d6,S04-T01,Sandeep Pandey,Mr.,Headmaster,"M.Sc., B.Ed.",2017-07-06,1;2;3,EVS;English;Hindi;Marathi;Mathematics,true
+40d3930c-2d7a-5a93-b0ec-f4556559df4b,7ed2eb4c-8005-5e95-a267-681378e181d6,S04-T02,Rajendra Deshmukh,Mr.,Assistant Teacher,"M.A., B.Ed.",2017-06-08,4;5,EVS;English;Hindi;Marathi;Mathematics,true
+cbcca63a-3519-5f8f-a258-6583a447322b,7ed2eb4c-8005-5e95-a267-681378e181d6,S04-T03,Yasmin Inamdar,Ms.,Subject Teacher,"D.Ed., B.A.",2008-08-02,6;7;8;9;10,Hindi;Marathi,true
+b5f484c3-0113-5bec-8ad5-46c447dccd2d,7ed2eb4c-8005-5e95-a267-681378e181d6,S04-T04,Shubhangi Raut,Mrs.,Subject Teacher,D.Ed.,2019-01-30,6;7;8;9;10,English;Social Science,true
+98ca86c5-70e3-54e5-aa3f-67ea0d6d0aa4,7ed2eb4c-8005-5e95-a267-681378e181d6,S04-T05,Sushila Yadav,Mrs.,Subject Teacher,B.Ed.,2016-01-10,6;7;8;9;10,Mathematics,true
+83ce680f-c00e-543a-a80a-17bd4fbfd7b8,7ed2eb4c-8005-5e95-a267-681378e181d6,S04-T06,Lydia Fernandes,Mrs.,Subject Teacher,"D.Ed., B.Ed.",2021-05-03,6;7;8;9;10,Science,true
+c42fb778-372f-5b46-87c0-25bda4e535ec,13ff0467-21d1-57a4-8af0-65f135b7532a,S05-T01,Rajendra Dhumal,Mr.,Headmaster,"M.Sc., B.Ed.",2011-07-08,1;2,EVS;English;Marathi;Mathematics,true
+2f8c5f0a-135f-5e1d-ad12-cedaff856b79,13ff0467-21d1-57a4-8af0-65f135b7532a,S05-T02,Farhana Inamdar,Mrs.,Assistant Teacher,"B.Sc., B.Ed.",2019-11-17,3;4,EVS;English;Marathi;Mathematics,true
+87f12317-cf66-5104-952d-a81b6f145280,13ff0467-21d1-57a4-8af0-65f135b7532a,S05-T03,Smita Raut,Mrs.,Assistant Teacher,"B.A., B.Ed.",2012-01-30,5;6,EVS;English;Hindi;Marathi;Mathematics;Science;Social Science,true
+73907186-c2f3-5f9f-8a77-0a4411ee1c17,13ff0467-21d1-57a4-8af0-65f135b7532a,S05-T04,Sunita Mane,Ms.,Assistant Teacher,"D.Ed., B.A.",2016-10-02,7,English;Hindi;Marathi;Mathematics;Science;Social Science,true
+f7ab837b-ee2d-59a1-93fa-6e39f78a6ed3,ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06-T01,Vaishali Mohite,Mrs.,Headmistress,D.Ed.,2021-08-13,5;6;7;8;9;10,Marathi,true
+5ef23422-a093-5a79-bf35-10f2e578b680,ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06-T02,Meena Sonawane,Mrs.,Assistant Teacher,"M.A., B.Ed.",2008-09-12,5;6;7;8;9;10,English,true
+8dd59c8e-c6a3-5d51-9760-def6232775f7,ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06-T03,Sheetal Lonkar,Mrs.,Assistant Teacher,"D.Ed., B.Ed.",2012-08-28,5;6;7;8;9;10,Mathematics,true
+89de0dbc-a4c1-54f2-90a9-fc7cf0b2026c,ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06-T04,Vaishali Shinde,Mrs.,Assistant Teacher,B.Ed.,2021-01-02,5;6;7;8;9;10,EVS;Science,true
+1b69880d-dd60-5118-a221-2a0b14da9e5b,ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06-T05,Sarika Tambe,Mrs.,Assistant Teacher,B.Ed.,2012-01-10,5;6;7;8;9;10,Hindi,true
+9c9462f2-c0f7-5aa4-a284-2f2b95d9f457,ebdf2c21-6ca6-559f-8cd8-907eb23899b8,S06-T06,Farhana Attar,Mrs.,Subject Teacher,"D.Ed., B.Ed.",2017-02-05,6;7;8;9;10,Social Science,true
+23249316-547c-5a2a-801e-fd8fa4ec7b11,b1c5faa9-dc04-575d-9803-81d69aaec607,S07-T01,Joseph D'Souza,Mr.,Headmaster,"M.A., B.Ed.",2011-02-15,1;2;3,EVS;English;Hindi;Marathi;Mathematics,true
+9d83ad12-3c73-5619-a378-730f2cf84504,b1c5faa9-dc04-575d-9803-81d69aaec607,S07-T02,Mary Lobo,Mrs.,Assistant Teacher,"M.A., B.Ed.",2010-09-17,4;5,EVS;English;Hindi;Marathi;Mathematics,true
+fb15ac74-828e-5f04-b552-77fefc926869,b1c5faa9-dc04-575d-9803-81d69aaec607,S07-T03,Neha Salunkhe,Mrs.,Subject Teacher,"M.A., B.Ed.",2012-11-10,6;7;8;9;10,Hindi;Marathi,true
+b20f065a-dd9c-593c-b53b-a0fb675469c2,b1c5faa9-dc04-575d-9803-81d69aaec607,S07-T04,Mary Gonsalves,Mrs.,Subject Teacher,B.Ed.,2018-08-13,6;7;8;9;10,English;Social Science,true
+705fee5d-575c-581b-b626-850280f59c51,b1c5faa9-dc04-575d-9803-81d69aaec607,S07-T05,Shweta Kamble,Mrs.,Subject Teacher,B.Ed.,2011-01-01,6;7;8;9;10,Mathematics,true
+84572d6f-5d54-586f-a742-53b9feac8d76,b1c5faa9-dc04-575d-9803-81d69aaec607,S07-T06,Flavia D'Souza,Mrs.,Subject Teacher,"D.Ed., B.Ed.",2013-05-15,6;7;8;9;10,Science,true
+68118361-0cfb-5f9b-9b16-401909e3cc30,a183ef85-1ec9-59ad-b97e-a3d704b8c611,S08-T01,Rekha Ghule,Mrs.,Headmistress,"M.A., B.Ed.",2016-04-09,1;2,EVS;English;Marathi;Mathematics,true
+fa603f51-63c8-599b-9299-b17c39ca52af,a183ef85-1ec9-59ad-b97e-a3d704b8c611,S08-T02,Balasaheb Pawar,Mr.,Assistant Teacher,"B.A., B.Ed.",2022-05-31,3;4,EVS;English;Marathi;Mathematics,true
+a4e48b93-971a-5094-a3a1-8bd99d6b24cb,a183ef85-1ec9-59ad-b97e-a3d704b8c611,S08-T03,Sushma Chavan,Ms.,Assistant Teacher,"B.Sc., B.Ed.",2008-11-25,5,EVS;English;Hindi;Marathi;Mathematics,true
+6c3fb395-cf45-5a19-823e-a7d58b7c4feb,a183ef85-1ec9-59ad-b97e-a3d704b8c611,S08-T04,Amol Kulkarni,Mr.,Assistant Teacher,"B.Sc., B.Ed.",2019-01-12,6,English;Hindi;Marathi;Mathematics;Science;Social Science,true
+1cc6248b-8c6b-5ece-a699-5b5412db7d30,a183ef85-1ec9-59ad-b97e-a3d704b8c611,S08-T05,Vishal Nimbalkar,Mr.,Assistant Teacher,"D.Ed., B.Ed.",2018-03-19,7,English;Hindi;Marathi;Mathematics;Science;Social Science,true
+93f5ffa3-474d-50bd-908f-59b828b6dea0,1542e599-38f1-5d70-98e4-3858c0b0c5b5,S09-T01,Ajay Chavan,Mr.,Headmaster,"D.Ed., B.Ed.",2026-06-15,1;2,EVS;English;Hindi;Marathi;Mathematics,true
+b78b0962-7a07-55a5-8631-473cf403f85b,1542e599-38f1-5d70-98e4-3858c0b0c5b5,S09-T02,Yasmin Mulla,Mrs.,Assistant Teacher,D.Ed.,2026-06-15,3;4,EVS;English;Hindi;Marathi;Mathematics,true
+b63b7381-d2b5-508c-9cfd-949cc121fffc,1542e599-38f1-5d70-98e4-3858c0b0c5b5,S09-T03,Anita Bhosale,Mrs.,Assistant Teacher,"D.Ed., B.Ed.",2026-06-15,5,EVS;English;Hindi;Marathi;Mathematics,true
+1c329d73-cc1c-5a47-a02e-a2d106f6d8ba,709e8e21-1d78-51ae-9112-28e9016cc16f,S10-T01,Sarika Salunkhe,Ms.,Headmistress,"M.A., B.Ed.",2011-10-11,1;2;3,EVS;English;Marathi;Mathematics,true
+1942dc1b-d2b4-5ee9-8c01-e1f2acfbbae7,709e8e21-1d78-51ae-9112-28e9016cc16f,S10-T02,Deepali Sonawane,Mrs.,Assistant Teacher,"D.Ed., B.Ed.",2008-12-20,4;5,EVS;English;Hindi;Marathi;Mathematics,true
+35d7ac17-b26c-5d57-bc6c-f170a7085166,709e8e21-1d78-51ae-9112-28e9016cc16f,S10-T03,Mary Pereira,Mrs.,Subject Teacher,"M.Sc., B.Ed.",2010-03-20,6;7;8;9;10,Hindi;Marathi,true
+16ff1ccd-b6be-534c-9604-36f6cf1319e1,709e8e21-1d78-51ae-9112-28e9016cc16f,S10-T04,Suresh Waghmare,Mr.,Subject Teacher,"B.Sc., B.Ed.",2009-01-04,6;7;8;9;10,English;Social Science,true
+e0da019b-2468-5432-abac-bba191ab08bc,709e8e21-1d78-51ae-9112-28e9016cc16f,S10-T05,Farhana Pathan,Mrs.,Subject Teacher,"B.A., B.Ed.",2016-12-05,6;7;8;9;10,Mathematics,true
+15ba7698-f2f2-590d-ac9a-8b4d9e93a76f,709e8e21-1d78-51ae-9112-28e9016cc16f,S10-T06,Rajendra Wagh,Mr.,Subject Teacher,"M.Sc., B.Ed.",2020-07-28,6;7;8;9;10,Science,true

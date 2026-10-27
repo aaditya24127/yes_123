@@ -1,0 +1,182 @@
+{
+ "file": "data/schools/S08_ZP_Mhasoba_Wadi/audio/2026-09-01_class3_english_reading_recording.mp3",
+ "duration_seconds": 224.3,
+ "teacher": "S08-T02",
+ "segments": [
+  {
+   "start": 0.0,
+   "end": 12.03,
+   "speaker": "T",
+   "text": "Good morning, children. Today we will read together. Please take out your English reader, the story called The Little Bird. Sit with your reading partner.",
+   "tag": null
+  },
+  {
+   "start": 12.49,
+   "end": 15.04,
+   "speaker": "SC",
+   "text": "Good morning, sir.",
+   "tag": null
+  },
+  {
+   "start": 15.49,
+   "end": 32.2,
+   "speaker": "T",
+   "text": "Remember our rule. One child reads one line, then the partner reads the next line. If a word is difficult, your partner helps first. Then you may ask me. Ready? Start from the first line.",
+   "tag": "pairrule"
+  },
+  {
+   "start": 38.73,
+   "end": 44.0,
+   "speaker": "S1",
+   "text": "A little bird sat on a tree. She sang a happy song.",
+   "tag": "pairread"
+  },
+  {
+   "start": 44.46,
+   "end": 48.71,
+   "speaker": "S2",
+   "text": "The sun was bright. The bird looked for food.",
+   "tag": null
+  },
+  {
+   "start": 52.21,
+   "end": 64.52,
+   "speaker": "T",
+   "text": "Very good, Aarti. I like how you stopped at the full stop. Now, who can tell me, where did the bird sit? Anyone? Raise your hand.",
+   "tag": "question"
+  },
+  {
+   "start": 64.98,
+   "end": 67.14,
+   "speaker": "S1",
+   "text": "On a tree, sir.",
+   "tag": null
+  },
+  {
+   "start": 67.6,
+   "end": 74.23,
+   "speaker": "T",
+   "text": "Correct. And why was the bird happy? Think, then tell your partner first.",
+   "tag": "think"
+  },
+  {
+   "start": 79.75,
+   "end": 84.77,
+   "speaker": "S2",
+   "text": "Because the sun was bright, sir. And she found food.",
+   "tag": null
+  },
+  {
+   "start": 85.22,
+   "end": 90.42,
+   "speaker": "T",
+   "text": "Wonderful answer, Omkar. Everyone, clap for Omkar.",
+   "tag": "praise"
+  },
+  {
+   "start": 90.87,
+   "end": 93.35,
+   "speaker": "SC",
+   "text": "Clapping and cheering.",
+   "tag": null
+  },
+  {
+   "start": 93.81,
+   "end": 103.15,
+   "speaker": "T",
+   "text": "Now the next paragraph. This time, the first partner points under each word with a finger. Let me see the fingers.",
+   "tag": null
+  },
+  {
+   "start": 109.68,
+   "end": 115.29,
+   "speaker": "S1",
+   "text": "Suddenly a big cat came near the tree. The bird was afraid.",
+   "tag": null
+  },
+  {
+   "start": 115.75,
+   "end": 122.14,
+   "speaker": "S2",
+   "text": "She flew up high. She called her friends. The friends came to help.",
+   "tag": null
+  },
+  {
+   "start": 122.59,
+   "end": 130.54,
+   "speaker": "T",
+   "text": "I heard a small mistake. The word friends. Say it again, slowly. Friends.",
+   "tag": null
+  },
+  {
+   "start": 131.0,
+   "end": 134.4,
+   "speaker": "S2",
+   "text": "Friends. Friends, sir.",
+   "tag": null
+  },
+  {
+   "start": 134.86,
+   "end": 147.93,
+   "speaker": "T",
+   "text": "Perfect. See, you corrected it yourself. Last month, many of you could not read this word at all. Now you are reading full paragraphs. I am proud of you.",
+   "tag": "progress"
+  },
+  {
+   "start": 148.39,
+   "end": 160.28,
+   "speaker": "T",
+   "text": "Now, close your books. Tell me in your own words what happened in the story. Start with your partner, then I will ask a few of you to share with the class.",
+   "tag": "retell"
+  },
+  {
+   "start": 168.83,
+   "end": 179.26,
+   "speaker": "S1",
+   "text": "The bird was singing on the tree. A cat came. The bird was afraid and called her friends. They scared the cat away.",
+   "tag": null
+  },
+  {
+   "start": 179.71,
+   "end": 186.62,
+   "speaker": "T",
+   "text": "Excellent retelling. Now Sakshi, you tell us. What did you like about the story?",
+   "tag": null
+  },
+  {
+   "start": 187.07,
+   "end": 193.13,
+   "speaker": "S2",
+   "text": "I liked that the friends helped the bird, sir. Friends should help each other.",
+   "tag": null
+  },
+  {
+   "start": 193.59,
+   "end": 199.02,
+   "speaker": "T",
+   "text": "What a lovely thought. Class, what can we learn from this story?",
+   "tag": null
+  },
+  {
+   "start": 199.48,
+   "end": 202.2,
+   "speaker": "SC",
+   "text": "We should help our friends.",
+   "tag": null
+  },
+  {
+   "start": 202.66,
+   "end": 218.96,
+   "speaker": "T",
+   "text": "Very good. Now go to our reading corner and each pair pick one picture book. For the last ten minutes, you will read it quietly with your partner. Tomorrow, I will ask each pair to tell us one new word they learnt.",
+   "tag": "readingcorner"
+  },
+  {
+   "start": 219.42,
+   "end": 223.85,
+   "speaker": "SC",
+   "text": "Yes, sir. Thank you, sir.",
+   "tag": null
+  }
+ ]
+}
