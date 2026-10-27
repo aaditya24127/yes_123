@@ -25,8 +25,11 @@ SEED_ORDER = [('crps.csv', 'crps'), ('schools.csv', 'schools'), ('school_assignm
 
 
 def connect():
-    url = os.environ.get('DATABASE_URL')
-    if not url: sys.exit('DATABASE_URL is not set (copy .env.example to .env)')
+    from app.core.settings import database_url
+    try:
+        url = database_url()
+    except RuntimeError as e:
+        sys.exit(str(e))
     return psycopg.connect(url)
 
 

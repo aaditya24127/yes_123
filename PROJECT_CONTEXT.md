@@ -57,8 +57,9 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 - **AI layer** (`backend/app/ai/`): the only place that talks to any AI. Each job is a named task with a fixed input
   and JSON output schema (`tasks.py`). `config/ai.json` lists, per task, providers to try in order (Claude, Gemini,
   Ollama, your own model over HTTP, local Whisper, Groq Whisper, free web search, `rules`). Answers are checked against
-  the schema; `rules` (free, no AI) is always the last fallback so the app works with no keys. Every call is logged
-  with cost in `llm_calls`. The research the AI must follow: `backend/app/knowledge/teaching_practices.md`.
+  the schema; `rules` (free, no AI) is always the last fallback so the app works with no keys. Current order for most
+  jobs: Claude -> Gemini free tier -> Ollama -> rules. Every call is logged with cost in `llm_calls`; `AI_BUDGET_USD`
+  caps paid AI. Gemini models are a list tried in order because Google retires models often. The research the AI must follow: `backend/app/knowledge/teaching_practices.md`.
 - **Jobs** (`backend/app/jobs.py`, `job_handlers.py`): queue in `processing_jobs`; workers use
   `FOR UPDATE SKIP LOCKED`, so you can run many (`python -m app.jobs`).
 - **Frontend**: all pages are client components. Menu and feature switches in `frontend/lib/app.config.ts`; every
@@ -78,7 +79,8 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `backend/app/core/storage.py` | local folder or Supabase Storage, same keys |
 | `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (not yet test-built) |
 | `config/ai.json` | who does each AI task |
-| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0009) |
+| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0010; `*.supabase.sql` = row-level security, Supabase only) |
+| `backend/app/core/settings.py` | `TARGET=local|supabase` picks the database (`DATABASE_URL` / `SUPABASE_DATABASE_URL`) and storage |
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
 | `frontend/app/` | pages: `/` priorities, `/upload`, `/visit`, `/connect`, `/settings`, `/teacher?k=` |
@@ -107,7 +109,8 @@ cd frontend && npm install && npm run dev                                    (we
 ```
 
 On Windows, `powershell -File start.ps1` starts database (portable), API and website together once set up.
-AI keys are optional: `docs/SETUP_KEYS.md`. Without keys everything still works using the free rules and local Whisper
+Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, set `TARGET=supabase`, run
+`database/cli.py setup`). AI keys are optional: `docs/SETUP_KEYS.md`. Without keys everything still works using the free rules and local Whisper
 (the Whisper "base" model downloads about 145 MB the first time audio is transcribed).
 
 ---

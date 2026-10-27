@@ -8,34 +8,48 @@ from .base import Provider, parse_json, schema_hint
 from ..registry import AIError, Unsupported
 
 
+GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models'
+BUSY = (404, 429, 500, 503)          # retired, rate-limited or overloaded: try the next model in the list
+
+
 class GeminiProvider(Provider):
-    """Google Gemini over plain HTTPS. Reads PDFs, images and audio. The free tier may use inputs for training: demo data only."""
+    """Google Gemini over plain HTTPS. Reads PDFs, images and audio. The free tier may use inputs for training: demo data only.
+    `models` in config/ai.json is a list tried in order, so a retired or overloaded model is skipped automatically."""
     needs_attachments_as = ('image/', 'application/pdf', 'audio/')
 
+    def _models(self): return self.cfg.get('models') or [self.cfg.get('model', 'gemini-flash-latest')]
+    def _key(self): return os.environ[self.cfg.get('needs_env', 'GEMINI_API_KEY')]
+
     def ping(self):
-        model = self.cfg.get('model', 'gemini-2.5-flash')
-        r = httpx.get(f'https://generativelanguage.googleapis.com/v1beta/models/{model}', params={'key': os.environ[self.cfg.get('needs_env', 'GEMINI_API_KEY')]}, timeout=20)
-        if r.status_code == 200: return True, f'Key works; {model} is available'
-        if r.status_code in (400, 401, 403): return False, 'The Gemini key was not accepted. Check GEMINI_API_KEY in .env'
-        if r.status_code == 404: return False, f'Model {model} not found; change it in config/ai.json'
-        return False, f'Gemini answered with error {r.status_code}'
+        for model in self._models():
+            r = httpx.get(f'{GEMINI}/{model}', params={'key': self._key()}, timeout=20)
+            if r.status_code in (400, 401, 403): return False, 'The Gemini key was not accepted. Check GEMINI_API_KEY in .env'
+            if r.status_code == 200: return True, f"Key works; will use {', then '.join(self._models())} (first one free and not busy)"
+        return False, f"None of these models exist any more: {', '.join(self._models())}; update the list in config/ai.json"
 
     def run(self, task, input, attachments):
         self.check_attachments(attachments)
-        model = self.cfg.get('model', 'gemini-2.5-flash')
         parts = [{'inline_data': {'mime_type': a.mime, 'data': base64.standard_b64encode(a.data).decode()}} for a in attachments]
         parts.append({'text': task.user(input) + '\n\n' + schema_hint(task.schema)})
         body = {'system_instruction': {'parts': [{'text': task.system()}]}, 'contents': [{'role': 'user', 'parts': parts}],
                 'generationConfig': {'response_mime_type': 'application/json', 'temperature': 0}}
-        r = httpx.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-                       params={'key': os.environ[self.cfg.get('needs_env', 'GEMINI_API_KEY')]}, json=body, timeout=self.cfg.get('timeout', 180))
-        if r.status_code != 200: raise AIError(f'Gemini error {r.status_code}')
-        j = r.json(); um = j.get('usageMetadata', {})
-        try:
-            text = j['candidates'][0]['content']['parts'][0]['text']
-        except (KeyError, IndexError):
-            raise AIError('Gemini returned no answer')
-        return parse_json(text), dict(model=model, input_tokens=um.get('promptTokenCount', 0), output_tokens=um.get('candidatesTokenCount', 0), cost_usd=0)
+        last = None
+        for model in self._models():
+            try:
+                r = httpx.post(f'{GEMINI}/{model}:generateContent', params={'key': self._key()}, json=body, timeout=self.cfg.get('timeout', 180))
+            except httpx.TimeoutException:
+                last = f'{model} timed out'; continue
+            if r.status_code in BUSY:
+                last = f'{model}: error {r.status_code}'; continue
+            if r.status_code != 200: raise AIError(f'Gemini error {r.status_code}')
+            j = r.json(); um = j.get('usageMetadata', {})
+            try:
+                text = j['candidates'][0]['content']['parts'][0]['text']
+            except (KeyError, IndexError):
+                last = f'{model} gave no answer'; continue
+            return parse_json(text), dict(model=j.get('modelVersion') or model, input_tokens=um.get('promptTokenCount', 0),
+                                          output_tokens=um.get('candidatesTokenCount', 0), cost_usd=0)
+        raise AIError(f'All Gemini models busy or unavailable ({last})')
 
 
 class OllamaProvider(Provider):

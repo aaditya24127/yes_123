@@ -6,7 +6,8 @@ from psycopg.rows import dict_row
 
 
 def get_conn():
-    return psycopg.connect(os.environ['DATABASE_URL'], row_factory=dict_row)
+    from ...core.settings import database_url
+    return psycopg.connect(database_url(), row_factory=dict_row)
 
 
 class Data:

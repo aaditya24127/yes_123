@@ -18,8 +18,8 @@ this computer). Keys only make the answers smarter.
 
 | Key | What it switches on | Where to get it | Cost |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | Claude: sorting unclear files, reading reports / scans / handwriting, student questions, lesson evaluation, textbook web search, Ask the copilot | console.anthropic.com > API keys | Paid from your credit. Haiku (cheap) does routine work; Opus only for scans and evaluations. **Set a monthly spend limit in the console.** |
-| `GEMINI_API_KEY` + `READ_PROVIDER=gemini` | Gemini free tier as a backup reader for scans | aistudio.google.com/apikey | Free tier, limited per day. Free tiers may use what you send to train their AI: **use only with demo data, never real student data.** |
+| `ANTHROPIC_API_KEY` | Claude (first choice for every AI job): sorting unclear files, reading reports / scans / handwriting, student questions, lesson evaluation, textbook web search, Ask the copilot | The key from the hackathon (starts with `sk-ant-`), or console.anthropic.com > API keys | Paid from the credit. Haiku (cheap) does routine work; Opus only for scans and evaluations. `AI_BUDGET_USD` (default 50) is a cap inside the app: when the app's logged Claude cost reaches it, Claude is skipped and Gemini / rules take over. |
+| `GEMINI_API_KEY` + `READ_PROVIDER=gemini` | Gemini free tier: second choice for every AI job (works on its own when there is no Claude key) | aistudio.google.com/apikey | Free tier, limited per day. Models are tried in order (`models` in `config/ai.json`), skipping busy or retired ones. Free tiers may use what you send to train their AI: **demo data only, never real student data.** |
 | `GROQ_API_KEY` | Faster speech-to-text in the cloud | console.groq.com/keys | Free tier. Without it, Whisper runs on this computer for free (already downloaded). |
 
 ## Watching the cost
