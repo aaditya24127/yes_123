@@ -30,3 +30,4 @@ uploads/
 data/schools/*/textbooks/
 data/schools/*/visit_session/
 frontend/app-build/
+tools/_pgstart.txt
