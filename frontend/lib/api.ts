@@ -1,18 +1,118 @@
-import type { Config, Entity, EvidenceGroup, FileInfo, Preview, Ranking } from './types';
+// Every call to the backend, in one place. Pages never build URLs themselves, so an endpoint can change here only.
+import type {
+  AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
+  FileInfo, Message, Notice, Override, Preview, Ranking, Resource, Session, SessionSummary, TeacherHome, TextbookHit, TRequest,
+} from './types';
+import { apiUrl } from './platform';
 
 async function j<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error((await res.text()) || res.statusText);
+  if (!res.ok) {
+    const txt = await res.text();
+    let msg = txt || res.statusText;
+    try { const d = JSON.parse(txt); msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail ?? d); } catch { /* plain text */ }
+    throw new Error(msg);
+  }
   return res.json() as Promise<T>;
 }
-const post = (url: string, body: unknown) =>
-  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const get = <T>(url: string) => fetch(apiUrl(url)).then(j<T>);
+const send = <T>(method: string, url: string, body?: unknown) =>
+  fetch(apiUrl(url), { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }).then(j<T>);
+const post = <T>(url: string, body?: unknown) => send<T>('POST', url, body ?? {});
+const form = <T>(url: string, fields: Record<string, string | number | null | undefined>, files: File[] | Blob[] = [], fileField = 'files', fileName?: string) => {
+  const f = new FormData();
+  Object.entries(fields).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') f.append(k, String(v)); });
+  files.forEach((x) => f.append(fileField, x as Blob, fileName ?? (x as File).name ?? 'recording.webm'));
+  return fetch(apiUrl(url), { method: 'POST', body: f }).then(j<T>);
+};
+const qs = (o: Record<string, string | number | boolean | null | undefined>) =>
+  '?' + Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
 
 export const api = {
-  config: () => fetch('/api/config').then(j<Config>),
-  ranking: (entity: Entity, weights?: Record<string, number>) => post('/api/ranking', { entity, weights }).then(j<Ranking>),
-  evidence: (entity: Entity, id: string) => post('/api/evidence', { entity, id }).then(j<EvidenceGroup[]>),
-  files: (schoolId: string) => fetch(`/api/schools/${schoolId}/files`).then(j<FileInfo[]>),
-  preview: (fileId: string) => fetch(`/api/files/${fileId}/preview`).then(j<Preview>),
-  rawUrl: (fileId: string) => `/api/files/${fileId}/raw`,
-  apply: (weights: Record<string, number>) => post('/api/config/apply', { weights }).then(j<{ version: number }>),
+  // ranking (original screens)
+  config: () => get<Config>('/api/config'),
+  ranking: (entity: Entity, weights?: Record<string, number>) => post<Ranking>('/api/ranking', { entity, weights }),
+  evidence: (entity: Entity, id: string) => post<EvidenceGroup[]>('/api/evidence', { entity, id }),
+  files: (schoolId: string) => get<FileInfo[]>(`/api/schools/${schoolId}/files`),
+  preview: (fileId: string) => get<Preview>(`/api/files/${fileId}/preview`),
+  rawUrl: (fileId: string) => apiUrl(`/api/files/${fileId}/raw`),
+  pageUrl: (fileId: string, n: number) => apiUrl(`/api/files/${fileId}/page/${n}`),
+  apply: (weights: Record<string, number>) => post<{ version: number }>('/api/config/apply', { weights }),
+
+  directory: () => get<Directory>('/api/directory'),
+
+  factors: {
+    list: () => get<{ factors: Factor[]; groups: string[] }>('/api/factors'),
+    preview: (code: string, entity: Entity) => get<{ rows: FactPreviewRow[] }>(`/api/factors/${code}/preview${qs({ entity })}`),
+    suggest: (description: string) => post<FactorSuggestion>('/api/factors/suggest', { description }),
+    create: (body: Record<string, unknown>) => post<{ code: string; fact_key: string; values_saved: number }>('/api/factors', body),
+    edit: (code: string, body: Record<string, unknown>) => send('PATCH', `/api/factors/${code}`, body),
+    remove: (code: string) => send('DELETE', `/api/factors/${code}`),
+    values: (key: string) => get<{ values: FactValueRow[] }>(`/api/facts/${key}`),
+    saveValues: (key: string, values: { school_id: string; value: string | number }[]) => post<{ saved: number }>(`/api/facts/${key}`, { values }),
+    uploadValues: (key: string, file: File) => form<{ saved: number; matched: unknown[]; unmatched: { row: number; text: string }[] }>(`/api/facts/${key}/upload`, {}, [file], 'file'),
+  },
+
+  overrides: {
+    list: () => get<Override[]>('/api/overrides'),
+    add: (body: { entity_type: Entity; id: string; action: Override['action']; points?: number; reason: string; expires_on?: string | null }) => post<{ id: string }>('/api/overrides', body),
+    remove: (id: string) => send('DELETE', `/api/overrides/${id}`),
+  },
+
+  uploads: {
+    recent: () => get<BatchSummary[]>('/api/uploads'),
+    send: (files: File[], hints: { school_id?: string; teacher_id?: string; section?: string } = {}) => form<Batch>('/api/uploads', hints, files),
+    get: (id: string) => get<Batch>(`/api/uploads/${id}`),
+    editItem: (id: string, body: Partial<{ school_id: string | null; teacher_id: string | null; section: string; record_date: string; status: string }>) =>
+      send('PATCH', `/api/uploads/items/${id}`, body),
+    import: (id: string) => post<{ queued: number }>(`/api/uploads/${id}/import`),
+  },
+
+  visits: {
+    brief: (p: { teacher_id?: string; school_id?: string }) => get<Brief>(`/api/brief${qs(p)}`),
+    start: (body: { school_id?: string; teacher_id?: string; class_no?: number | null; subject?: string; topic?: string }) => post<Session>('/api/sessions', body),
+    get: (id: string) => get<Session>(`/api/sessions/${id}`),
+    list: (p: { teacher_id?: string; school_id?: string } = {}) => get<SessionSummary[]>(`/api/sessions${qs(p)}`),
+    edit: (id: string, body: Record<string, unknown>) => send<Session>('PATCH', `/api/sessions/${id}`, body),
+    addMedia: (id: string, file: Blob, kind: string, extra: { question_index?: number; student_label?: string } = {}, name?: string) =>
+      form<Session>(`/api/sessions/${id}/media`, { kind, ...extra }, [file], 'file', name),
+    removeMedia: (id: string, mid: string) => send<Session>('DELETE', `/api/sessions/${id}/media/${mid}`),
+    questions: (id: string) => post<Session>(`/api/sessions/${id}/questions`),
+    evaluate: (id: string) => post<Session>(`/api/sessions/${id}/evaluate`),
+    save: (id: string, body: { growth?: number[]; next_steps?: number[] }) => post<{ visit_id: string; observations: number; resolved: number; actions: number }>(`/api/sessions/${id}/save`, body),
+  },
+
+  textbooks: {
+    search: (p: { q: string; class_no?: number | null; subject?: string; board?: string; language?: string }) => get<{ results: TextbookHit[]; found_by: string }>(`/api/textbooks/search${qs(p)}`),
+    add: (body: { teacher_id?: string; school_id?: string; url: string; title: string; class_no?: number | null; subject?: string | null; publisher?: string; kind?: string }) =>
+      post<{ id: string }>('/api/resources', body),
+    list: (p: { teacher_id?: string; school_id?: string }) => get<Resource[]>(`/api/resources${qs(p)}`),
+    remove: (id: string) => send('DELETE', `/api/resources/${id}`),
+  },
+
+  connect: {
+    overview: () => get<ConnectRow[]>('/api/connect/overview'),
+    link: (tid: string) => post<{ token: string; path: string }>(`/api/teachers/${tid}/link`),
+    stopLink: (tid: string) => send('DELETE', `/api/teachers/${tid}/link`),
+    request: (body: { teacher_ids?: string[]; school_id?: string; kind: string; title?: string; message?: string; due_date?: string; visit_date?: string }) =>
+      post<{ created: number }>('/api/requests', body),
+    requests: (p: { teacher_id?: string; status?: string } = {}) => get<TRequest[]>(`/api/requests${qs(p)}`),
+    setRequest: (id: string, status: string) => send('PATCH', `/api/requests/${id}`, { status }),
+    messages: (tid: string) => get<Message[]>(`/api/teachers/${tid}/messages`),
+    send: (tid: string, body: string) => post<Message[]>(`/api/teachers/${tid}/messages`, { body }),
+    notifications: () => get<Notice[]>('/api/notifications'),
+    readAll: () => post('/api/notifications/read'),
+  },
+
+  teacher: {
+    home: (token: string) => get<TeacherHome>(`/api/t/${token}`),
+    message: (token: string, body: string) => post<TeacherHome>(`/api/t/${token}/messages`, { body }),
+    submit: (token: string, fields: { request_id?: string; text?: string }, files: File[]) => form<TeacherHome>(`/api/t/${token}/submit`, fields, files),
+  },
+
+  ai: {
+    status: () => get<AIStatus>('/api/ai/status'),
+    test: () => post<Record<string, { ok: boolean | null; message: string }>>('/api/ai/test'),
+    usage: (days = 30) => get<AIUsage>(`/api/ai/usage${qs({ days })}`),
+    ask: (question: string, scope: { school_id?: string; teacher_id?: string } = {}) => post<{ answer: string; records_used: string[]; answered_by: string }>('/api/ask', { question, ...scope }),
+  },
 };

@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const gu: Dict = {
+const gu: Partial<Dict> = {
   iface: 'ઇન્ટરફેસ શૈલી',
   grid: 'ગ્રિડ', vertical: 'ઊભી', sideways: 'આડી',
   language: 'ભાષા',

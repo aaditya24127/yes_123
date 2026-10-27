@@ -1,7 +1,7 @@
 ﻿"""Generates docs/DATASET.md from the seed CSVs (run after build.py)."""
 import csv, collections
 from pathlib import Path
-R = Path(r'D:\CRP'); S = R / 'database' / 'seed_data'
+R = Path(__file__).resolve().parents[1]; S = R / 'database' / 'seed_data'
 rd = lambda n: list(csv.DictReader(open(S / n, encoding='utf-8')))
 schools = {s['id']: s for s in rd('schools.csv')}
 files = rd('source_files.csv')
@@ -15,7 +15,7 @@ L = ['# CRP Mentor Copilot - demo dataset', '',
      '- Window 2 (~2 months before generation): 20 Aug - 5 Sep 2026 (First Term Examination, second CRP visits).',
      '- Cohort A (Window 1 only): S01, S03, S05, S09, S10. Cohort B (both windows): S02, S04, S06, S07, S08.',
      '- Every record has an event date (`record_date`, `visit_date`, `observation_date`...) and the file an upload timestamp (`uploaded_at`). New uploads will carry their real dates; the engine must compute "days overdue / since visit" against the current date (or an explicit `as_of`).', '',
-     '## Folder layout', '', '```', 'D:\\CRP\\', '  data\\schools\\<code>_<school>\\<section>\\<files>   original uploaded files (sections: assessments, observations, followups, visits, attendance, audio, roster)',
+     '## Folder layout', '', '```', '<project folder>\\', '  data\\schools\\<code>_<school>\\<section>\\<files>   original uploaded files (sections: assessments, observations, followups, visits, attendance, audio, roster)',
      '  database\\seed_data\\*.csv                          structured records extracted from those files (ground truth for loading)',
      '  evaluation\\ground_truth\\                          hidden answer keys (never read by the app)',
      '  generator\\                                        Python generator (base.py, render.py, audio.py, audio_scripts.py, build.py, write_docs.py)',

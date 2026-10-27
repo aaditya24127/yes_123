@@ -1,9 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import {
   Source_Sans_3, Source_Serif_4, Noto_Sans_Devanagari, Noto_Sans_Bengali, Noto_Sans_Telugu, Noto_Sans_Tamil, Noto_Sans_Gujarati,
   Noto_Sans_Kannada, Noto_Sans_Oriya, Noto_Sans_Malayalam, Noto_Naskh_Arabic,
 } from 'next/font/google';
 import { LangProvider } from '@/lib/i18n';
+import BottomNav from '@/components/shell/BottomNav';
 import './globals.css';
 
 const sans = Source_Sans_3({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -20,13 +21,15 @@ const mlym = Noto_Sans_Malayalam({ subsets: ['malayalam'], variable: '--font-mly
 const arab = Noto_Naskh_Arabic({ subsets: ['arabic'], variable: '--font-arab', display: 'swap', preload: false });
 
 export const metadata: Metadata = { title: 'CRP Mentor Copilot', description: 'Prioritise schools and teachers for mentoring visits' };
+// Phone and app friendly: fills the whole screen (notch / home bar handled in globals.css), no zoom jumps on inputs.
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#2563EB' };
 
 const fonts = [sans, serif, deva, beng, telu, tami, guju, knda, orya, mlym, arab].map((f) => f.variable).join(' ');
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={fonts}>
-      <body className="min-h-screen font-sans antialiased"><LangProvider>{children}</LangProvider></body>
+      <body className="min-h-screen font-sans antialiased"><LangProvider>{children}<BottomNav /></LangProvider></body>
     </html>
   );
 }

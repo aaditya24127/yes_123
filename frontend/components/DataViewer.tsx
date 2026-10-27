@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { FileInfo, Preview } from '@/lib/types';
 import { useLang } from '@/lib/i18n';
+import ExtLink from './ui/ExtLink';
 
 const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -119,7 +120,7 @@ export default function DataViewer({ file }: { file: FileInfo }) {
           <p className="truncate text-sm font-semibold text-ink-900">{file.name}</p>
           <p className="text-xs text-ink-500">{file.format.toUpperCase()} · {file.record_date}{file.scanned ? ` · ${t('scanned')}` : ''}</p>
         </div>
-        <a href={raw} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100"><ExternalLink size={13} /> {t('openOriginal')}</a>
+        <ExtLink href={raw} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100"><ExternalLink size={13} /> {t('openOriginal')}</ExtLink>
       </div>
       <div className="min-h-0 flex-1">
         {err && <p className="text-sm text-red-600">{err}</p>}
@@ -127,7 +128,7 @@ export default function DataViewer({ file }: { file: FileInfo }) {
         {p?.view === 'sheets' && <Sheets preview={p} />}
         {p?.view === 'doc' && <Paragraphs items={[...(p.paragraphs ?? []), ...(p.tables ?? []).flatMap((t) => t.map((r) => r.join('  |  ')))]} highlights={p.highlights} />}
         {p?.view === 'text' && <Paragraphs items={blocks(p.text ?? '')} highlights={p.highlights} />}
-        {p?.view === 'pdf' && <div className="thin-scroll h-full space-y-3 overflow-auto rounded-2xl border border-brand-100 bg-brand-50/50 p-3">{Array.from({ length: p.pages ?? 1 }).map((_, i) => <img key={i} src={`/api/files/${file.id}/page/${i + 1}`} alt={`Page ${i + 1}`} className="mx-auto w-full max-w-3xl rounded-lg bg-surface shadow-float" />)}</div>}
+        {p?.view === 'pdf' && <div className="thin-scroll h-full space-y-3 overflow-auto rounded-2xl border border-brand-100 bg-brand-50/50 p-3">{Array.from({ length: p.pages ?? 1 }).map((_, i) => <img key={i} src={api.pageUrl(file.id, i + 1)} alt={`Page ${i + 1}`} className="mx-auto w-full max-w-3xl rounded-lg bg-surface shadow-float" />)}</div>}
         {p?.view === 'image' && <div className="thin-scroll h-full overflow-auto rounded-2xl border border-brand-100 bg-surface p-3"><img src={raw} alt={file.name} className="mx-auto max-w-full rounded-lg" /></div>}
         {p?.view === 'audio' && <Audio src={raw} duration={file.duration} />}
       </div>

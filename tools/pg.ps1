@@ -1,6 +1,6 @@
-﻿# Portable local PostgreSQL helper.  Usage:  powershell -File D:\CRP\tools\pg.ps1 init|start|stop|status
+﻿# Portable local PostgreSQL helper.  Usage:  powershell -File tools\pg.ps1 (from the project folder) init|start|stop|status
 param([Parameter(Mandatory = $true)][ValidateSet('init', 'start', 'stop', 'status')][string]$cmd)
-$root = 'D:\CRP'
+$root = Split-Path $PSScriptRoot -Parent   # project folder, wherever it lives
 $bin  = "$root\tools\pgsql\bin"
 $data = "$root\database\pgdata"
 $log  = "$root\database\pg.log"
@@ -16,4 +16,5 @@ switch ($cmd) {
     'stop'   { & "$bin\pg_ctl.exe" -D $data -m fast stop }
     'status' { & "$bin\pg_ctl.exe" -D $data status }
 }
+
 

@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Phones and the Android / iOS app: keep content clear of the notch, the home bar and the bottom menu. */
+body { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+@media (max-width: 767px) { body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); } }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+/* Inputs at 16px stop iPhones from zooming in when a field is tapped. */
+@media (max-width: 767px) { input, select, textarea { font-size: 16px !important; } }
+
 :root { color-scheme: light; }
 html, body { background: rgb(var(--page)); color: rgb(var(--i900)); }
 :root { --surface: 255 255 255; --i900: 11 27 63; --i700: 51 66 95; --i500: 100 116 139; --i400: 148 163 184; --page: 243 246 253; --b50: 239 245 255; --b100: 219 232 254; --b200: 191 213 253; --b300: 147 184 251; --b400: 94 146 247; --b500: 59 115 240; --b600: 37 99 235; --b700: 30 79 208; --b800: 30 64 175; --b900: 27 53 133; }

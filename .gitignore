@@ -18,3 +18,16 @@ frontend/*.tsbuildinfo
 *.err
 __pycache__/
 *.pyc
+
+# project Python environment
+backend/.venv/
+database/backups/
+
+# upload staging area (files wait here until the CRP confirms them)
+uploads/
+
+# files the app downloads or records while in use (real data, not source code)
+data/schools/*/textbooks/
+data/schools/*/visit_session/
+frontend/app-build/
+tools/_pgstart.txt

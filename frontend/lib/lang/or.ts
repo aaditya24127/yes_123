@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const or: Dict = {
+const or: Partial<Dict> = {
   iface: 'ଇଣ୍ଟରଫେସ୍ ଶୈଳୀ',
   grid: 'ଗ୍ରିଡ୍', vertical: 'ଠିଆ', sideways: 'ଶୋଇଲା',
   language: 'ଭାଷା',

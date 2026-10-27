@@ -12,7 +12,7 @@ Fictional Pune-district cluster (Hinjewadi-Mulshi Cluster 7), 10 schools, 52 tea
 ## Folder layout
 
 ```
-D:\CRP\
+
   data\schools\<code>_<school>\<section>\<files>   original uploaded files (sections: assessments, observations, followups, visits, attendance, audio, roster)
   database\seed_data\*.csv                          structured records extracted from those files (ground truth for loading)
   evaluation\ground_truth\                          hidden answer keys (never read by the app)

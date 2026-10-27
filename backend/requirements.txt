@@ -1,0 +1,30 @@
+# CRP Mentor Copilot backend. Install into the project's own environment (nothing system-wide):
+#   python -m venv backend\.venv
+#   backend\.venv\Scripts\python -m pip install -r backend\requirements.txt
+# start.ps1 uses backend\.venv automatically when it exists.
+
+# web API
+fastapi>=0.115
+uvicorn>=0.30
+python-multipart>=0.0.9     # lets the API receive uploaded files
+pydantic>=2.7
+python-dotenv>=1.0
+
+# database
+psycopg[binary]>=3.2
+
+# reading files for free (no AI needed)
+openpyxl>=3.1               # Excel
+python-docx>=1.1            # Word
+pymupdf>=1.24               # PDF text + page images
+pillow>=10.0                # images
+
+mutagen>=1.47               # length of audio recordings
+
+# AI and web
+anthropic>=0.70             # Claude API (only used when ANTHROPIC_API_KEY is set)
+httpx>=0.27                 # Gemini / Groq / Ollama / your own model, and textbook downloads
+jsonschema>=4.20            # checks every AI answer has the expected shape, whichever AI gave it
+
+# Free speech-to-text on the server (the "base" model, ~145 MB, downloads on first use)
+faster-whisper>=1.0

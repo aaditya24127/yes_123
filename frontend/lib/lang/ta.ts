@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const ta: Dict = {
+const ta: Partial<Dict> = {
   iface: 'இடைமுக பாணி',
   grid: 'கட்டம்', vertical: 'செங்குத்து', sideways: 'கிடைமட்டம்',
   language: 'மொழி',

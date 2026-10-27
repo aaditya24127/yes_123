@@ -1,4 +1,4 @@
-// Master dictionary. Every other language must provide exactly these keys (checked by TypeScript).
+// Master dictionary (English). Other languages may translate any subset; missing keys fall back to English, so new screens only need English here.
 // Only operating text lives here. Data (names, evidence, explanations, file names) is never translated.
 const en = {
   iface: 'Interface style',
@@ -15,6 +15,9 @@ const en = {
   needsEvidence: 'Needs evidence',
   needsMore: 'Needs more evidence',
   noMatch: 'Nothing matches “{q}”.',
+  noneInGroup: 'No one in this group right now.',
+  nav_priorities: 'Priorities', nav_upload: 'Upload', nav_visit: 'Visit', nav_connect: 'Teachers', nav_settings: 'Settings',
+  addFactor: 'Add a factor', createFactor: 'Create your own factor', moreFactors: 'More factors you can switch on', ask: 'Ask the copilot',
   saved: 'Priorities saved · version {v}',
   unranked: 'Unranked',
   notEnough: 'Not enough data to score yet.',
@@ -25,7 +28,7 @@ const en = {
   rank: 'Rank {n}',
   coverage: 'Evidence coverage',
   close: 'Close',
-  st_verified: 'Verified', st_provisional: 'Provisional', st_unknown: 'No data', st_review: 'Review',
+  st_verified: 'Verified', st_provisional: 'Provisional', st_unknown: 'No data', st_review: 'Review', st_na: 'Not used here',
   records: '{n} records',
   selectFile: 'Select a file to view it.',
   scanned: 'Scanned', duplicate: 'Duplicate',
@@ -39,7 +42,7 @@ const en = {
   cat_time_since_visit: 'Time Since Last Visit', cat_recurring_need: 'Recurring Need',
   flag_never_observed: 'Never observed', flag_conflicting_records: 'Conflicting records', flag_invalid_rows: 'Invalid rows excluded',
   flag_duplicates_ignored: 'Duplicate uploads ignored', flag_insufficient_evidence: 'Insufficient evidence', flag_no_assessments: 'No assessment results',
-  flag_needs_review: 'Needs review',
+  flag_needs_review: 'Needs review', flag_pinned: 'Pinned by CRP', flag_adjusted: 'Adjusted by CRP', flag_held: 'Held back by CRP',
   alertOverdue: 'Follow-up overdue by {n} days', alertNoVisit: 'No visit for {n} days', alertNever: 'Never observed ({n} days since joining)',
   feed_learning_gap: 'Learning gaps', feed_unresolved_issue: 'Unresolved issues', feed_recurring_need: 'Recurring needs',
   sec_assessments: 'Assessments', sec_observations: 'Observations', sec_followups: 'Follow-ups', sec_visits: 'Visits',

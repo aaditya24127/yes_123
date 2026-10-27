@@ -10,6 +10,7 @@ import PriorityPanel, { PriorityBody } from '@/components/PriorityPanel';
 import DetailModal, { DetailBody } from '@/components/DetailModal';
 import Carousel from '@/components/Carousel';
 import { LANGS, useLang, type Key } from '@/lib/i18n';
+import NavLinks from '@/components/shell/NavLinks';
 
 type Filter = 'all' | Band | 'insufficient';
 type UI = 'grid' | 'vertical' | 'horizontal';
@@ -72,7 +73,8 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [config, entity, weights]);
 
-  const dirty = useMemo(() => config?.categories.some((c) => (weights[c.code] ?? 0) !== (saved[c.code] ?? 0)) ?? false, [config, weights, saved]);
+  const dirty = useMemo(() => [...new Set([...Object.keys(weights), ...Object.keys(saved)])].some((c) => (weights[c] ?? 0) !== (saved[c] ?? 0)), [weights, saved]);
+  const reloadConfig = useCallback(() => api.config().then((c) => { setConfig(c); setSaved(c.weights); setWeights((w) => ({ ...c.weights, ...Object.fromEntries(Object.entries(w).filter(([k, v]) => v > 0 && !(k in c.weights))) })); }), []);
 
   const apply = useCallback(async () => {
     setApplying(true);
@@ -115,8 +117,9 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">C</div>
-            <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 md:block">CRP Mentor Copilot</span>
+            <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 xl:block">CRP Mentor Copilot</span>
           </div>
+          <NavLinks compact />
           <div className="relative shrink-0">
             <button onClick={() => { setUiMenu((v) => !v); setLangMenu(false); setThemeMenu(false); }} aria-label={t('iface')} title={t('iface')}
               className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-float ring-1 ring-brand-100 transition ${uiMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}>U</button>
@@ -237,7 +240,8 @@ export default function Home() {
                   {side === 'priority' && config && (
                     <div className="h-full p-6">
                       <PriorityBody onClose={() => setSide(null)} categories={config.categories} weights={weights} dirty={dirty} applying={applying}
-                        onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={() => setWeights(saved)} onApply={apply} />
+                        onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={() => setWeights(saved)} onApply={apply}
+          library={config.library} onFactorsChanged={reloadConfig} />
                     </div>
                   )}
                 </div>
@@ -267,12 +271,13 @@ export default function Home() {
       )}
 
       {ranking && list.length === 0 && (
-        <div className="mt-16 text-center text-ink-500">{t('noMatch', { q: query })}</div>
+        <div className="mt-16 text-center text-ink-500">{query.trim() ? t('noMatch', { q: query }) : t('noneInGroup')}</div>
       )}
 
       {config && !focus && (
         <PriorityPanel open={panel} onClose={() => setPanel(false)} categories={config.categories} weights={weights} dirty={dirty} applying={applying}
-          onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={() => setWeights(saved)} onApply={apply} />
+          onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={() => setWeights(saved)} onApply={apply}
+          library={config.library} onFactorsChanged={reloadConfig} />
       )}
       {!focus && <DetailModal item={selected} onClose={() => setSelected(null)} />}
 

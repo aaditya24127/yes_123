@@ -1,0 +1,13 @@
+.env
+.git
+repo
+backend/.venv
+**/__pycache__
+frontend
+data
+database/pgdata
+database/backups
+tools
+uploads
+evaluation
+generator

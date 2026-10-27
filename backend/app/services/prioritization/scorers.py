@@ -34,6 +34,10 @@ class Ctx:
     visits: list
     as_of: object
     params: dict             # category code -> rule_params (with config overrides applied)
+    interventions: list = field(default_factory=list)
+    attendance: list = field(default_factory=list)      # school-level, so the same list for a school and its teachers
+    school_teachers: list = field(default_factory=list)
+    facts: dict = field(default_factory=dict)          # fact_key -> latest valid fact row (teacher's own value wins over the school's)
 
     @property
     def classroom_visits(self): return [v for v in self.visits if v['visit_type'] == 'classroom_observation']
