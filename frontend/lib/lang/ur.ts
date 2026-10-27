@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const ur: Dict = {
+const ur: Partial<Dict> = {
   iface: 'انٹرفیس کا انداز',
   grid: 'گرڈ', vertical: 'عمودی', sideways: 'افقی',
   language: 'زبان',

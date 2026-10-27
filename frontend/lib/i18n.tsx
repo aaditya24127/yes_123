@@ -29,7 +29,7 @@ export const LANGS: { code: Lang; native: string; english: string; locale: strin
   { code: 'ml', native: 'മലയാളം', english: 'Malayalam', locale: 'ml-IN' },
 ];
 
-const DICTS: Record<Lang, Dict> = { en, hi, bn, mr, te, ta, gu, ur, kn, or, ml };
+const DICTS: Record<Lang, Partial<Dict>> = { en, hi, bn, mr, te, ta, gu, ur, kn, or, ml };
 
 export type Key = keyof Dict;
 type Vars = Record<string, string | number>;

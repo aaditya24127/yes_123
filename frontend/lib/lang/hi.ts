@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const hi: Dict = {
+const hi: Partial<Dict> = {
   iface: 'इंटरफ़ेस शैली',
   grid: 'ग्रिड', vertical: 'ऊर्ध्वाधर', sideways: 'क्षैतिज',
   language: 'भाषा',

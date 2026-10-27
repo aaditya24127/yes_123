@@ -6,9 +6,11 @@ export interface Category {
 }
 export interface Config {
   version: number; as_of: string; bands: Record<string, number>; categories: Category[]; weights: Record<string, number>;
+  library: (Category & { group?: string; scope?: string; data_hint?: string })[];   // approved factors that are switched off (weight 0)
 }
+export * from './types-v2';
 export interface CatScore {
-  code: string; label: string; name: string; score: number | null; status: 'verified' | 'provisional' | 'unknown' | 'review';
+  code: string; label: string; name: string; score: number | null; status: 'verified' | 'provisional' | 'unknown' | 'review' | 'na';
   weight: number; contribution: number | null; explanation: string;
 }
 export interface Item {
@@ -16,6 +18,7 @@ export interface Item {
   score: number | null; band: Band | null; rank: number | null; coverage: number; provisional: boolean; insufficient: boolean; needs_review: boolean;
   flags: { code: string; label: string }[]; alerts: { type: string; days: number; message: string }[];
   categories: CatScore[]; reasons: string[]; headline: string;
+  override?: { id: string; action: 'pin_top' | 'adjust' | 'hold'; points: number; reason: string; score_before: number | null } | null;
 }
 export interface Ranking {
   entity: Entity; as_of: string; normalized_weights: Record<string, number>; items: Item[];

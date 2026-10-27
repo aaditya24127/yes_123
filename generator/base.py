@@ -2,7 +2,7 @@
 import uuid, datetime as dt, random
 from pathlib import Path
 
-ROOT = Path(r'D:\CRP')
+ROOT = Path(__file__).resolve().parents[1]   # the project folder, wherever it lives
 DATA = ROOT / 'data' / 'schools'
 SEED = ROOT / 'database' / 'seed_data'
 EVAL = ROOT / 'evaluation' / 'ground_truth'

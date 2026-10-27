@@ -8,6 +8,8 @@ import { BAND, CAT_COLORS, FEED_LABEL, SECTION_LABEL } from '@/lib/theme';
 import ScoreRing from './ScoreRing';
 import DataViewer from './DataViewer';
 import { useLang, type Key } from '@/lib/i18n';
+import OverrideBox from './OverrideBox';
+import { FEATURES } from '@/lib/app.config';
 
 const TABS = ['Overview', 'Evidence', 'Data sources'] as const;
 const TAB_KEY: Record<(typeof TABS)[number], Key> = { Overview: 'overview', Evidence: 'evidence', 'Data sources': 'dataSources' };
@@ -24,6 +26,7 @@ function FileIcon({ f }: { f: FileInfo }) {
 
 const STATUS: Record<string, string> = {
   verified: 'bg-emerald-50 text-emerald-700', provisional: 'bg-sky-50 text-sky-700', unknown: 'bg-slate-100 text-slate-600', review: 'bg-amber-50 text-amber-700',
+  na: 'bg-slate-50 text-slate-400',
 };
 // Feed names that reuse the section wording.
 const FEED_AS_SECTION: Record<string, string> = { overdue_followup: 'followups', time_since_visit: 'visits', attendance: 'attendance' };
@@ -123,6 +126,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                 </div>
               ))}
             </div>
+            {FEATURES.overrides && !item.insufficient && <OverrideBox item={item} />}
           </div>
         )}
 

@@ -1,10 +1,10 @@
 ﻿# Local database
 
-Portable PostgreSQL 17 lives in `D:\CRP\tools\pgsql` (no admin rights, no Windows service). Data: `D:\CRP\database\pgdata`. Credentials (local only): user `postgres`, password `postgres`, database `crp`, port 5432. Connection settings are in `D:\CRP\.env` (copy of `.env.example`).
+Portable PostgreSQL 17 lives in `tools\pgsql` (no admin rights, no Windows service). Data: `database\pgdata`. Credentials (local only): user `postgres`, password `postgres`, database `crp`, port 5432. Connection settings are in `.env` (copy of `.env.example`).
 
 ```
-powershell -File D:\CRP\tools\pg.ps1 start     # start the server (stays running until stopped or reboot)
-powershell -File D:\CRP\tools\pg.ps1 stop
+powershell -File tools\pg.ps1 start     # start the server (stays running until stopped or reboot)
+powershell -File tools\pg.ps1 stop
 python database\cli.py setup                    # migrate + seed + storage check + verify (idempotent)
 python database\cli.py verify                   # counts, frozen-weight check, file hashes
 python database\cli.py reset --yes              # local only: drop everything

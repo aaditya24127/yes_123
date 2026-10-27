@@ -1,4 +1,4 @@
-﻿"""CRP Mentor Copilot API. Run:  python -m uvicorn app.main:app --port 8000   (from D:\\CRP\\backend)"""
+"""CRP Mentor Copilot API. Run:  python -m uvicorn app.main:app --port 8000   (from the backend folder)"""
 import csv, datetime as dt, io, os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -16,9 +16,20 @@ from pydantic import BaseModel
 from app.core.storage import get_storage, LocalStorage
 from app.services.prioritization import engine
 from app.services.prioritization.data import Data, get_conn
+from app.api import factors as factors_api, uploads as uploads_api, visits as visits_api, connect as connect_api, assistant as assistant_api
+from app import jobs
 
 app = FastAPI(title='CRP Mentor Copilot')
-app.add_middleware(CORSMiddleware, allow_origins=['http://localhost:3000', 'http://127.0.0.1:3000'], allow_methods=['*'], allow_headers=['*'])
+# Which websites may call this API: comma-separated in ALLOWED_ORIGINS (add the real domain when the site goes live).
+ORIGINS = [o.strip() for o in os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=['*'], allow_headers=['*'])
+for r in (factors_api, uploads_api, visits_api, connect_api, assistant_api):
+    app.include_router(r.router)
+
+
+@app.on_event('startup')
+def _start_workers():
+    jobs.start_in_api()     # background workers inside the API (WORKERS_IN_API, default 1); more can run separately: python -m app.jobs
 
 
 def today(): return dt.date.today()
@@ -54,9 +65,13 @@ def health():
 def config():
     with get_conn() as conn:
         d = Data(conn)
+        codes = engine.factor_codes(d)
+        cat = lambda c: dict(code=c, label=engine.label(d, c), name=d.categories[c]['name'], description=d.categories[c]['description'],
+                             group=d.categories[c].get('group_name'), scope=d.categories[c].get('entity_scope'), data_hint=d.categories[c].get('data_hint'))
+        active = [c for c in codes if d.weights.get(c, 0) > 0]
         return dict(version=d.config['version'], as_of=str(today()), bands=d.config['band_thresholds'],
-                    categories=[dict(code=c, label=engine.LABEL[c], name=d.categories[c]['name'], description=d.categories[c]['description']) for c in engine.ORDER],
-                    weights={c: round(d.weights.get(c, 0), 2) for c in engine.ORDER})
+                    categories=[cat(c) for c in active], library=[cat(c) for c in codes if c not in active],
+                    weights={c: round(d.weights.get(c, 0), 2) for c in codes})
 
 
 @app.post('/api/ranking')
@@ -156,12 +171,12 @@ def file_preview(fid: str):
     st = get_storage(os.environ)
     meta = dict(id=str(f['id']), name=f['original_filename'], format=f['file_format'], kind=f['doc_kind'], scanned=f['is_scanned'], highlights=hl)
     fmt = f['file_format']
-    if fmt == 'jpg': return dict(meta, view='image')
+    if fmt in ('jpg', 'png', 'webp'): return dict(meta, view='image')
     if fmt == 'pdf':
         import pymupdf
         pages = len(pymupdf.open(stream=st.get(f['storage_path']), filetype='pdf'))
         return dict(meta, view='pdf', pages=pages)
-    if fmt == 'mp3': return dict(meta, view='audio')
+    if fmt in ('mp3', 'wav', 'm4a', 'ogg', 'webm', 'aac', 'opus'): return dict(meta, view='audio', transcript=f['extracted_text'])
     data = st.get(f['storage_path'])
     if fmt == 'xlsx':
         wb = openpyxl.load_workbook(io.BytesIO(data), data_only=True)

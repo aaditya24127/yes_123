@@ -7,7 +7,9 @@ export const BAND: Record<Band, { label: string; chip: string; ring: string; bar
   low: { label: 'Low', chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', ring: '#10A37F', bar: 'bg-emerald-500' },
 };
 
-export const CAT_COLORS = ['rgb(var(--b800))', 'rgb(var(--b600))', 'rgb(var(--b500))', 'rgb(var(--b400))', 'rgb(var(--b300))'];
+// Factor colours: brand shades first, then calm accents; repeats when more than 10 factors are switched on.
+const BASE_COLORS = ['rgb(var(--b800))', 'rgb(var(--b600))', 'rgb(var(--b500))', 'rgb(var(--b400))', 'rgb(var(--b300))', '#0F766E', '#7C3AED', '#B45309', '#BE185D', '#475569'];
+export const CAT_COLORS = Array.from({ length: 40 }, (_, i) => BASE_COLORS[i % BASE_COLORS.length]);
 
 export type Theme = { name: string; page: string; surface: string; ink: string[]; brand: string[] };
 // Sun-switcher palettes. brand = shades 50..900 (light to dark; 600 carries white text), ink = text 900/700/500/400.

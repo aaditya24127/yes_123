@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const te: Dict = {
+const te: Partial<Dict> = {
   iface: 'ఇంటర్‌ఫేస్ శైలి',
   grid: 'గ్రిడ్', vertical: 'నిలువు', sideways: 'అడ్డం',
   language: 'భాష',

@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const kn: Dict = {
+const kn: Partial<Dict> = {
   iface: 'ಇಂಟರ್‌ಫೇಸ್ ಶೈಲಿ',
   grid: 'ಗ್ರಿಡ್', vertical: 'ಲಂಬ', sideways: 'ಅಡ್ಡ',
   language: 'ಭಾಷೆ',

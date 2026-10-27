@@ -1,6 +1,6 @@
 import type { Dict } from './en';
 
-const bn: Dict = {
+const bn: Partial<Dict> = {
   iface: 'ইন্টারফেসের ধরন',
   grid: 'গ্রিড', vertical: 'উল্লম্ব', sideways: 'আনুভূমিক',
   language: 'ভাষা',

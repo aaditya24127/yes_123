@@ -1,0 +1,88 @@
+'use client';
+// Search official textbooks / syllabus on the web and link them to a teacher (the app downloads the PDF itself and remembers it).
+import { useState } from 'react';
+import { BookOpen, ExternalLink, Link2, Search, Trash2 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useLoad, usePoll } from '@/lib/hooks';
+import type { TextbookHit } from '@/lib/types';
+import { Badge, Button, Card, Empty, ErrorNote, Input } from './ui';
+import ExtLink from './ui/ExtLink';
+
+export default function TextbookPanel({ teacherId, schoolId, defaults }: {
+  teacherId?: string | null; schoolId?: string | null; defaults?: { class_no?: number | null; subject?: string | null; board?: string | null; language?: string | null };
+}) {
+  const [q, setQ] = useState([defaults?.class_no ? `Class ${defaults.class_no}` : '', defaults?.subject ?? '', defaults?.board ?? '', 'textbook'].filter(Boolean).join(' '));
+  const [hits, setHits] = useState<TextbookHit[] | null>(null);
+  const [by, setBy] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [manual, setManual] = useState('');
+  const linked = useLoad(() => api.textbooks.list(teacherId ? { teacher_id: teacherId } : { school_id: schoolId ?? undefined }), [teacherId, schoolId]);
+  usePoll(!!linked.data?.some((r) => r.status === 'linked' && !r.source_file_id && r.source_url?.toLowerCase().includes('.pdf')), () => linked.reload());
+
+  const search = async () => {
+    if (!q.trim()) return; setBusy(true); setError('');
+    try {
+      const r = await api.textbooks.search({ q, class_no: defaults?.class_no, subject: defaults?.subject ?? undefined, board: defaults?.board ?? undefined, language: defaults?.language ?? undefined });
+      setHits(r.results); setBy(r.found_by);
+    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  };
+  const add = async (url: string, title: string, publisher?: string) => {
+    try {
+      await api.textbooks.add({ teacher_id: teacherId ?? undefined, school_id: schoolId ?? undefined, url, title, class_no: defaults?.class_no ?? null, subject: defaults?.subject ?? null, publisher });
+      linked.reload();
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  return (
+    <Card title={<span className="flex items-center gap-2"><BookOpen size={18} className="text-brand-600" />Textbooks and syllabus</span>}
+      subtitle="Find the book the teacher uses and link it. The app fetches the PDF from the official site and remembers it for this teacher.">
+      <ErrorNote error={error} onClose={() => setError('')} />
+      <div className="flex gap-2">
+        <Input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} placeholder="e.g. Class 4 Mathematics Balbharati" />
+        <Button onClick={search} busy={busy} icon={<Search size={16} />}>Search</Button>
+      </div>
+      {hits && (
+        <div className="mt-3">
+          {by && <p className="mb-2 text-xs text-ink-400">Found by: {by === 'rules' ? 'official portal list (switch on web search for direct PDFs)' : by}</p>}
+          {!hits.length ? <Empty>Nothing found. Try other words, or paste a link below.</Empty> : (
+            <ul className="space-y-2">
+              {hits.map((h) => (
+                <li key={h.url} className="flex items-start gap-3 rounded-2xl bg-brand-50/50 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-ink-900">{h.title}</p>
+                    <p className="truncate text-xs text-ink-500">{h.publisher} · {h.url}</p>
+                  </div>
+                  {h.is_pdf && <Badge tone="good">PDF</Badge>}
+                  <ExtLink href={h.url} className="rounded-full p-1.5 text-ink-400 hover:bg-brand-100" title="Open"><ExternalLink size={15} /></ExtLink>
+                  <Button className="px-3 py-1.5" onClick={() => add(h.url, h.title, h.publisher)}>Link</Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      <div className="mt-3 flex gap-2">
+        <Input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Or paste a link to a PDF or textbook page" />
+        <Button variant="soft" icon={<Link2 size={15} />} disabled={!manual.startsWith('http')} onClick={() => { add(manual, manual.split('/').pop() || 'Textbook'); setManual(''); }}>Link</Button>
+      </div>
+      <div className="mt-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Linked {teacherId ? 'for this teacher' : 'for this school'}</p>
+        {!linked.data?.length ? <p className="text-sm text-ink-400">None yet.</p> : (
+          <ul className="space-y-1.5">
+            {linked.data.map((r) => (
+              <li key={r.id} className="flex items-center gap-2 text-sm">
+                <BookOpen size={15} className="shrink-0 text-brand-600" />
+                <ExtLink href={r.source_file_id ? api.rawUrl(r.source_file_id) : r.source_url ?? '#'} className="min-w-0 flex-1 truncate hover:text-brand-700">{r.title}</ExtLink>
+                <Badge tone={r.status === 'downloaded' ? 'good' : r.status === 'failed' ? 'bad' : 'neutral'}>
+                  {r.status === 'downloaded' ? `${r.pages ?? '?'} pages${r.chapters ? `, ${r.chapters} chapters` : ''}` : r.status === 'failed' ? 'link only' : 'link'}
+                </Badge>
+                <button onClick={async () => { await api.textbooks.remove(r.id); linked.reload(); }} className="rounded-full p-1 text-ink-400 hover:text-red-600" aria-label="Remove"><Trash2 size={14} /></button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Card>
+  );
+}
