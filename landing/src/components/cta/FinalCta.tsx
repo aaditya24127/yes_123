@@ -4,6 +4,7 @@ import { ctaLeaves } from '@/components/motion/leafPresets'
 import { Reveal } from '@/components/motion/Reveal'
 import { ButtonLink } from '@/components/ui/ButtonLink'
 import { Container } from '@/components/ui/Container'
+import { appLink } from '@/lib/appLinks'
 import { ClosingLandscape } from './ClosingLandscape'
 
 export function FinalCta() {
@@ -31,10 +32,13 @@ export function FinalCta() {
             See how everyday school records become focused, practical mentoring, with you in charge of every decision.
           </p>
         </Reveal>
-        <Reveal delay={200} className="mt-10 flex justify-center">
-          <ButtonLink href="#how-it-works" size="lg">
-            See How It Works
+        <Reveal delay={200} className="mt-10 flex flex-wrap justify-center gap-3">
+          <ButtonLink href={appLink()} size="lg">
+            Open the app
             <ArrowRight className="size-4" aria-hidden="true" />
+          </ButtonLink>
+          <ButtonLink href="#how-it-works" size="lg" variant="secondary">
+            See How It Works
           </ButtonLink>
         </Reveal>
       </Container>

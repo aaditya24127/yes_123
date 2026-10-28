@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { Container } from '@/components/ui/Container'
+import { ButtonLink } from '@/components/ui/ButtonLink'
+import { appLink } from '@/lib/appLinks'
 import { Logo } from './Logo'
 import { headerNavItems, type NavSection } from './navigation'
 
@@ -138,6 +140,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ButtonLink href={appLink()} size="sm">Open app</ButtonLink>
           {/* Mobile hamburger button */}
           <button
             type="button"

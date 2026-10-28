@@ -1,4 +1,6 @@
-import { Sprout } from 'lucide-react'
+import { ArrowRight, Sprout } from 'lucide-react'
+import { ButtonLink } from '@/components/ui/ButtonLink'
+import { appLink } from '@/lib/appLinks'
 
 export function HeroCopy() {
   return (
@@ -14,7 +16,16 @@ export function HeroCopy() {
       >
         Every school visit, <em className="font-normal text-teal-600">thoughtfully</em> guided.
       </h1>
+
+      <div className="mt-8 flex animate-rise-in flex-wrap gap-3 [animation-delay:240ms]">
+        <ButtonLink href={appLink()} size="lg">
+          Open the app
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </ButtonLink>
+        <ButtonLink href="#how-it-works" size="lg" variant="secondary">
+          See how it works
+        </ButtonLink>
+      </div>
     </div>
   )
 }
-
