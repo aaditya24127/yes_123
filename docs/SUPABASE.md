@@ -1,36 +1,50 @@
-# Moving from local PostgreSQL to Supabase
+# Moving from the local database to Supabase (online, Mumbai)
 
-The schema and loader are target-agnostic: only `.env` changes. Nothing in the code needs editing.
+The code works the same on both. Only `.env` changes, and one setting (`TARGET`) switches between them.
 
-## One-time Supabase setup
-1. Create a project at supabase.com (note the project ref and the database password).
-2. Storage > New bucket > name `crp-files`, **Private** (leave "Public bucket" off).
-3. Project Settings > API: copy the project URL and the **service_role** key (server-side only; never put it in frontend code).
-4. Project Settings > Database > Connection string: copy the *Session pooler* URI (port 5432; migrations need a session connection, not the transaction pooler on 6543).
+## 1. Create the project (about 2 minutes, in the browser)
 
-## Point the project at Supabase
-Copy `.env` to `.env.local-backup`, then edit `.env`:
+1. Go to supabase.com > **New project**.
+   - Name: `crp-mentor-copilot`
+   - Region: **South Asia (Mumbai)** (keeps school data in India, as the DPDP Act expects)
+   - Plan: Free is fine to start
+   - Database password: make a strong one and save it somewhere safe
+2. Wait until the project says it is ready.
+
+## 2. Paste three values into `.env`
+
+| `.env` line | Where to find it |
+|---|---|
+| `SUPABASE_DATABASE_URL` | Top of the project page > **Connect** > "Session pooler" connection string (port **5432**). Replace `[YOUR-PASSWORD]` with your database password. |
+| `SUPABASE_URL` | Project Settings > **API Keys** > Project URL (`https://<project-ref>.supabase.co`) |
+| `SUPABASE_SERVICE_KEY` | Project Settings > **API Keys** > the `service_role` key (or the new "secret" key). **Server only**: never put it in the website or app code. |
+
+## 3. Switch and load everything (one command)
+
+Set `TARGET=supabase` in `.env`, then from the project folder:
+
 ```
-TARGET=supabase
-DATABASE_URL=postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
-STORAGE_BACKEND=supabase
-SUPABASE_URL=https://<ref>.supabase.co
-SUPABASE_SERVICE_KEY=<service_role key>
-SUPABASE_BUCKET=crp-files
+backend\.venv\Scripts\python database\cli.py setup
 ```
 
-## Push everything
-```
-python database/cli.py setup
-```
-This applies migrations 0001-0004 plus `0005_rls.supabase.sql` (row-level security: a CRP only sees assigned schools; only the service role can touch config, jobs and audit tables), loads all seed rows (idempotent upserts with deterministic IDs), uploads every file in `source_files` to the bucket under the same relative key, and verifies counts and SHA-256 hashes.
+This creates all tables (migrations 0001-0009), turns on row-level security (`0005_rls.supabase.sql`, `0010_rls_v2.supabase.sql`),
+creates the private `crp-files` storage bucket, loads the demo data, uploads every demo file to the bucket under the same
+name, and checks counts and file fingerprints. It is safe to run again.
 
-Individual steps: `migrate`, `seed`, `storage-sync`, `verify`. `reset` refuses to run against `TARGET=supabase`.
+Restart the backend. The website now reads and writes Supabase. `TARGET=local` switches back to this computer's database.
 
-## Linking a real login later
-`app_users.auth_user_id` holds the Supabase `auth.users.id`; `crps.user_id` links the CRP profile to that user. The RLS helper `my_school_ids()` resolves assigned schools from `auth.uid()`.
+Individual steps: `migrate`, `seed`, `storage-sync`, `verify`. `reset` refuses to run against Supabase.
+
+## Security notes
+
+- The backend connects as the database owner and checks every request itself; row-level security protects against
+  direct access through Supabase's public API (the "anon" / publishable key). Every table has it switched on.
+- There is no login in the app yet (see `PROJECT_CONTEXT.md` > Security). Do not put real student data online before that.
+- Supabase Auth is the planned login: `app_users.auth_user_id` holds the Supabase user id, `crps.user_id` links the CRP
+  profile, and `my_school_ids()` gives the schools a logged-in CRP may see.
 
 ## Notes
-- Demo rows carry `is_demo = true`, so `delete from <table> where is_demo` removes them cleanly when real data starts.
-- The free tier has storage and database size limits and pauses idle projects; check current limits before relying on it.
-- pgvector (for the knowledge-base phase) is available on Supabase (`create extension vector`); it will arrive as a later migration.
+
+- Demo rows carry `is_demo = true`, so `delete from <table> where is_demo` removes them when real data starts.
+- The free plan pauses a project after about a week without use, and has database and storage size limits; check the
+  current limits before relying on it.

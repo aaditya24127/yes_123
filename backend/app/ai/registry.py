@@ -120,6 +120,7 @@ def run(task, input, attachments=None, only=None):
             p = provider(name)
             ok, why = p.available()
             if not ok: tried.append((name, why)); continue
+            if over_budget(p): tried.append((name, 'AI_BUDGET_USD reached')); continue
             t0 = time.time()
             out, usage = p.run(t, input, attachments or [])
             jsonschema.validate(out, t.schema)
@@ -150,6 +151,22 @@ def status():
         first = next((n for n in names if out['providers'].get(n, {}).get('available')), None)
         out['tasks'][task] = dict(chain=names, will_use=first, description=TASKS[task].description if task in TASKS else '')
     return out
+
+
+def spent_usd():
+    from ..services.prioritization.data import get_conn
+    with get_conn() as c:
+        return float(c.execute('select coalesce(sum(cost_usd), 0) as s from llm_calls').fetchone()['s'])
+
+
+def over_budget(p):
+    """Paid providers stop being used once the logged AI cost reaches AI_BUDGET_USD (free ones keep working)."""
+    cap = os.environ.get('AI_BUDGET_USD', '').strip()
+    if not cap or not any(p.cfg.get('price_per_mtok') or [0]): return False
+    try:
+        return spent_usd() >= float(cap)
+    except Exception:
+        return False
 
 
 def test_all():

@@ -16,8 +16,9 @@
     "claude_search": { "type": "claude", "model": "claude-haiku-5-5", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50], "web_search": true,
                        "allowed_domains": ["ncert.nic.in", "ebalbharati.in", "books.ebalbharati.in", "diksha.gov.in", "epathshala.nic.in", "cbseacademic.nic.in",
                                            "maa.ac.in", "scert.kerala.gov.in", "tnschools.gov.in", "textbooks.karnataka.gov.in", "gseb.org", "scertodisha.nic.in"] },
-    "gemini_free":   { "type": "gemini", "model": "gemini-2.5-flash", "needs_env": "GEMINI_API_KEY", "enabled_env": "READ_PROVIDER=gemini",
-                       "note": "Free tier may use inputs for training: demo data only." },
+    "gemini_free":   { "type": "gemini", "models": ["gemini-3.5-flash", "gemini-flash-latest", "gemini-flash-lite-latest"],
+                       "needs_env": "GEMINI_API_KEY", "enabled_env": "READ_PROVIDER=gemini",
+                       "note": "Free tier, tried in this order (busy or retired models are skipped). Free tiers may use inputs for training: demo data only." },
     "ollama_local":  { "type": "ollama", "model": "qwen2.5vl:7b", "url": "http://localhost:11434", "enabled": false,
                        "note": "Runs on this computer for free. Install a model with: ollama pull qwen2.5vl:7b, then set enabled to true." },
     "my_model":      { "type": "http", "url": "http://localhost:9000/predict", "enabled": false, "timeout": 120,
@@ -28,15 +29,15 @@
                                                                       "epathshala.nic.in", "cbseacademic.nic.in", "maa.ac.in"] }
   },
   "tasks": {
-    "classify_document":     ["claude_fast", "ollama_local", "rules"],
-    "extract_records":       ["claude_fast", "ollama_local", "my_model", "rules"],
+    "classify_document":     ["claude_fast", "gemini_free", "ollama_local", "rules"],
+    "extract_records":       ["claude_fast", "gemini_free", "ollama_local", "my_model", "rules"],
     "extract_records_scan":  ["claude_smart", "gemini_free", "ollama_local", "rules"],
     "transcribe":            ["groq_whisper", "whisper_local", "rules"],
-    "suggest_factor":        ["claude_fast", "ollama_local", "rules"],
-    "visit_brief":           ["claude_fast", "ollama_local", "rules"],
-    "student_questions":     ["claude_smart", "ollama_local", "rules"],
-    "evaluate_lesson":       ["claude_smart", "ollama_local", "my_model", "rules"],
+    "suggest_factor":        ["claude_fast", "gemini_free", "ollama_local", "rules"],
+    "visit_brief":           ["claude_fast", "gemini_free", "ollama_local", "rules"],
+    "student_questions":     ["claude_smart", "gemini_free", "ollama_local", "rules"],
+    "evaluate_lesson":       ["claude_smart", "gemini_free", "ollama_local", "my_model", "rules"],
     "find_textbooks":        ["claude_search", "web_free", "rules"],
-    "ask_copilot":           ["claude_fast", "ollama_local", "rules"]
+    "ask_copilot":           ["claude_fast", "gemini_free", "ollama_local", "rules"]
   }
 }

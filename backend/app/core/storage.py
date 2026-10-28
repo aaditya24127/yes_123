@@ -75,7 +75,8 @@ class SupabaseStorage:
 
 def get_storage(env=None):
     env = env or os.environ
-    kind = env.get('STORAGE_BACKEND', 'local').lower()
+    from .settings import storage_backend
+    kind = storage_backend() if env is os.environ else env.get('STORAGE_BACKEND', 'local').lower()
     if kind == 'supabase':
         miss = [k for k in ('SUPABASE_URL', 'SUPABASE_SERVICE_KEY') if not env.get(k)]
         if miss: raise StorageError(f'missing env: {", ".join(miss)}')
