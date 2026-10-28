@@ -84,6 +84,7 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
 | `frontend/app/` | pages: `/` priorities, `/upload`, `/visit`, `/connect`, `/settings`, `/teacher?k=` |
+| `landing/` | public landing page (separate Vite + React 19 + Tailwind 4 site): `cd landing && npm install && npm run dev` (port 5173). Its links are in-page only; not yet linked to the app |
 | `frontend/components/` | page parts; `ui/` shared kit; `shell/` menu and page frame |
 | `docs/` | `REAL_WORLD_V2.md` (features), `SETUP_KEYS.md`, `MOBILE_APP.md`, `DATABASE.md`, `DATASET.md`, `SUPABASE.md` |
 | `evaluation/` | tests and answer keys |
