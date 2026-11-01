@@ -68,18 +68,14 @@ export interface Resource {
 
 export interface ConnectRow {
   id: string; full_name: string; title: string; designation: string; school_id: string; school_name: string; school_code: string; open_requests: number; submitted: number;
-  unread: number; last_message: string | null; has_link: boolean;
+  unread: number; last_message: string | null; email: string | null;
 }
 export interface TRequest {
   id: string; teacher_id: string; teacher_name?: string; school_name?: string; kind: string; title: string; message: string | null; due_date: string | null;
   visit_date: string | null; status: string; response_text: string | null; batch_id: string | null; created_at: string; responded_at: string | null;
 }
-export interface Message { id: string; sender: 'crp' | 'teacher' | 'system'; body: string; created_at: string; read_at: string | null; request_id: string | null }
+export interface Message { id: string; sender: 'crp' | 'teacher' | 'system'; body: string; created_at: string; read_at: string | null; request_id: string | null; is_concern?: boolean }
 export interface Notice { id: string; title: string; body: string | null; link: string | null; created_at: string; read_at: string | null }
-export interface TeacherHome {
-  teacher: { name: string; school: string; classes: number[]; subjects: string[] }; upcoming_visit: { visit_date: string; message: string | null } | null;
-  requests: TRequest[]; messages: Message[]; notifications: Notice[]; kinds: Record<string, string>;
-}
 
 export interface AIStatus {
   providers: Record<string, { type?: string; model?: string | null; available: boolean; reason: string; note?: string | null }>;

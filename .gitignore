@@ -31,3 +31,10 @@ data/schools/*/textbooks/
 data/schools/*/visit_session/
 frontend/app-build/
 tools/_pgstart.txt
+
+# teacher app
+teacher-app/node_modules/
+teacher-app/.next/
+teacher-app/*.tsbuildinfo
+landing/node_modules/
+landing/dist/

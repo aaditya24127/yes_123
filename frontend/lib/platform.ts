@@ -4,9 +4,13 @@
 //                         a full address in the app, e.g. https://api.example.in
 //   NEXT_PUBLIC_WEB_URL   the public website address, used for links that are sent to people (teacher links).
 //                         Empty = the address this page was opened from.
+//   NEXT_PUBLIC_LANDING_URL  the public landing page, where the logo in the header leads back to.
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE ?? '').replace(/\/$/, '');
 const WEB_URL = (process.env.NEXT_PUBLIC_WEB_URL ?? '').replace(/\/$/, '');
+
+/** The landing page (local default: its development server). */
+export const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:5173';
 
 /** True inside the Android / iOS app shell. */
 export function isApp(): boolean {

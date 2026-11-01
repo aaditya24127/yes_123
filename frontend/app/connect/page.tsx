@@ -1,15 +1,13 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Bell, CalendarClock, Copy, Link2, Send, Unlink } from 'lucide-react';
+import { Bell, CalendarClock, Send, TriangleAlert } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 import TextbookPanel from '@/components/TextbookPanel';
 import { Badge, Button, Card, Empty, ErrorNote, Field, Input, Select, TextArea } from '@/components/ui';
 import { api } from '@/lib/api';
 import { REQUEST_KINDS } from '@/lib/app.config';
 import { useLoad, usePoll } from '@/lib/hooks';
-import { copyText, shareUrl } from '@/lib/platform';
-import ExtLink from '@/components/ui/ExtLink';
 import type { ConnectRow } from '@/lib/types';
 
 const KIND: Record<string, string> = {
@@ -34,7 +32,7 @@ export default function ConnectPage() {
   const unread = (notices.data ?? []).filter((n) => !n.read_at);
 
   return (
-    <PageShell wide title="Teachers" subtitle="Stay in touch between visits: ask for marks, plans or a lesson recording, announce visits, and chat. Each teacher answers from a private link on their phone.">
+    <PageShell wide title="Teachers" subtitle="Stay in touch between visits: ask for marks, plans or a lesson recording, announce visits, and chat. Teachers sign in to the teacher app on their phone, see what you asked, upload it and can raise concerns.">
       {unread.length > 0 && (
         <Card title={<span className="flex items-center gap-2"><Bell size={18} className="text-brand-600" />New ({unread.length})</span>}
           action={<Button variant="ghost" onClick={async () => { await api.connect.readAll(); notices.reload(); }}>Mark all read</Button>}>
@@ -70,29 +68,16 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
   usePoll(true, () => { msgs.reload(); reqs.reload(); });
   const [form, setForm] = useState({ kind: 'marks', message: '', due_date: '', visit_date: '', whole_school: false });
   const [text, setText] = useState('');
-  const [link, setLink] = useState<string | null>(null);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const run = async (k: string, fn: () => Promise<void>) => { setBusy(k); setError(''); setOk(''); try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(''); } };
-  const fullLink = link ? shareUrl(link) : '';
 
   return (
     <div className="space-y-5">
       <ErrorNote error={error} onClose={() => setError('')} />
-      <Card title={`${row.title} ${row.full_name}`} subtitle={`${row.designation} · ${row.school_name}`}
-        action={<div className="flex gap-2">
-          <Button variant="soft" icon={<Link2 size={15} />} busy={busy === 'link'} onClick={() => run('link', async () => { const r = await api.connect.link(row.id); setLink(r.path); onChange(); })}>{row.has_link ? 'Show link' : 'Create private link'}</Button>
-          {row.has_link && <Button variant="ghost" icon={<Unlink size={15} />} onClick={() => run('stop', async () => { await api.connect.stopLink(row.id); setLink(null); onChange(); })}>Switch off</Button>}
-        </div>}>
-        {link && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-brand-50 p-3 text-sm">
-            <span className="min-w-0 flex-1 truncate font-mono text-xs">{fullLink}</span>
-            <Button variant="soft" className="px-3 py-1.5" icon={<Copy size={14} />} onClick={() => copyText(fullLink)}>Copy</Button>
-            <ExtLink href={fullLink} className="text-brand-700 underline">Open as teacher</ExtLink>
-            <p className="w-full text-xs text-ink-500">Send this link to the teacher yourself (for example on WhatsApp). Anyone with the link can see this teacher&apos;s requests, so switch it off if it is shared by mistake.</p>
-          </div>
-        )}
+      <Card title={`${row.title} ${row.full_name}`} subtitle={`${row.designation} · ${row.school_name}`}>
+        <p className="text-sm text-ink-500">Teacher app login: <span className="font-mono text-ink-700">{row.email}</span></p>
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -121,6 +106,7 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
           <div className="thin-scroll flex max-h-80 flex-col gap-2 overflow-y-auto pe-1">
             {!msgs.data?.length ? <Empty>No messages yet.</Empty> : msgs.data.map((m) => (
               <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.sender === 'crp' ? 'self-end bg-brand-600 text-white' : m.sender === 'teacher' ? 'self-start bg-brand-50 text-ink-900' : 'self-center bg-slate-100 text-xs text-ink-500'}`}>
+                {m.is_concern && <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-amber-700"><TriangleAlert size={11} />Concern</div>}
                 {m.body}<div className={`mt-0.5 text-[10px] ${m.sender === 'crp' ? 'text-white/70' : 'text-ink-400'}`}>{new Date(m.created_at).toLocaleString()}</div>
               </div>
             ))}

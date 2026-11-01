@@ -13,7 +13,7 @@ export const FEATURES = {
   aiAdmin: !END_USER_BUILD, // AI providers, connection test and AI cost on the Settings page
   upload: true,          // bulk upload + automatic sorting
   visit: true,           // 4-step visit evaluation
-  connect: true,         // CRP <-> teacher requests, messages, private teacher links
+  connect: true,         // CRP <-> teacher requests, messages (teachers use the separate teacher-app)
   customFactors: true,   // CRP can create factors (and add the data for them)
   overrides: true,       // pin / move / hold a school or teacher by hand
   textbooks: true,       // textbook search + link to teacher

@@ -22,7 +22,7 @@ const arab = Noto_Naskh_Arabic({ subsets: ['arabic'], variable: '--font-arab', d
 
 export const metadata: Metadata = { title: 'CRP Mentor Copilot', description: 'Prioritise schools and teachers for mentoring visits' };
 // Phone and app friendly: fills the whole screen (notch / home bar handled in globals.css), no zoom jumps on inputs.
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#2563EB' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#235347' };
 
 const fonts = [sans, serif, deva, beng, telu, tami, guju, knda, orya, mlym, arab].map((f) => f.variable).join(' ');
 

@@ -17,7 +17,7 @@ export function ClosingLandscape({ className }: { className?: string }) {
   const filter = `url(#${filterId})`
 
   return (
-    <div aria-hidden="true" className={cn('relative h-[200px] w-full sm:h-[280px] lg:h-[340px]', className)}>
+    <div aria-hidden="true" className={cn('pointer-events-none relative h-[200px] w-full sm:h-[280px] lg:h-[340px]', className)}>
       <svg width="0" height="0" className="absolute" focusable="false">
         <defs>
           {/*

@@ -8,7 +8,6 @@ import { useLang } from '@/lib/i18n';
 export default function BottomNav() {
   const { t } = useLang();
   const path = usePathname();
-  if (path.startsWith('/teacher')) return null;      // teachers' page has no CRP menu
   const items = NAV.filter((n) => !n.feature || FEATURES[n.feature]);
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-0 z-[55] flex border-t border-brand-100 bg-surface/95 backdrop-blur md:hidden">
