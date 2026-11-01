@@ -138,9 +138,20 @@ def edit_factor(code: str, req: FactorPatch):
 def remove_factor(code: str):
     with get_conn() as conn:
         d = Data(conn)
-        if code in engine.CORE: raise HTTPException(400, 'the five core factors cannot be removed (set their weight to 0 instead)')
-        if d.weights.get(code, 0) > 0: raise HTTPException(400, 'set this factor to 0% and save your priorities first')
+        if code in engine.CORE: raise HTTPException(400, 'the five main priorities cannot be deleted (set one to 0% instead)')
+        c = d.categories.get(code)
+        if not c: raise HTTPException(404, 'unknown factor')
+        if c['is_builtin']: raise HTTPException(400, 'ready-made priorities cannot be deleted (set one to 0% instead)')
+        if d.weights.get(code, 0) > 0:
+            # switched on: take it out of the saved priorities first (the others share its weight), then delete it
+            rest = {k: v for k, v in d.weights.items() if k != code and v > 0}
+            if not rest: raise HTTPException(400, 'keep at least one other priority switched on')
+            _, cid, _ = engine.save_configuration(conn, rest)
+            d = Data(conn)
+            for ent in ('school', 'teacher'):
+                engine.persist_run(conn, d, dt.date.today(), ent, engine.run(d, dt.date.today(), ent), cid)
         conn.execute("update priority_categories set status = 'disabled' where code = %s", (code,))
+        conn.execute("insert into audit_logs (action, entity_type, details) values ('factor_deleted', 'priority_category', %s)", (json.dumps(dict(code=code)),))
         conn.commit()
     return dict(ok=True)
 

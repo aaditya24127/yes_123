@@ -81,6 +81,19 @@ export default function Home() {
   useEffect(() => () => clearTimeout(askTimer.current), []);
   const reloadConfig = useCallback(() => api.config().then((c) => { setReload((n) => n + 1); setConfig(c); setSaved(c.weights); setWeights((w) => ({ ...c.weights, ...Object.fromEntries(Object.entries(w).filter(([k, v]) => v > 0 && !(k in c.weights))) })); }), []);
 
+  // Reset = the 5 main priorities we started with (their starting weights); everything else is switched off. Saved only when the CRP presses Save.
+  const resetMain = useCallback(() => {
+    const d = config?.defaults; if (!d) return;
+    setWeights(Object.fromEntries([...new Set([...Object.keys(weights), ...Object.keys(d)])].map((k) => [k, d[k] ?? 0])));
+    setToast(t('resetDone')); setTimeout(() => setToast(''), 3200);
+  }, [config, weights, t]);
+  const deletePriority = useCallback(async (code: string) => {
+    await api.factors.remove(code);
+    const keep = { ...weights }; delete keep[code];
+    await reloadConfig();
+    setWeights(keep);   // sliders the CRP has moved (or reset) but not saved yet stay as they were
+  }, [reloadConfig, weights]);
+
   const apply = useCallback(async () => {
     setApplying(true);
     try {
@@ -228,7 +241,7 @@ export default function Home() {
                   {side === 'priority' && config && (
                     <div className="h-full p-6">
                       <PriorityBody onClose={() => setSide(null)} categories={config.categories} weights={weights} dirty={dirty} applying={applying}
-                        onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={() => setWeights(saved)} onApply={apply}
+                        onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={resetMain} onDelete={deletePriority} onApply={apply}
           library={config.library} onFactorsChanged={reloadConfig} />
                     </div>
                   )}
@@ -264,7 +277,7 @@ export default function Home() {
 
       {config && !focus && (
         <PriorityPanel open={panel} onClose={() => setPanel(false)} categories={config.categories} weights={weights} dirty={dirty} applying={applying}
-          onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={() => setWeights(saved)} onApply={apply}
+          onChange={(code, v) => setWeights((w) => ({ ...w, [code]: v }))} onReset={resetMain} onDelete={deletePriority} onApply={apply}
           library={config.library} onFactorsChanged={reloadConfig} />
       )}
       {!focus && <DetailModal item={selected} onClose={() => setSelected(null)} />}

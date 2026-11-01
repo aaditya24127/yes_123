@@ -9,6 +9,7 @@ from .scorers import SCORERS, NEED_LABEL, Ctx, CatResult
 from .factors import FACTOR_SCORERS, fact_rule
 
 CORE = ['learning_gap', 'unresolved_issue', 'overdue_followup', 'time_since_visit', 'recurring_need']      # the original five, always computed
+DEFAULT_WEIGHTS = {'learning_gap': 30, 'unresolved_issue': 25, 'overdue_followup': 20, 'time_since_visit': 15, 'recurring_need': 10}   # what "Reset" goes back to
 LABEL = {'learning_gap': 'Learning Gap', 'unresolved_issue': 'Unresolved Issue', 'overdue_followup': 'Overdue Follow-up',
          'time_since_visit': 'Time Since Last Visit', 'recurring_need': 'Recurring Need'}
 FLAG_LABEL = {'never_observed': 'Never observed', 'conflicting_records': 'Conflicting records', 'invalid_rows': 'Invalid rows excluded',

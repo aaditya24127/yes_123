@@ -20,6 +20,9 @@ What it does:
 1. **Priority list**: ranks schools and teachers 0-100 from 25 factors (learning gaps, unresolved issues, overdue
    follow-ups, time since last visit, attendance, girls enrolled, ...). Every score links to the exact file and row it
    came from. The CRP chooses factor weights, creates their own factors, and can pin / move / hold an entry by hand.
+   **Reset** in the priorities panel goes back to the 5 main priorities we started with (`engine.DEFAULT_WEIGHTS`: learning gap 30,
+   unresolved issue 25, overdue follow-up 20, time since visit 15, recurring need 10; everything else off; kept only after Save).
+   A priority the CRP created can be **deleted** (trash icon; `DELETE /api/factors/{code}`); the 5 main and the ready-made ones can only be set to 0%.
 2. **Upload**: drop many files (Excel, CSV, Word, PDF, scans, photos of handwritten notes, audio). Each is sorted to a
    school / teacher / type / date, checked for duplicates and conflicting numbers, confirmed by the CRP, then imported.
 3. **Visit (4 steps)**: before class (history and brief) -> in class (record lesson, notes) -> students (4-5 suggested

@@ -2,11 +2,12 @@
 export type Band = 'critical' | 'high' | 'medium' | 'low';
 
 export interface Category {
-  code: string; label: string; name: string; description: string;
+  code: string; label: string; name: string; description: string; builtin?: boolean;   // builtin = ready-made (can't be deleted)
 }
 export interface Config {
   version: number; as_of: string; bands: Record<string, number>; categories: Category[]; weights: Record<string, number>;
   library: (Category & { group?: string; scope?: string; data_hint?: string })[];   // approved factors that are switched off (weight 0)
+  defaults: Record<string, number>; core: string[];   // the five main priorities and their starting weights (what Reset goes back to)
 }
 export * from './types-v2';
 export interface CatScore {
