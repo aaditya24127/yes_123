@@ -28,7 +28,7 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         ctx = next(c for c in engine.make_contexts(d, as_of, entity) if (c.teacher or c.school)['id'] == (t or s)['id'])
         issues = []
         for k, (first, last) in enumerate(_open_threads(ctx), 1):
-            issues.append(dict(ref=f'O{k}', issue=f"[O{k}] {NEED_LABEL.get(last['need_code'], last['need_code'])} ({last['severity']}): {last['issue_text']}",
+            issues.append(dict(ref=f'O{k}', label=NEED_LABEL.get(last['need_code'], last['need_code']), issue=f"[O{k}] {NEED_LABEL.get(last['need_code'], last['need_code'])} ({last['severity']}): {last['issue_text']}",
                                need_code=last['need_code'], severity=last['severity'], teacher_id=str(last['teacher_id']) if last['teacher_id'] else None,
                                class_label=last['class_label'], subject=last['subject'], since=str(first['observation_date']), last_seen=str(last['observation_date'])))
         good = [dict(point=o['issue_text'], date=str(o['observation_date'])) for o in ctx.observations if o['need_code'] == 'GOOD_PRACTICE' and o['validation_status'] == 'valid'][-3:]
@@ -49,13 +49,15 @@ def gather(teacher_id=None, school_id=None, as_of=None):
                      next_steps=[n['action'] for n in (x['result'] or {}).get('next_steps', [])]) for x in sess]
         books = conn.execute("select title, class_no, subject, source_url, contents from teaching_resources where school_id = %s and (teacher_id = %s or teacher_id is null) order by created_at desc",
                              (s['id'], t['id'] if t else None)).fetchall()
+        acc = conn.execute('select email from teacher_accounts where teacher_id = %s', (t['id'],)).fetchone() if t else None
+        email = acc['email'] if acc else None
         reqs = conn.execute("select title, kind, status, due_date from teacher_requests where school_id = %s and (teacher_id = %s or %s::uuid is null) and status in ('open','submitted') order by created_at desc",
                             (s['id'], t['id'] if t else None, t['id'] if t else None)).fetchall()
     return dict(
         who=_who(t, s), entity=entity, school=dict(id=str(s['id']), code=s['code'], name=s['name'], type=s['school_type'], board=s['board'], medium=s['medium'],
                                                     grades=f"{s['grade_from']}-{s['grade_to']}", village=s['village']),
         teacher=None if not t else dict(id=str(t['id']), name=f"{t['title'] or ''} {t['full_name']}".strip(), designation=t['designation'], classes=t['classes_taught'],
-                                        subjects=t['subjects_taught'], joined=str(t['joined_date']) if t['joined_date'] else None),
+                                        subjects=t['subjects_taught'], joined=str(t['joined_date']) if t['joined_date'] else None, email=email),
         scores=None if not item else dict(score=item['score'], band=item['band'], rank=item['rank'], flags=[f['label'] for f in item['flags']],
                                           categories=[dict(label=c['label'], score=c['score'], contribution=c['contribution'], explanation=c['explanation']) for c in item['categories']]),
         alerts=[a['message'] for a in (item or {}).get('alerts', [])], open_issues=issues, strengths_seen=good, open_actions=actions,
@@ -181,7 +183,7 @@ def save_to_records(sid, approved_growth=None, approved_steps=None):
         n_act = 0
         for k, a in enumerate(steps):
             if k not in keep_s: continue
-            due = today + dt.timedelta(days=int(a.get('due_in_days') or 14))
+            due = today + dt.timedelta(days=int(s.get('followup_days') or 14))
             iid = conn.execute("""insert into interventions (school_id, teacher_id, created_on, recommended_action, approved_action, responsible, planned_completion, status, locator)
                                   values (%s,%s,%s,%s,%s,%s,%s,'approved','visit evaluation') returning id""",
                                (s['school_id'], s['teacher_id'], today, a['action'], a['action'], a.get('who'), due)).fetchone()['id']

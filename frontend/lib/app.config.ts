@@ -1,6 +1,6 @@
 // One place for the app's high-level layout: menu, pages and feature switches.
 // To add a page: create app/<path>/page.tsx using <PageShell>, then add it to NAV below. To hide a feature, set it to false in FEATURES.
-import { Home, Upload, ClipboardCheck, MessagesSquare, Settings, type LucideIcon } from 'lucide-react';
+import { Home, Upload, ClipboardCheck, MessageCircleQuestion, MessagesSquare, Settings, type LucideIcon } from 'lucide-react';
 import type { Key } from './i18n';
 
 export const APP = { name: 'CRP Mentor Copilot', short: 'C' };
@@ -10,8 +10,7 @@ export const APP = { name: 'CRP Mentor Copilot', short: 'C' };
 export const END_USER_BUILD = process.env.NEXT_PUBLIC_END_USER === '1';
 
 export const FEATURES = {
-  aiAdmin: !END_USER_BUILD, // AI providers, connection test and AI cost on the Settings page
-  upload: true,          // bulk upload + automatic sorting
+  upload: true,          // add files + automatic sorting
   visit: true,           // 4-step visit evaluation
   connect: true,         // CRP <-> teacher requests, messages (teachers use the separate teacher-app)
   customFactors: true,   // CRP can create factors (and add the data for them)
@@ -26,6 +25,7 @@ export const NAV: NavItem[] = [
   { href: '/upload', label: 'nav_upload', icon: Upload, feature: 'upload' },
   { href: '/visit', label: 'nav_visit', icon: ClipboardCheck, feature: 'visit' },
   { href: '/connect', label: 'nav_connect', icon: MessagesSquare, feature: 'connect' },
+  { href: '/ask', label: 'nav_ask', icon: MessageCircleQuestion, feature: 'ask' },
   { href: '/settings', label: 'nav_settings', icon: Settings },
 ];
 

@@ -50,3 +50,18 @@ export const FEED_LABEL: Record<string, string> = {
 export const SECTION_LABEL: Record<string, string> = {
   assessments: 'Assessments', observations: 'Observations', followups: 'Follow-ups', visits: 'Visits', attendance: 'Attendance', audio: 'Audio recordings', roster: 'Roster', other: 'Other',
 };
+
+// The colour theme is a personal choice kept on this device. Evergreen is the default.
+export const DEFAULT_THEME = THEMES.findIndex((t) => t.name === 'Evergreen');
+export function loadTheme(): number {
+  try {
+    const raw = localStorage.getItem('crp-theme');
+    const n = raw === null || raw === '' ? NaN : Number(raw);
+    if (Number.isInteger(n) && n >= 0 && n < THEMES.length) return n;
+  } catch { /* ignore */ }
+  return DEFAULT_THEME;
+}
+export function saveTheme(i: number) {
+  try { localStorage.setItem('crp-theme', String(i)); } catch { /* ignore */ }
+  applyTheme(i);
+}

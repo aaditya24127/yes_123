@@ -1,11 +1,13 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, CalendarClock, ChevronRight, ClipboardList, GraduationCap, HelpCircle, Repeat, UserCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { AlertTriangle, CalendarClock, ChevronRight, ClipboardCheck, ClipboardList, GraduationCap, HelpCircle, Repeat, UserCheck } from 'lucide-react';
 import type { Item } from '@/lib/types';
 import { BAND } from '@/lib/theme';
 import ScoreRing from './ScoreRing';
 import { useLang } from '@/lib/i18n';
+import { visitHref } from '@/lib/visit-text';
 
 const ICON: Record<string, typeof GraduationCap> = {
   learning_gap: GraduationCap, unresolved_issue: ClipboardList, overdue_followup: CalendarClock, time_since_visit: UserCheck, recurring_need: Repeat,
@@ -18,6 +20,7 @@ const short = (t: string) => t.split(/;|\(/)[0].trim().replace(/\.$/, '');
 export default function ItemCard({ item, onOpen, plain = false }: { item: Item; onOpen: (i: Item) => void; plain?: boolean }) {
   const { t, tx, dir, alert, fact } = useLang();
   const band = item.band ? BAND[item.band] : null;
+  const router = useRouter();
   const [tip, setTip] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -86,7 +89,13 @@ export default function ItemCard({ item, onOpen, plain = false }: { item: Item; 
             </>
           )}
         </div>
-        <span className="flex items-center text-sm font-semibold text-brand-600">{t('details')} <ChevronRight size={16} className="rtl:rotate-180" /></span>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center text-sm font-semibold text-brand-600">{t('details')} <ChevronRight size={16} className="rtl:rotate-180" /></span>
+          <button onClick={(e) => { e.stopPropagation(); router.push(visitHref(item)); }} onKeyDown={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-float transition hover:bg-brand-700">
+            <ClipboardCheck size={16} />{t('visit')}
+          </button>
+        </div>
       </div>
     </motion.div>
   );

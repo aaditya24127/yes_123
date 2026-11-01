@@ -15,7 +15,10 @@ export interface Home {
   teacher: Profile; upcoming_visit: { visit_date: string; message: string | null } | null; tasks: Task[]; messages: Msg[]; notifications: Notice[];
   unread: number; kinds: Record<string, string>;
 }
-export interface Visits { visits: { visit_date: string; visit_type: string }[]; follow_ups: { due_date: string; status: string; action: string | null }[] }
+export interface Visits {
+  visits: { visit_date: string; visit_type: string }[]; follow_ups: { due_date: string; status: string; action: string | null }[];
+  reports: { id: string; date: string; class_no: number | null; subject: string | null; topic: string | null; url: string }[];
+}
 
 const KEY = 'crp-teacher-token';
 export const token = {

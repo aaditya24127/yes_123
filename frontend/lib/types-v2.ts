@@ -33,9 +33,9 @@ export interface BatchSummary { id: string; created_at: string; status: string; 
 
 export interface Brief {
   who: string; entity: Entity; school: { id: string; code: string; name: string; board: string; medium: string; grades: string; village: string };
-  teacher: { id: string; name: string; designation: string; classes: number[]; subjects: string[]; joined: string | null } | null;
+  teacher: { id: string; name: string; designation: string; classes: number[]; subjects: string[]; joined: string | null; email?: string | null } | null;
   scores: { score: number | null; band: Band | null; rank: number | null; flags: string[]; categories: { label: string; score: number | null; contribution: number | null; explanation: string }[] } | null;
-  alerts: string[]; open_issues: { ref: string; issue: string; since: string; last_seen: string }[]; strengths_seen: { point: string; date: string }[];
+  alerts: string[]; open_issues: { ref: string; label?: string; severity?: string; issue: string; since: string; last_seen: string }[]; strengths_seen: { point: string; date: string }[];
   open_actions: { action: string; due: string; overdue_days: number }[]; latest_results: { cls: number; subject: string; skill: string | null; below_pct: number; date: string }[];
   last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; overall: string | null; next_steps: string[] }[];
   textbooks: { title: string; cls: number | null; subject: string | null; url: string | null }[]; pending_requests: { title: string; kind: string; status: string; due: string | null }[];
@@ -58,6 +58,7 @@ export interface Session {
   id: string; school_id: string; teacher_id: string | null; class_no: number | null; subject: string | null; topic: string | null; stage: number; status: string;
   brief: Brief; crp_notes: string | null; changes_since_last: string | null; questions: Question[]; result: Partial<Evaluation>; media: Media[];
   started_at: string; job: { status: string; error: string | null; provider: string | null } | null; visit_id: string | null; question_tips?: string[]; questions_by?: string;
+  followup_days: number; report_sent_at: string | null; report_sent_to: string | null;
 }
 export interface SessionSummary { id: string; started_at: string; status: string; stage: number; class_no: number | null; subject: string | null; topic: string | null; school_name: string; teacher_name: string | null }
 export interface TextbookHit { title: string; url: string; publisher: string; is_pdf: boolean; class_no: number | null; subject: string | null; language: string | null }

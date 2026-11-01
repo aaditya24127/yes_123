@@ -1,9 +1,10 @@
 'use client';
 // "Give tasks": the CRP writes numbered tasks (Task 1, Task 2 ...), each with its own instructions, and sends them to a teacher or a whole school.
-// A visit notice is a separate mode (a date and a short message).
+// A visit notice is a separate mode. Sending always asks for a date first (pop-up), and cannot go ahead without one.
 import { useState } from 'react';
 import { CalendarClock, ListPlus, Send, Trash2 } from 'lucide-react';
 import { Button, Card, Field, Input, Pill, Select, TextArea } from '@/components/ui';
+import DatePrompt from '@/components/ui/DatePrompt';
 import { api } from '@/lib/api';
 import { useLoad } from '@/lib/hooks';
 import type { ConnectRow } from '@/lib/types';
@@ -16,8 +17,7 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
   const [mode, setMode] = useState<'tasks' | 'visit'>('tasks');
   const [pkgTitle, setPkgTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [due, setDue] = useState('');
-  const [visitDate, setVisitDate] = useState('');
+  const [asking, setAsking] = useState(false);
   const [items, setItems] = useState<Draft[]>([blank()]);
   const [wholeSchool, setWholeSchool] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -26,25 +26,25 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
   const kinds = opts.data?.kinds ?? [];
   const set = (i: number, patch: Partial<Draft>) => setItems((l) => l.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const filled = items.filter((x) => x.instructions.trim() || x.title.trim());
-  const canSend = mode === 'visit' ? !!visitDate : filled.length > 0;
+  const canSend = mode === 'visit' ? true : filled.length > 0;
   const target = wholeSchool ? { school_id: row.school_id } : { teacher_ids: [row.id] };
 
-  const send = async () => {
+  const send = async (date: string) => {
     setBusy(true); setOk('');
     try {
       const r = mode === 'visit'
-        ? await api.connect.request({ kind: 'visit_notice', visit_date: visitDate, message: message || undefined, ...target })
-        : await api.connect.request({ kind: 'other', title: pkgTitle || undefined, message: message || undefined, due_date: due || undefined, ...target,
+        ? await api.connect.request({ kind: 'visit_notice', visit_date: date, message: message || undefined, ...target })
+        : await api.connect.request({ kind: 'other', title: pkgTitle || undefined, message: message || undefined, due_date: date, ...target,
             items: filled.map((x) => ({ kind: x.kind, title: x.title.trim() || undefined, instructions: x.instructions.trim() || undefined })) });
       setOk(`Sent to ${r.created} teacher${r.created === 1 ? '' : 's'}.`);
-      setMessage(''); setPkgTitle(''); setItems([blank()]); setDue(''); setVisitDate('');
+      setMessage(''); setPkgTitle(''); setItems([blank()]); setAsking(false);
       onSent();
-    } catch (e) { onError((e as Error).message); }
+    } catch (e) { onError((e as Error).message); setAsking(false); }
     setBusy(false);
   };
 
   return (
-    <Card title="Give tasks" subtitle="Write numbered tasks. The teacher gets an alert, uploads for each task, and you accept or reject each one.">
+    <Card title="Give tasks" subtitle="Write what you need, one task at a time. The teacher sees each task on their phone and sends it back. You then accept it or ask for changes.">
       <div className="mb-4 flex gap-2">
         <Pill active={mode === 'tasks'} onClick={() => setMode('tasks')}>Tasks</Pill>
         <Pill active={mode === 'visit'} onClick={() => setMode('visit')}>Visit notice</Pill>
@@ -52,15 +52,11 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
 
       {mode === 'visit' ? (
         <div className="grid gap-3">
-          <Field label="Visit date"><Input type="date" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} /></Field>
           <Field label="Message (optional)"><TextArea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Please keep Class 4 marks and your lesson plan ready." /></Field>
         </div>
       ) : (
         <div className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Heading (optional)"><Input value={pkgTitle} onChange={(e) => setPkgTitle(e.target.value)} placeholder="Before my visit on Friday" /></Field>
-            <Field label="Please send by (optional)"><Input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
-          </div>
+          <Field label="Heading (optional)"><Input value={pkgTitle} onChange={(e) => setPkgTitle(e.target.value)} placeholder="Before my visit on Friday" /></Field>
           <Field label="Message for everything (optional)"><TextArea rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Hello! Please send these before the visit." /></Field>
 
           <ol className="grid gap-3">
@@ -85,10 +81,13 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
 
       <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={wholeSchool} onChange={(e) => setWholeSchool(e.target.checked)} className="h-4 w-4" />Send to all teachers of {row.school_name}</label>
       <div className="mt-3 flex items-center gap-3">
-        <Button icon={mode === 'visit' ? <CalendarClock size={16} /> : <Send size={16} />} busy={busy} disabled={!canSend} onClick={send}>
+        <Button icon={mode === 'visit' ? <CalendarClock size={16} /> : <Send size={16} />} disabled={!canSend} onClick={() => setAsking(true)}>
           {mode === 'visit' ? 'Send notice' : `Send ${filled.length > 1 ? `${filled.length} tasks` : 'task'}`}</Button>
         {ok && <span className="text-sm text-emerald-700">{ok}</span>}
       </div>
+      <DatePrompt open={asking} busy={busy} onClose={() => setAsking(false)} onConfirm={send} confirmLabel={mode === 'visit' ? 'Send notice' : 'Send'}
+        title={mode === 'visit' ? 'Date of the visit' : 'Send by which date?'}
+        question={mode === 'visit' ? 'On which day will you visit?' : 'By which date should the teacher send these?'} />
     </Card>
   );
 }

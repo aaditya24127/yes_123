@@ -13,7 +13,6 @@ export default function TextbookPanel({ teacherId, schoolId, defaults }: {
 }) {
   const [q, setQ] = useState([defaults?.class_no ? `Class ${defaults.class_no}` : '', defaults?.subject ?? '', defaults?.board ?? '', 'textbook'].filter(Boolean).join(' '));
   const [hits, setHits] = useState<TextbookHit[] | null>(null);
-  const [by, setBy] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [manual, setManual] = useState('');
@@ -24,7 +23,7 @@ export default function TextbookPanel({ teacherId, schoolId, defaults }: {
     if (!q.trim()) return; setBusy(true); setError('');
     try {
       const r = await api.textbooks.search({ q, class_no: defaults?.class_no, subject: defaults?.subject ?? undefined, board: defaults?.board ?? undefined, language: defaults?.language ?? undefined });
-      setHits(r.results); setBy(r.found_by);
+      setHits(r.results);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   };
   const add = async (url: string, title: string, publisher?: string) => {
@@ -44,7 +43,6 @@ export default function TextbookPanel({ teacherId, schoolId, defaults }: {
       </div>
       {hits && (
         <div className="mt-3">
-          {by && <p className="mb-2 text-xs text-ink-400">Found by: {by === 'rules' ? 'official portal list (switch on web search for direct PDFs)' : by}</p>}
           {!hits.length ? <Empty>Nothing found. Try other words, or paste a link below.</Empty> : (
             <ul className="space-y-2">
               {hits.map((h) => (

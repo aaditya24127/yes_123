@@ -6,6 +6,8 @@ import PageShell from '@/components/shell/PageShell';
 import TextbookPanel from '@/components/TextbookPanel';
 import TaskComposer from '@/components/TaskComposer';
 import TaskReview from '@/components/TaskReview';
+import DatePrompt from '@/components/ui/DatePrompt';
+import { fmtDay } from '@/lib/visit-text';
 import { Badge, Button, Card, Empty, ErrorNote, Input } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useLoad, usePoll } from '@/lib/hooks';
@@ -29,7 +31,7 @@ export default function ConnectPage() {
   const unread = (notices.data ?? []).filter((n) => !n.read_at);
 
   return (
-    <PageShell wide title="Teachers" subtitle="Stay in touch between visits: ask for marks, plans or a lesson recording, announce visits, and chat. Teachers sign in to the teacher app on their phone, see what you asked, upload it and can raise concerns.">
+    <PageShell wide title="Teachers" subtitle="Pick a teacher to give tasks, announce a visit or send a message. Teachers see everything in their own app and send things back from there.">
       {unread.length > 0 && (
         <Card title={<span className="flex items-center gap-2"><Bell size={18} className="text-brand-600" />New ({unread.length})</span>}
           action={<Button variant="ghost" onClick={async () => { await api.connect.readAll(); notices.reload(); }}>Mark all read</Button>}>
@@ -64,6 +66,7 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
   const msgs = useLoad(() => api.connect.messages(row.id), [row.id]);
   usePoll(true, () => { msgs.reload(); reqs.reload(); });
   const [text, setText] = useState('');
+  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
@@ -73,7 +76,7 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
     <div className="space-y-5">
       <ErrorNote error={error} onClose={() => setError('')} />
       <Card title={`${row.title} ${row.full_name}`} subtitle={`${row.designation} · ${row.school_name}`}>
-        <p className="text-sm text-ink-500">Teacher app login: <span className="font-mono text-ink-700">{row.email}</span></p>
+        <p className="text-sm text-ink-500">Teacher&apos;s email: <span className="text-ink-700">{row.email}</span></p>
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -89,9 +92,13 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
             ))}
           </div>
           <div className="mt-3 flex gap-2">
-            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message" onKeyDown={(e) => e.key === 'Enter' && text.trim() && run('msg', async () => { msgs.setData(await api.connect.send(row.id, text)); setText(''); })} />
-            <Button busy={busy === 'msg'} disabled={!text.trim()} onClick={() => run('msg', async () => { msgs.setData(await api.connect.send(row.id, text)); setText(''); })}>Send</Button>
+            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message" onKeyDown={(e) => e.key === 'Enter' && text.trim() && setAsking(true)} />
+            <Button disabled={!text.trim()} onClick={() => setAsking(true)}>Send</Button>
           </div>
+          <DatePrompt open={asking} busy={busy === 'msg'} title="Reply by which date?" question="By which date should the teacher reply to this message?" confirmLabel="Send message" onClose={() => setAsking(false)}
+            onConfirm={(d) => run('msg', async () => { msgs.setData(await api.connect.send(row.id, `${text.trim()}
+
+Please reply by ${fmtDay(d)}.`)); setText(''); setAsking(false); })} />
         </Card>
       </div>
 

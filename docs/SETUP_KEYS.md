@@ -24,8 +24,8 @@ this computer). Keys only make the answers smarter.
 
 ## Watching the cost
 
-**Settings > AI cost** shows every AI call, which AI answered, tokens used, and the approximate cost in dollars, for the last 30
-days and all time.
+The app screens show nothing technical any more. To see every AI call, which AI answered, tokens used and the approximate cost (last 30
+days and all time), open `/api/ai/usage` on the backend (and `/api/ai/status` or `POST /api/ai/test` to check the keys).
 
 ## Changing which AI does what
 
