@@ -146,7 +146,7 @@ Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, se
 
 ### Done (real-world-v2)
 25 factors + custom factors + manual overrides; bulk upload with sorting / validation / background import; 4-step visit
-evaluation; CRP <-> teacher requests and messages; teacher app (`teacher-app/`, browser version) with logins; textbook search + PDF download; replaceable AI layer with
+evaluation; CRP <-> teacher requests and messages; teacher app (`teacher-app/`, browser version) with logins and phone/browser alerts (Web Push, VAPID keys in `.env`: `python database/cli.py vapid-keys`; no Firebase needed for the browser app; Firebase would only be needed for a native Android build); textbook search + PDF download; replaceable AI layer with
 cost log and free connection test; job queue; app-ready frontend (single API address, static export build, phone layout,
 bottom menu); free local speech-to-text verified (99% word match on a demo recording).
 

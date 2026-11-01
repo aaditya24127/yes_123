@@ -5,6 +5,7 @@ import datetime as dt
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from ..services import push
 from ..services.prioritization.data import get_conn
 
 router = APIRouter(prefix='/api', tags=['connect'])
@@ -54,7 +55,7 @@ def create_requests(req: RequestReq):
             tids = [str(r['id']) for r in conn.execute('select id from teachers where school_id = %s and is_active', (req.school_id,)).fetchall()]
         if not tids: raise HTTPException(400, 'choose at least one teacher')
         title = req.title or (f"CRP visit on {req.visit_date:%d %b %Y}" if req.kind == 'visit_notice' and req.visit_date else KIND_LABEL[req.kind])
-        ids = []
+        ids, pushes = [], []
         for tid in tids:
             t = conn.execute('select school_id from teachers where id = %s', (tid,)).fetchone()
             if not t: continue
@@ -64,8 +65,9 @@ def create_requests(req: RequestReq):
             if req.kind == 'visit_notice' and req.visit_date: body = f"Your CRP will visit on {req.visit_date:%A %d %B}. {req.message or 'Please keep your lesson plan, recent marks and attendance ready.'}"
             conn.execute("insert into messages (teacher_id, sender, body, request_id) values (%s,'crp',%s,%s)", (tid, body, rid))
             conn.execute("insert into notifications (recipient_type, teacher_id, title, body) values ('teacher',%s,%s,%s)", (tid, title, body))
-            ids.append(str(rid))
+            ids.append(str(rid)); pushes.append((tid, title, body, f'/task?id={rid}'))
         conn.commit()
+    for p in pushes: push.notify_teacher(*p)
     return dict(created=len(ids), ids=ids)
 
 
@@ -90,6 +92,7 @@ def edit_request(rid: str, req: RequestPatch):
         if r and req.status == 'accepted':
             conn.execute("insert into notifications (recipient_type, teacher_id, title) values ('teacher', %s, %s)", (r['teacher_id'], f"Thank you: '{r['title']}' was accepted"))
         conn.commit()
+    if r and req.status == 'accepted': push.notify_teacher(r['teacher_id'], f"Thank you: '{r['title']}' was accepted", None, f'/task?id={rid}')
     return dict(ok=True)
 
 
@@ -112,6 +115,7 @@ def send_message(tid: str, req: MessageReq):
         conn.execute("insert into messages (teacher_id, sender, body) values (%s,'crp',%s)", (tid, req.body.strip()))
         conn.execute("insert into notifications (recipient_type, teacher_id, title, body) values ('teacher',%s,'New message from your CRP',%s)", (tid, req.body.strip()[:200]))
         conn.commit()
+    push.notify_teacher(tid, 'New message from your CRP', req.body.strip()[:200], '/messages')
     return messages(tid)
 
 
