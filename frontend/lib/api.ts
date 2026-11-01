@@ -5,24 +5,41 @@ import type {
 } from './types';
 import { apiUrl } from './platform';
 
+const WAKING = 'The server is waking up. Please wait a few seconds and try again.';
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Looking things up can safely be tried again when the server is still waking up (it sleeps when nobody has used it for a while). */
+async function run(url: string, init: RequestInit | undefined, safe: boolean): Promise<Response> {
+  const tries = safe ? 4 : 1;
+  for (let i = 0; i < tries; i++) {
+    let res: Response;
+    try { res = await fetch(url, init); } catch {
+      if (i < tries - 1) { await sleep(2500 * (i + 1)); continue; }
+      throw new Error('Could not reach the server. Check your internet connection and try again.');
+    }
+    if ([502, 503, 504].includes(res.status) && i < tries - 1) { await sleep(2500 * (i + 1)); continue; }
+    return res;
+  }
+  throw new Error(WAKING);
+}
 async function j<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const txt = await res.text();
+    if ([502, 503, 504].includes(res.status) || /ROUTER_EXTERNAL_TARGET_ERROR|FUNCTION_INVOCATION|NOT_FOUND.*bom1/.test(txt)) throw new Error(WAKING);
     let msg = txt || res.statusText;
     try { const d = JSON.parse(txt); msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail ?? d); } catch { /* plain text */ }
     throw new Error(msg);
   }
   return res.json() as Promise<T>;
 }
-const get = <T>(url: string) => fetch(apiUrl(url)).then(j<T>);
-const send = <T>(method: string, url: string, body?: unknown) =>
-  fetch(apiUrl(url), { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }).then(j<T>);
-const post = <T>(url: string, body?: unknown) => send<T>('POST', url, body ?? {});
+const get = <T>(url: string) => run(apiUrl(url), undefined, true).then(j<T>);
+const send = <T>(method: string, url: string, body?: unknown, safe = false) =>
+  run(apiUrl(url), { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }, safe).then(j<T>);
+const post = <T>(url: string, body?: unknown, safe = false) => send<T>('POST', url, body ?? {}, safe);
 const form = <T>(url: string, fields: Record<string, string | number | null | undefined>, files: File[] | Blob[] = [], fileField = 'files', fileName?: string) => {
   const f = new FormData();
   Object.entries(fields).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') f.append(k, String(v)); });
   files.forEach((x) => f.append(fileField, x as Blob, fileName ?? (x as File).name ?? 'recording.webm'));
-  return fetch(apiUrl(url), { method: 'POST', body: f }).then(j<T>);
+  return run(apiUrl(url), { method: 'POST', body: f }, false).then(j<T>);
 };
 const qs = (o: Record<string, string | number | boolean | null | undefined>) =>
   '?' + Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
@@ -30,8 +47,8 @@ const qs = (o: Record<string, string | number | boolean | null | undefined>) =>
 export const api = {
   // ranking (original screens)
   config: () => get<Config>('/api/config'),
-  ranking: (entity: Entity, weights?: Record<string, number>) => post<Ranking>('/api/ranking', { entity, weights }),
-  evidence: (entity: Entity, id: string) => post<EvidenceGroup[]>('/api/evidence', { entity, id }),
+  ranking: (entity: Entity, weights?: Record<string, number>) => post<Ranking>('/api/ranking', { entity, weights }, true),
+  evidence: (entity: Entity, id: string) => post<EvidenceGroup[]>('/api/evidence', { entity, id }, true),
   files: (schoolId: string) => get<FileInfo[]>(`/api/schools/${schoolId}/files`),
   preview: (fileId: string) => get<Preview>(`/api/files/${fileId}/preview`),
   rawUrl: (fileId: string) => apiUrl(`/api/files/${fileId}/raw`),
@@ -39,6 +56,7 @@ export const api = {
   apply: (weights: Record<string, number>) => post<{ version: number }>('/api/config/apply', { weights }),
 
   directory: () => get<Directory>('/api/directory'),
+  health: () => get<{ ok: boolean }>('/api/health'),
 
   factors: {
     list: () => get<{ factors: Factor[]; groups: string[] }>('/api/factors'),
@@ -68,8 +86,8 @@ export const api = {
   },
 
   visits: {
-    brief: (p: { teacher_id?: string; school_id?: string }) => get<Brief>(`/api/brief${qs(p)}`),
-    start: (body: { school_id?: string; teacher_id?: string; class_no?: number | null; subject?: string; topic?: string }) => post<Session>('/api/sessions', body),
+    brief: (p: { teacher_id?: string; school_id?: string }, fast = false) => get<Brief>(`/api/brief${qs({ ...p, fast: fast || undefined })}`),
+    start: (body: { school_id?: string; teacher_id?: string; class_no?: number | null; subject?: string; topic?: string; brief_text?: Brief['brief']; brief_by?: string | null }) => post<Session>('/api/sessions', body),
     get: (id: string) => get<Session>(`/api/sessions/${id}`),
     list: (p: { teacher_id?: string; school_id?: string } = {}) => get<SessionSummary[]>(`/api/sessions${qs(p)}`),
     edit: (id: string, body: Record<string, unknown>) => send<Session>('PATCH', `/api/sessions/${id}`, body),

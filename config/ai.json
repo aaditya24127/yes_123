@@ -11,6 +11,10 @@
   "providers": {
     "rules":         { "type": "rules" },
     "claude_fast":   { "type": "claude", "model": "claude-haiku-5-5", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50] },
+    "claude_quick":  { "type": "claude", "model": "claude-haiku-5-5", "effort": "low", "thinking": "off", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50],
+                       "note": "Haiku with hidden thinking off: answers short jobs in a few seconds." },
+    "claude_mid":    { "type": "claude", "model": "claude-sonnet-5-5", "effort": "medium", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [1.0, 5.0],
+                       "note": "Sonnet: fast and good. Used for the lesson evaluation." },
     "claude_smart":  { "type": "claude", "model": "claude-opus-5-5", "effort": "high", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [4.0, 20.0],
                        "refusal_fallback": true },
     "claude_search": { "type": "claude", "model": "claude-haiku-5-5", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50], "web_search": true,
@@ -33,11 +37,11 @@
     "extract_records":       ["claude_fast", "gemini_free", "ollama_local", "my_model", "rules"],
     "extract_records_scan":  ["claude_smart", "gemini_free", "ollama_local", "rules"],
     "transcribe":            ["groq_whisper", "whisper_local", "rules"],
-    "suggest_factor":        ["claude_fast", "gemini_free", "ollama_local", "rules"],
-    "visit_brief":           ["claude_fast", "gemini_free", "ollama_local", "rules"],
-    "student_questions":     ["claude_smart", "gemini_free", "ollama_local", "rules"],
-    "evaluate_lesson":       ["claude_smart", "gemini_free", "ollama_local", "my_model", "rules"],
+    "suggest_factor":        ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"],
+    "visit_brief":           ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"],
+    "student_questions":     ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"],
+    "evaluate_lesson":       ["claude_mid", "claude_smart", "gemini_free", "ollama_local", "my_model", "rules"],
     "find_textbooks":        ["claude_search", "web_free", "rules"],
-    "ask_copilot":           ["claude_fast", "gemini_free", "ollama_local", "rules"]
+    "ask_copilot":           ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"]
   }
 }

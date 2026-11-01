@@ -10,6 +10,7 @@ import openpyxl
 from docx import Document
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
 
@@ -23,6 +24,7 @@ app = FastAPI(title='CRP Mentor Copilot')
 # Which websites may call this API: comma-separated in ALLOWED_ORIGINS (add the real domain when the site goes live).
 ORIGINS = [o.strip() for o in os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=['*'], allow_headers=['*'])
+app.add_middleware(GZipMiddleware, minimum_size=1000)      # big answers (priority list, evidence) travel compressed
 for r in (factors_api, uploads_api, visits_api, connect_api, assistant_api, teacher_api):
     app.include_router(r.router)
 

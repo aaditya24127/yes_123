@@ -21,13 +21,13 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []) {
 }
 
 /** Calls `tick` every POLL_MS while `active` is true (used for imports, transcription and evaluation). */
-export function usePoll(active: boolean, tick: () => void) {
+export function usePoll(active: boolean, tick: () => void, ms = POLL_MS) {
   const t = useRef(tick); t.current = tick;
   useEffect(() => {
     if (!active) return;
-    const h = setInterval(() => t.current(), POLL_MS);
+    const h = setInterval(() => t.current(), ms);
     return () => clearInterval(h);
-  }, [active]);
+  }, [active, ms]);
 }
 
 let dirCache: Promise<Directory> | null = null;

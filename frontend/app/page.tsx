@@ -61,24 +61,32 @@ export default function Home() {
     api.config().then((c) => { setConfig(c); setSaved(c.weights); setWeights(c.weights); }).catch((e) => setError(String(e.message || e)));
   }, []);
 
-  useEffect(() => {
-    if (!config) return;
-    const id = ++seq.current;
-    const t = setTimeout(() => {
-      api.ranking(entity, weights).then((r) => { if (id === seq.current) { setRanking(r); setError(''); } }).catch((e) => setError(String(e.message || e)));
-    }, 120);
-    return () => clearTimeout(t);
-  }, [config, entity, weights]);
-
   const dirty = useMemo(() => [...new Set([...Object.keys(weights), ...Object.keys(saved)])].some((c) => (weights[c] ?? 0) !== (saved[c] ?? 0)), [weights, saved]);
-  const reloadConfig = useCallback(() => api.config().then((c) => { setConfig(c); setSaved(c.weights); setWeights((w) => ({ ...c.weights, ...Object.fromEntries(Object.entries(w).filter(([k, v]) => v > 0 && !(k in c.weights))) })); }), []);
+  // The list is asked for at the same time as the settings (not after them). With unchanged weights the server uses the saved ones,
+  // so nothing is asked twice when the settings arrive; a new request goes out only when the person moves a slider, switches
+  // schools / teachers, or the factors change (reload).
+  const [reload, setReload] = useState(0);
+  const lastAsk = useRef('');
+  const askTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    const key = `${entity}|${dirty ? JSON.stringify(weights) : ''}|${reload}`;
+    if (key === lastAsk.current) return;
+    lastAsk.current = key;
+    clearTimeout(askTimer.current);
+    const id = ++seq.current;
+    askTimer.current = setTimeout(() => {
+      api.ranking(entity, dirty ? weights : undefined).then((r) => { if (id === seq.current) { setRanking(r); setError(''); } }).catch((e) => { if (id === seq.current) { lastAsk.current = ''; setError(String(e.message || e)); } });
+    }, dirty ? 120 : 0);
+  }, [entity, weights, dirty, reload]);
+  useEffect(() => () => clearTimeout(askTimer.current), []);
+  const reloadConfig = useCallback(() => api.config().then((c) => { setReload((n) => n + 1); setConfig(c); setSaved(c.weights); setWeights((w) => ({ ...c.weights, ...Object.fromEntries(Object.entries(w).filter(([k, v]) => v > 0 && !(k in c.weights))) })); }), []);
 
   const apply = useCallback(async () => {
     setApplying(true);
     try {
       const r = await api.apply(weights);
       const c = await api.config();
-      setConfig(c); setSaved(c.weights); setWeights(c.weights);
+      setReload((n) => n + 1); setConfig(c); setSaved(c.weights); setWeights(c.weights);
       setToast(t('saved', { v: r.version })); setTimeout(() => setToast(''), 2600);
     } catch (e) { setError(String((e as Error).message)); } finally { setApplying(false); }
   }, [weights, t]);

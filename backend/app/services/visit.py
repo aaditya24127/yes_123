@@ -67,8 +67,14 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         pending_requests=[dict(title=r['title'], kind=r['kind'], status=r['status'], due=str(r['due_date']) if r['due_date'] else None) for r in reqs])
 
 
-def brief(teacher_id=None, school_id=None):
+def brief(teacher_id=None, school_id=None, fast=False):
+    """The before-class briefing. fast=True answers at once with the plain summary built from the records (no waiting for an AI);
+    the screen then asks again without fast to swap in the sharper AI version."""
     data = gather(teacher_id, school_id)
+    if fast:
+        from ..ai.providers.rules import RulesProvider
+        data['brief'], data['brief_by'] = RulesProvider('rules', {}).visit_brief(data), 'rules'
+        return data
     try:
         r = ai.run('visit_brief', data)
         data['brief'], data['brief_by'] = r.data, r.provider

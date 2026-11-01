@@ -44,8 +44,14 @@ function VisitPage() {
   usePoll(pendingTranscripts || evaluating, () => { reload(); });
 
   const run = async (label: string, fn: () => Promise<void>) => { setBusy(label); setError(''); try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(''); } };
+  // The briefing appears at once (plain summary from the records); the sharper version follows a few seconds later and replaces it.
+  const briefKey = useRef('');
   const loadBrief = (p: { teacher_id?: string; school_id?: string } = pick.teacher_id ? { teacher_id: pick.teacher_id } : { school_id: pick.school_id }) =>
-    run('brief', async () => { setBrief(await api.visits.brief(p)); setStep(0); });
+    run('brief', async () => {
+      const key = briefKey.current = `${p.teacher_id ?? ''}|${p.school_id ?? ''}`;
+      setBrief(await api.visits.brief(p, true)); setStep(0);
+      api.visits.brief(p).then((full) => { if (briefKey.current === key) setBrief((cur) => (cur ? { ...cur, brief: full.brief, brief_by: full.brief_by } : cur)); }).catch(() => {});
+    });
 
   // Arriving from the "Visit" button on a school or teacher card: fill in who, and show the briefing straight away.
   const auto = useRef('');
@@ -60,9 +66,15 @@ function VisitPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dir, sid, qSchool, qTeacher]);
 
+  // Choosing another teacher (or the whole school) after pressing Visit on a school card: fill in their class and subject and show their briefing.
+  const pickTeacher = (id: string) => {
+    const t = dir?.teachers.find((x) => x.id === id);
+    setPick((p) => ({ ...p, teacher_id: id, class_no: t?.classes_taught[0] ? String(t.classes_taught[0]) : '', subject: t?.subjects_taught[0] ?? '' }));
+    loadBrief(id ? { teacher_id: id } : { school_id: pick.school_id || brief?.school.id });
+  };
   const start = () => run('start', async () => {
     const s = await api.visits.start({ school_id: pick.school_id || brief?.school.id, teacher_id: pick.teacher_id || undefined, class_no: pick.class_no ? Number(pick.class_no) : null,
-      subject: pick.subject || undefined, topic: pick.topic || undefined });
+      subject: pick.subject || undefined, topic: pick.topic || undefined, brief_text: brief?.brief ?? undefined, brief_by: brief?.brief_by });
     setSession(s); setStep(1); router.replace(`/visit?session=${s.id}`); recent.reload();
   });
   const save = (body: Record<string, unknown>) => session && api.visits.edit(session.id, body).then(setSession).catch((e) => setError(e.message));
@@ -92,7 +104,8 @@ function VisitPage() {
         <Stepper steps={STEPS} current={session ? step : 0} maxReached={session ? Math.max(step, session.stage - 1) : 0} onPick={session ? setStep : undefined} />
       )}
 
-      {brief && step === 0 && <BriefView b={brief} pick={pick} setPick={setPick} teacher={teacher} dir={dir} onStart={session ? undefined : start} busy={busy === 'start'} />}
+      {brief && step === 0 && <BriefView b={brief} pick={pick} setPick={setPick} teacher={teacher} dir={dir} onStart={session ? undefined : start} busy={busy === 'start'}
+        teachers={(dir?.teachers ?? []).filter((t) => t.school_id === brief.school.id)} onPickTeacher={pickTeacher} loading={busy === 'brief'} />}
 
       {session && step === 1 && (
         <div className="grid gap-5 lg:grid-cols-2">
@@ -183,8 +196,9 @@ function VisitHeader({ brief, session, pick, onStartOver }: { brief: Brief; sess
   );
 }
 
-function BriefView({ b, pick, setPick, teacher, dir, onStart, busy }: {
+function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, onPickTeacher, loading }: {
   b: Brief; pick: Pick; setPick: (p: Pick) => void; teacher: { classes_taught: number[]; subjects_taught: string[] } | undefined; dir: ReturnType<typeof useDirectory>; onStart?: () => void; busy: boolean;
+  teachers: { id: string; name: string }[]; onPickTeacher: (id: string) => void; loading: boolean;
 }) {
   const point = (items: string[] | undefined, n = 3) => (items ?? []).filter(Boolean).slice(0, n);
   const summary = sentences(b.brief?.summary, 4);
@@ -207,13 +221,15 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy }: {
       )}
 
       {onStart && (
-        <Card title="Today's class">
-          <div className="grid gap-3 sm:grid-cols-3">
+        <Card title="Today's class" action={loading ? <Spinner label="Loading…" /> : undefined}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Teacher"><Select value={pick.teacher_id} onChange={(e) => onPickTeacher(e.target.value)}>
+              <option value="">The whole school</option>{teachers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select></Field>
             <Field label="Class"><Select value={pick.class_no} onChange={(e) => setPick({ ...pick, class_no: e.target.value })}>
               <option value="">Not sure</option>{classes.map((c) => <option key={c} value={c}>Class {c}</option>)}</Select></Field>
             <Field label="Subject"><Select value={pick.subject} onChange={(e) => setPick({ ...pick, subject: e.target.value })}>
               <option value="">Not sure</option>{subjects.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-            <Field label="Topic (optional)"><Input value={pick.topic} onChange={(e) => setPick({ ...pick, topic: e.target.value })} placeholder="For example: place value" /></Field>
+            <Field label="Topic being taught today"><Input value={pick.topic} onChange={(e) => setPick({ ...pick, topic: e.target.value })} placeholder="For example: place value" /></Field>
           </div>
           <div className="mt-4"><Button onClick={onStart} busy={busy} icon={<Mic size={16} />}>Start the visit</Button></div>
         </Card>
@@ -273,10 +289,11 @@ function MediaList({ items, onRemove }: { items: Session['media']; onRemove: (id
       {items.map((m) => (
         <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
           <div className="flex items-center gap-2">
-            <FileAudio size={15} className="shrink-0 text-brand-600" />
+            {m.kind === 'crp_notes_file' ? <FileText size={15} className="shrink-0 text-brand-600" /> : <FileAudio size={15} className="shrink-0 text-brand-600" />}
             <span className="min-w-0 flex-1 truncate font-semibold">{m.student_label ?? m.name}</span>
+            {m.kind === 'crp_notes_file' && m.file_id && <ExtLink href={api.rawUrl(m.file_id)} className="shrink-0 text-xs font-semibold text-brand-700 underline">Open</ExtLink>}
             {m.duration ? <span className="text-xs text-ink-400">{Math.round(m.duration)} s</span> : null}
-            {m.file_id && <audio controls preload="none" src={api.rawUrl(m.file_id)} className="h-8 max-w-[180px]" />}
+            {m.file_id && m.kind !== 'crp_notes_file' && <audio controls preload="none" src={api.rawUrl(m.file_id)} className="h-8 max-w-[180px]" />}
             <button onClick={() => onRemove(m.id)} className="rounded-full p-1 text-ink-400 hover:text-red-600" aria-label="Remove"><Trash2 size={14} /></button>
           </div>
           {m.transcript ? <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-ink-700">{m.transcript}</p>
