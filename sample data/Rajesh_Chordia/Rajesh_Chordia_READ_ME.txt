@@ -1,16 +1,16 @@
-4GO: PRACTICE VISIT
-Many questions, but a wrong idea goes unnoticed: parts of a plant
+MR. RAJESH CHORDIA: PRACTICE VISIT
+A lesson where only the teacher speaks: simple present tense
 ======================================================================
 
 WHO IS THIS FOR
    School   : Mahavir Jaideep English Medium School (S02)
-   Teacher  : Mr. Vishal Gawade
-   Class    : 6
-   Subject  : Science
-   Topic    : Parts of a plant and what each part does
+   Teacher  : Mr. Rajesh Chordia
+   Class    : 7
+   Subject  : English
+   Topic    : Simple present tense
 
 WHAT THIS PRACTICE SHOWS
-   Lots of energy and questions with a real plant. Expect: the same few students answer while the back rows stay silent, and the app points out the wrong idea "plants eat soil", which the teacher praised and did not correct.
+   A weak lesson for student speaking. Expect: the teacher talks most of the period, students only copy, and no one is asked to speak in full sentences. The app also notices the threat of punishment near the end ("anyone who cannot say the rules will be punished") and marks it as the biggest thing to fix. Good points: clear rules and a calm class.
 
 IMPORTANT BEFORE YOU START
    * Everything here is made-up practice material. The lesson audio is a computer voice acting a teacher and children.
@@ -23,34 +23,34 @@ STEP 1.  START THE VISIT  (Visit page)
    Easiest way: on the first page find "Mahavir Jaideep English Medium School" (or the teacher) and press the Visit button on the card.
    Or open the Visit page and choose:
       School  : Mahavir Jaideep English Medium School
-      Teacher : Mr. Vishal Gawade
+      Teacher : Mr. Rajesh Chordia
    Then fill in "Today's class":
-      Class   : 6
-      Subject : Science
-      Topic   : (type this)   Parts of a plant and what each part does
+      Class   : 7
+      Subject : English
+      Topic   : (type this)   Simple present tense
    Press "Start the visit".
 
 ----------------------------------------------------------------------
 STEP 2.  IN CLASS
 ----------------------------------------------------------------------
    a) Lesson recording. Under "Record the lesson" press the "Upload audio" button and choose:
-         4go_lesson_audio_5min.mp3
+         Rajesh_Chordia_lesson_audio_5min.mp3
       (5 minutes). Wait about a minute until the words appear under the recording.
 
    b) Your notes. Copy and paste these two boxes.
 
       Box "What did you see?" (type or paste):
-         Very lively lesson. Teacher asked many questions and used a real plant.
-         The same four or five students answered every question. The back rows stayed silent.
-         One student said plants eat soil for food and the teacher said good and moved on. The wrong idea was not corrected.
-         Teacher did not ask students to explain the reasons, only to name the parts.
-         No written check at the end.
+         Teacher spoke almost the whole period. Students listened and copied from the board.
+         Only two or three questions were asked, and the same two front-bench students answered.
+         No one was asked to speak in full sentences. No pair work, no slate or notebook check.
+         Teacher did not stop to check if the back rows understood.
+         Students looked bored by the middle of the lesson, but the room was quiet and orderly.
 
       Box "What is different since the last visit?" (type or paste):
-         New since last visit: he now brings real plants and asks many questions. Needs to include every student and correct wrong ideas.
+         Same as the last visit. Spoken English is still weak. The action we agreed (ask students to answer in full sentences) was not followed.
 
    c) Optional: press "Add a photo of written notes" and choose:
-         4go_my_notes_photo.jpg
+         Rajesh_Chordia_my_notes_photo.jpg
       (the same notes as a photo of handwriting).
 
    Press "Next: students".
@@ -59,18 +59,19 @@ STEP 2.  IN CLASS
 STEP 3.  STUDENTS
 ----------------------------------------------------------------------
    Press "Get questions". The app writes 4 or 5 questions for this class and topic. They are not always the same,
-   so read each question and answer in the same style as below. For each question press "Record Student A",
+   so read each question and answer in the same style as below.
+   For each question press "Record Student A",
    say the answer out loud in a child's voice (10 to 20 seconds), and stop. Use Student B, C, D for the next children.
 
    Answers you can say (record them yourself):
    1. [Remember] If the app asks something like: "What did you learn today?"
-      say: Roots, stem, leaves, flower. The roots hold the plant in the soil and take in water.
-   2. [Understand] If the app asks something like: "Explain what leaves do."
-      say: Leaves make food for the plant using sunlight. It is called photosynthesis.
-   3. [Use it] If the app asks something like: "What would happen to a plant kept in a dark cupboard?"
-      say: It will turn yellow and weak, because the leaves cannot make food without sunlight.
-   4. [Think] If the app asks something like: "How does a plant get its food?"
-      say: The plant eats the soil through its roots. That is its food. I am not sure about leaves.
+      say: We learned the simple present tense. I think it is the tense for things we do every day.
+   2. [Understand] If the app asks something like: "Explain it in your own words."
+      say: Simple present is when the verb stays the same. Um... with he and she we add s. I am not sure about more.
+   3. [Use it] If the app asks something like: "Make one sentence about your family."
+      say: My mother cook food. (pause) My mother cooks food.
+   4. [Think] If the app asks something like: "Why do we say he plays but I play?"
+      say: I do not know. The teacher said it is a rule.
 
    Press "Next: results".
 
@@ -78,8 +79,8 @@ STEP 3.  STUDENTS
 STEP 4.  RESULTS
 ----------------------------------------------------------------------
    Wait about a minute. Then check the points. You should see something like this:
-      Lots of energy and questions with a real plant. Expect: the same few students answer while the back rows stay silent, and the app points out the wrong idea "plants eat soil", which the teacher praised and did not correct.
+      A weak lesson for student speaking. Expect: the teacher talks most of the period, students only copy, and no one is asked to speak in full sentences. The app also notices the threat of punishment near the end ("anyone who cannot say the rules will be punished") and marks it as the biggest thing to fix. Good points: clear rules and a calm class.
    Try these:
       * Follow-up days: press 7 days, or type your own number.
       * Press "Generate report" to see the PDF for the teacher.
-      * "Send to teacher" sends it to Mr. Vishal Gawade's app (and to email only if email is set up).
+      * "Send to teacher" sends it to Mr. Rajesh Chordia's app (and to email only if email is set up).
