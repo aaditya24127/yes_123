@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Phones: keep content clear of the notch, the home bar and the bottom menu. */
+body { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+/* Inputs at 16px stop iPhones from zooming in when a field is tapped. */
+input, select, textarea { font-size: 16px !important; }
+
+:root { color-scheme: light; }
+/* Evergreen: the same palette as the CRP website. */
+:root { --surface: 251 254 251; --i900: 5 31 32; --i700: 47 75 68; --i500: 95 122 112; --i400: 142 166 153; --page: 237 246 238; --b50: 238 247 240; --b100: 218 241 222; --b200: 188 220 196; --b300: 142 182 155; --b400: 94 147 120; --b500: 58 114 96; --b600: 35 83 71; --b700: 22 56 50; --b800: 11 43 38; --b900: 5 31 32; }
+html, body { background: rgb(var(--page)); color: rgb(var(--i900)); }
+body {
+  background-image: radial-gradient(1000px 420px at 85% -10%, rgb(var(--b600) / 0.10), transparent 60%),
+    radial-gradient(800px 380px at -5% 0%, rgb(var(--b400) / 0.12), transparent 55%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+@media (min-width: 768px) { body { padding-bottom: 24px; } }
+
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgb(var(--b200)); border-radius: 99px; }

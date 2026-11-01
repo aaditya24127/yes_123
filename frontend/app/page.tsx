@@ -1,10 +1,11 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
-import { ArrowLeftRight, ArrowUpDown, Check, Languages, LayoutGrid, Search, School, Sun, UserRound, X } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpDown, Check, Languages, LayoutGrid, Search, School, UserRound, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Band, Config, Entity, Item, Ranking } from '@/lib/types';
-import { BAND, THEMES, applyTheme } from '@/lib/theme';
+import { BAND } from '@/lib/theme';
+import { LANDING_URL } from '@/lib/platform';
 import ItemCard from '@/components/ItemCard';
 import PriorityPanel, { PriorityBody } from '@/components/PriorityPanel';
 import DetailModal, { DetailBody } from '@/components/DetailModal';
@@ -55,10 +56,6 @@ export default function Home() {
     return () => { window.removeEventListener('resize', on); ro?.disconnect(); };
   }, []);
   useEffect(() => { document.body.style.overflow = focus ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [focus]);
-  const [theme, setTheme] = useState(0);
-  const [themeMenu, setThemeMenu] = useState(false);
-  useEffect(() => { try { const t = Number(localStorage.getItem('crp-theme') ?? 0); setTheme(t); applyTheme(t); } catch { /* ignore */ } }, []);
-  const pick = (i: number) => { setTheme(i); applyTheme(i); try { localStorage.setItem('crp-theme', String(i)); } catch { /* ignore */ } };
 
   useEffect(() => {
     api.config().then((c) => { setConfig(c); setSaved(c.weights); setWeights(c.weights); }).catch((e) => setError(String(e.message || e)));
@@ -115,13 +112,13 @@ export default function Home() {
     <main className={`mx-auto max-w-[1400px] px-4 sm:px-8 ${focus ? 'pb-4' : 'pb-16'}`}>
       <header ref={headerRef} className="sticky top-0 z-30 -mx-4 bg-gradient-to-b from-page via-page/95 to-transparent px-4 pb-4 pt-5 sm:-mx-8 sm:px-8">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
+          <a href={LANDING_URL} className="flex items-center gap-2.5" aria-label="CRP Mentor Copilot home page" title="Back to the landing page">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">C</div>
             <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 xl:block">CRP Mentor Copilot</span>
-          </div>
+          </a>
           <NavLinks compact />
           <div className="relative shrink-0">
-            <button onClick={() => { setUiMenu((v) => !v); setLangMenu(false); setThemeMenu(false); }} aria-label={t('iface')} title={t('iface')}
+            <button onClick={() => { setUiMenu((v) => !v); setLangMenu(false); }} aria-label={t('iface')} title={t('iface')}
               className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-float ring-1 ring-brand-100 transition ${uiMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}>U</button>
             <AnimatePresence>
               {uiMenu && (
@@ -140,7 +137,7 @@ export default function Home() {
             </AnimatePresence>
           </div>
           <div className="relative shrink-0">
-            <button onClick={() => { setLangMenu((v) => !v); setUiMenu(false); setThemeMenu(false); }} aria-label={t('language')} title={t('language')}
+            <button onClick={() => { setLangMenu((v) => !v); setUiMenu(false); }} aria-label={t('language')} title={t('language')}
               className={`flex h-12 w-12 items-center justify-center rounded-full shadow-float ring-1 ring-brand-100 transition ${langMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}><Languages size={21} /></button>
             <AnimatePresence>
               {langMenu && (
@@ -174,23 +171,6 @@ export default function Home() {
               P
               {dirty && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-400" />}
             </button>
-          </div>
-          <div className="relative shrink-0">
-            <button onClick={() => { setThemeMenu((v) => !v); setUiMenu(false); setLangMenu(false); }} aria-label={t('themes')} title={t('themes')}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-brand-600 shadow-float ring-1 ring-brand-100 transition hover:text-brand-800"><Sun size={20} /></button>
-            <AnimatePresence>
-              {themeMenu && (
-                <motion.div initial={{ opacity: 0, scale: 0.9, y: -6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: -6 }}
-                  className="absolute end-0 top-14 z-40 grid grid-cols-4 gap-3 rounded-3xl bg-surface p-4 shadow-panel ring-1 ring-brand-100">
-                  {THEMES.map((t, i) => (
-                    <motion.button key={t.name} onClick={() => pick(i)} title={t.name} aria-label={`Theme ${i + 1}: ${t.name}`}
-                      initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04, type: 'spring', stiffness: 400, damping: 22 }} whileHover={{ scale: 1.12 }}
-                      className={`h-10 w-10 rounded-full shadow-float ring-offset-2 ring-offset-white ${theme === i ? 'ring-2 ring-ink-900' : 'ring-1 ring-black/10'}`}
-                      style={{ background: `conic-gradient(${t.brand[6]} 0 50%, ${t.brand[3]} 50% 75%, ${t.page} 75% 100%)` }} />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
 

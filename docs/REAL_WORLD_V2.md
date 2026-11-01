@@ -9,7 +9,7 @@ Plain-language guide to what was added on the `feature/real-world-v2` branch, ho
 | **Priorities** (home) | Same ranking as before. The priorities panel now has **25 ready-made factors** (5 on by default), **Create your own factor** (with optional numbers typed in or uploaded), and in each school/teacher's details **Change this position by hand** (pin, move up/down, hold back; reason required; logged). |
 | **Upload** | Drop many files or a zip. Each file is sorted automatically (school, teacher, type, date), duplicates are caught, the CRP checks and presses **Import**. Imported records count in the ranking straight away. |
 | **Visit** | 4 steps: **Before class** (history, open issues, agreed actions, results, linked textbooks, a short brief), **In class** (record the lesson on the phone, notes, what changed), **Students** (4-5 suggested questions; record each answer), **Results** (evaluation against the research file; tick what to save; saving creates the visit, open issues, follow-ups with due dates, and closes improved issues). |
-| **Teachers** | Requests to a teacher or a whole school (marks, attendance, syllabus plan, lesson recording, reflection, visit notice), messages, notifications, and each teacher's **private link** (`/t/<code>`) where they answer and upload from their phone. Uploads from teachers go to the Upload page for the CRP to check. |
+| **Teachers** | Requests to a teacher or a whole school (marks, attendance, syllabus plan, lesson recording, reflection, visit notice), messages, notifications, and the **teacher app** (`teacher-app/`, port 3001) where each teacher signs in (`firstname.lastname@crp.com`, demo password `pass123`), sees tasks and notifications, uploads answers and sends concerns. Uploads from teachers go to the Upload page for the CRP to check. |
 | **Settings** | Which AI does each job, AI cost, and **Ask the copilot** (questions answered from the latest records). |
 
 Textbooks: search official sites (NCERT, Balbharati, DIKSHA...) from the Visit or Teachers page and **Link** a result; the app downloads the PDF itself, keeps it, reads its chapter list and remembers it for that teacher and school.
@@ -82,4 +82,4 @@ then open http://localhost:3000. The backend uses its own Python environment in 
 - Logins: today anyone who can open the website sees everything; teacher links are private but have no password.
 - Real domain in `ALLOWED_ORIGINS`, India data-protection (DPDP) consent and data location, removing `generator/t.mp3` and `generator/test_s08.mp3`.
 - Translating the new screens into the 10 other languages (they show English for now).
-- SMS / WhatsApp notifications to teachers (today: in-app messages and the private link, which the CRP shares).
+- SMS / WhatsApp notifications to teachers (today: in-app notifications in the teacher app; phone push needs the Firebase step).

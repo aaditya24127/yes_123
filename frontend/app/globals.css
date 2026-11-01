@@ -11,7 +11,7 @@ body { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-
 
 :root { color-scheme: light; }
 html, body { background: rgb(var(--page)); color: rgb(var(--i900)); }
-:root { --surface: 255 255 255; --i900: 11 27 63; --i700: 51 66 95; --i500: 100 116 139; --i400: 148 163 184; --page: 243 246 253; --b50: 239 245 255; --b100: 219 232 254; --b200: 191 213 253; --b300: 147 184 251; --b400: 94 146 247; --b500: 59 115 240; --b600: 37 99 235; --b700: 30 79 208; --b800: 30 64 175; --b900: 27 53 133; }
+:root { --surface: 251 254 251; --i900: 5 31 32; --i700: 47 75 68; --i500: 95 122 112; --i400: 142 166 153; --page: 237 246 238; --b50: 238 247 240; --b100: 218 241 222; --b200: 188 220 196; --b300: 142 182 155; --b400: 94 147 120; --b500: 58 114 96; --b600: 35 83 71; --b700: 22 56 50; --b800: 11 43 38; --b900: 5 31 32; }
 body {
   background-image: radial-gradient(1000px 420px at 85% -10%, rgb(var(--b600) / 0.10), transparent 60%),
     radial-gradient(800px 380px at -5% 0%, rgb(var(--b400) / 0.12), transparent 55%);

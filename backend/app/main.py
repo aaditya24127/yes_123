@@ -16,19 +16,21 @@ from pydantic import BaseModel
 from app.core.storage import get_storage, LocalStorage
 from app.services.prioritization import engine
 from app.services.prioritization.data import Data, get_conn
-from app.api import factors as factors_api, uploads as uploads_api, visits as visits_api, connect as connect_api, assistant as assistant_api
+from app.api import factors as factors_api, uploads as uploads_api, visits as visits_api, connect as connect_api, assistant as assistant_api, teacher_app as teacher_api
 from app import jobs
 
 app = FastAPI(title='CRP Mentor Copilot')
 # Which websites may call this API: comma-separated in ALLOWED_ORIGINS (add the real domain when the site goes live).
 ORIGINS = [o.strip() for o in os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=['*'], allow_headers=['*'])
-for r in (factors_api, uploads_api, visits_api, connect_api, assistant_api):
+for r in (factors_api, uploads_api, visits_api, connect_api, assistant_api, teacher_api):
     app.include_router(r.router)
 
 
 @app.on_event('startup')
 def _start_workers():
+    from app.services import teacher_auth
+    with get_conn() as conn: teacher_auth.ensure_accounts(conn)     # demo logins for every teacher (firstname.lastname@crp.com)
     jobs.start_in_api()     # background workers inside the API (WORKERS_IN_API, default 1); more can run separately: python -m app.jobs
 
 

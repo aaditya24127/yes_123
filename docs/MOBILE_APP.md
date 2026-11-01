@@ -58,5 +58,5 @@ one thing: the server's address (built in). AI keys stay on the server, because 
 
 ## Teachers
 
-Teachers do not need the app: the private link opens in any phone browser. If teachers get the app later, the same
+Teachers use the teacher app (`teacher-app/`), which opens in any phone browser and can later be wrapped the same way. If teachers get the app later, the same
 `/teacher?k=...` page works inside it.

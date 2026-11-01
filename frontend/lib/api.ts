@@ -1,7 +1,7 @@
 // Every call to the backend, in one place. Pages never build URLs themselves, so an endpoint can change here only.
 import type {
   AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
-  FileInfo, Message, Notice, Override, Preview, Ranking, Resource, Session, SessionSummary, TeacherHome, TextbookHit, TRequest,
+  FileInfo, Message, Notice, Override, Preview, Ranking, Resource, Session, SessionSummary, TextbookHit, TRequest,
 } from './types';
 import { apiUrl } from './platform';
 
@@ -91,8 +91,6 @@ export const api = {
 
   connect: {
     overview: () => get<ConnectRow[]>('/api/connect/overview'),
-    link: (tid: string) => post<{ token: string; path: string }>(`/api/teachers/${tid}/link`),
-    stopLink: (tid: string) => send('DELETE', `/api/teachers/${tid}/link`),
     request: (body: { teacher_ids?: string[]; school_id?: string; kind: string; title?: string; message?: string; due_date?: string; visit_date?: string }) =>
       post<{ created: number }>('/api/requests', body),
     requests: (p: { teacher_id?: string; status?: string } = {}) => get<TRequest[]>(`/api/requests${qs(p)}`),
@@ -101,12 +99,6 @@ export const api = {
     send: (tid: string, body: string) => post<Message[]>(`/api/teachers/${tid}/messages`, { body }),
     notifications: () => get<Notice[]>('/api/notifications'),
     readAll: () => post('/api/notifications/read'),
-  },
-
-  teacher: {
-    home: (token: string) => get<TeacherHome>(`/api/t/${token}`),
-    message: (token: string, body: string) => post<TeacherHome>(`/api/t/${token}/messages`, { body }),
-    submit: (token: string, fields: { request_id?: string; text?: string }, files: File[]) => form<TeacherHome>(`/api/t/${token}/submit`, fields, files),
   },
 
   ai: {

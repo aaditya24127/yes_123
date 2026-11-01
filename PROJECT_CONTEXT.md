@@ -14,7 +14,7 @@ A **Cluster Resource Person (CRP)** in India mentors the teachers of about 10-15
 (Classes 1-10). They cannot visit everyone often, so this app tells them **whom to visit first and why**, helps them run
 the visit, and keeps teachers in touch between visits.
 
-Main users: CRPs (main app), teachers (a private link on their phone), later block / district officials.
+Main users: CRPs (main app), teachers (the separate `teacher-app/`: sign in with email + password, tasks, uploads, concerns), later block / district officials.
 
 What it does:
 1. **Priority list**: ranks schools and teachers 0-100 from 25 factors (learning gaps, unresolved issues, overdue
@@ -84,6 +84,8 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
 | `frontend/app/` | pages: `/` priorities, `/upload`, `/visit`, `/connect`, `/settings`, `/teacher?k=` |
+| `teacher-app/` | the teachers' browser app (Next.js 15, same Evergreen look, port 3001): `cd teacher-app && npm install --legacy-peer-deps && npm run dev`. Sign in, tasks from the CRP, upload answers, send concerns, own visits. Backend: `backend/app/api/teacher_app.py`, `services/teacher_auth.py` |
+| `landing/` | public landing page (separate Vite + React 19 + Tailwind 4 site): `cd landing && npm install && npm run dev` (port 5173). Every "Open the app" button goes to the app (`VITE_APP_URL`, default localhost:3000), and the app's logo goes back here (`NEXT_PUBLIC_LANDING_URL`, default localhost:5173) |
 | `frontend/components/` | page parts; `ui/` shared kit; `shell/` menu and page frame |
 | `docs/` | `REAL_WORLD_V2.md` (features), `SETUP_KEYS.md`, `MOBILE_APP.md`, `DATABASE.md`, `DATASET.md`, `SUPABASE.md` |
 | `evaluation/` | tests and answer keys |
@@ -144,7 +146,7 @@ Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, se
 
 ### Done (real-world-v2)
 25 factors + custom factors + manual overrides; bulk upload with sorting / validation / background import; 4-step visit
-evaluation; CRP <-> teacher requests, messages, private links; textbook search + PDF download; replaceable AI layer with
+evaluation; CRP <-> teacher requests and messages; teacher app (`teacher-app/`, browser version) with logins; textbook search + PDF download; replaceable AI layer with
 cost log and free connection test; job queue; app-ready frontend (single API address, static export build, phone layout,
 bottom menu); free local speech-to-text verified (99% word match on a demo recording).
 
@@ -157,7 +159,7 @@ fonts).
   JWT bearer tokens, which work in the mobile app; avoid cookie-only sessions). Roles: CRP, teacher, admin, viewer
   (`app_users.role` exists). Every API route must check the user and limit data to their cluster / schools
   (`school_assignments`). Supabase row-level security draft: `database/migrations/0005_rls.supabase.sql`.
-- Teacher links (`teacher_links.token`) are bearer secrets with no expiry: add expiry, rotation, rate limiting.
+- Teacher app logins: demo accounts are `firstname.lastname@crp.com` with the shared demo password (`DEMO_TEACHER_PASSWORD`, default `pass123`). Before real use: set a strong `TEACHER_AUTH_SECRET`, give each teacher their own password (they can change it in the app), and move to Supabase Auth if wanted. Teacher tokens last 30 days; wrong-password attempts are rate limited per email (in memory only).
 - File uploads: size limits exist (500 MB batch, 200 MB per file); add file-type checks by content, a virus scan, limits
   on zip contents (zip bombs), and safe file names.
 - `ALLOWED_ORIGINS` (CORS) must list only real domains in production; HTTPS everywhere.
