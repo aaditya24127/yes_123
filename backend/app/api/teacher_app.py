@@ -3,7 +3,7 @@ Everything is limited to the signed-in teacher (the id comes from the token, nev
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ..services import push, teacher_auth
+from ..services import push, tasks, teacher_auth
 from ..services.ingest import pipeline
 from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
@@ -68,7 +68,8 @@ def home(tid: str = Depends(teacher_auth.current_teacher)):
         msgs = conn.execute('select * from messages where teacher_id = %s order by created_at desc limit 80', (tid,)).fetchall()
         notes = conn.execute("select * from notifications where recipient_type = 'teacher' and teacher_id = %s order by created_at desc limit 30", (tid,)).fetchall()
         visit = conn.execute("select visit_date, message from teacher_requests where teacher_id = %s and kind = 'visit_notice' and status <> 'cancelled' and visit_date >= current_date order by visit_date limit 1", (tid,)).fetchone()
-    return dict(teacher=_profile(t), upcoming_visit=_row(visit) if visit else None, tasks=[_row(r) for r in reqs], messages=[_row(m) for m in reversed(msgs)],
+        its = tasks.items_by_request(conn, [r['id'] for r in reqs])
+    return dict(teacher=_profile(t), upcoming_visit=_row(visit) if visit else None, tasks=[dict(_row(r), items=its.get(str(r['id']), [])) for r in reqs], messages=[_row(m) for m in reversed(msgs)],
                 notifications=[_row(n) for n in notes], unread=sum(1 for n in notes if n['read_at'] is None), kinds=KIND_LABEL)
 
 
@@ -95,29 +96,47 @@ def send_message(req: MessageReq, tid: str = Depends(teacher_auth.current_teache
 
 
 @router.post('/submit')
-async def submit(task_id: str | None = Form(None), text: str | None = Form(None), files: list[UploadFile] = File(default=[]),
-                 tid: str = Depends(teacher_auth.current_teacher)):
-    """Answer a task (files and/or a note), or send something unasked. Files go into the normal upload sorting, already tagged with this
-    teacher and school; the CRP checks and imports them on the Upload page."""
+async def submit(task_id: str | None = Form(None), item_id: str | None = Form(None), text: str | None = Form(None),
+                 files: list[UploadFile] = File(default=[]), tid: str = Depends(teacher_auth.current_teacher)):
+    """Answer one numbered task (files and/or a note), confirm a visit notice, or send something unasked. Files go into the normal upload
+    sorting, already tagged with this teacher, school and task; the CRP reviews them (accept or reject) from the Teachers page."""
     text = (text or '').strip() or None
     with get_conn() as conn:
         t = _me(conn, tid)
+        it = None
+        if item_id:
+            it = conn.execute("""select i.* from task_items i join teacher_requests r on r.id = i.request_id
+                                 where i.id = %s and r.teacher_id = %s and r.status <> 'cancelled'""", (item_id, tid)).fetchone()
+            if not it: raise HTTPException(404, 'That task was not found.')
+            if it['status'] == 'accepted': raise HTTPException(400, 'This task was already accepted. Thank you!')
+            task_id = str(it['request_id'])
         r = conn.execute('select * from teacher_requests where id = %s and teacher_id = %s', (task_id, tid)).fetchone() if task_id else None
         if task_id and not r: raise HTTPException(404, 'That task was not found.')
+        if r and not it and r['kind'] != 'visit_notice':      # an older app version: answer the first task still waiting
+            it = conn.execute("select * from task_items where request_id = %s and status in ('open', 'rejected') order by position limit 1", (task_id,)).fetchone()
     got = [(f.filename or 'file', await f.read()) for f in files if f.filename]
     if not got and not text: raise HTTPException(400, 'Add a file or write a note first.')
+    kind = it['kind'] if it else (r['kind'] if r else None)
     bid = None
     if got:
         bid = pipeline.create_batch(got, origin='teacher', created_by=t['full_name'], hint_school_id=t['school_id'], hint_teacher_id=tid,
-                                    hint_section=KIND_SECTION.get(r['kind']) if r else None, note=f"From {t['full_name']}" + (f": {r['title']}" if r else ''))
+                                    hint_section=KIND_SECTION.get(kind), note=f"From {t['full_name']}" + (f": Task {it['position']}, {it['title']}" if it else (f": {r['title']}" if r else '')))
     with get_conn() as conn:
-        if r:
-            conn.execute("update teacher_requests set status = 'submitted', response_text = %s, responded_at = now(), batch_id = coalesce(%s, batch_id) where id = %s", (text, bid, r['id']))
+        if bid and it: conn.execute('update upload_batches set task_item_id = %s where id = %s', (it['id'], bid))
+        if it:
+            conn.execute("update task_items set status = 'submitted', response_text = coalesce(%s, response_text), review_remark = null, submitted_at = now() where id = %s", (text, it['id']))
+            tasks.refresh_request(conn, it['request_id'])
+        elif r:                                               # a visit notice that the teacher has seen
+            conn.execute("update teacher_requests set status = 'submitted', response_text = %s, responded_at = now() where id = %s", (text, r['id']))
         if text:
             conn.execute("insert into messages (teacher_id, sender, body, request_id) values (%s,'teacher',%s,%s)", (tid, text, r['id'] if r else None))
-        title = (f"{t['full_name']} sent {len(got)} file(s)" if got else f"Reply from {t['full_name']}")
-        conn.execute("insert into notifications (recipient_type, title, body, link) values ('crp', %s, %s, %s)",
-                     (title, (r['title'] if r else (text or ''))[:200], f'/upload?batch={bid}' if bid else '/connect'))
+        if it:
+            title = f"{t['full_name']} sent Task {it['position']}"
+            body = it['title'] + (f" ({len(got)} file{'s' if len(got) != 1 else ''})" if got else '')
+        else:
+            title = f"{t['full_name']} sent {len(got)} file(s)" if got else f"Reply from {t['full_name']}"
+            body = r['title'] if r else (text or '')
+        conn.execute("insert into notifications (recipient_type, title, body, link) values ('crp', %s, %s, '/connect')", (title, body[:200]))
         conn.commit()
     return dict(ok=True, files=len(got), batch_id=str(bid) if bid else None)
 

@@ -1,0 +1,94 @@
+'use client';
+// "Give tasks": the CRP writes numbered tasks (Task 1, Task 2 ...), each with its own instructions, and sends them to a teacher or a whole school.
+// A visit notice is a separate mode (a date and a short message).
+import { useState } from 'react';
+import { CalendarClock, ListPlus, Send, Trash2 } from 'lucide-react';
+import { Button, Card, Field, Input, Pill, Select, TextArea } from '@/components/ui';
+import { api } from '@/lib/api';
+import { useLoad } from '@/lib/hooks';
+import type { ConnectRow } from '@/lib/types';
+
+type Draft = { kind: string; title: string; instructions: string };
+const blank = (): Draft => ({ kind: 'marks', title: '', instructions: '' });
+
+export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow; onSent: () => void; onError: (m: string) => void }) {
+  const opts = useLoad(() => api.connect.taskOptions(), []);
+  const [mode, setMode] = useState<'tasks' | 'visit'>('tasks');
+  const [pkgTitle, setPkgTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [due, setDue] = useState('');
+  const [visitDate, setVisitDate] = useState('');
+  const [items, setItems] = useState<Draft[]>([blank()]);
+  const [wholeSchool, setWholeSchool] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ok, setOk] = useState('');
+
+  const kinds = opts.data?.kinds ?? [];
+  const set = (i: number, patch: Partial<Draft>) => setItems((l) => l.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const filled = items.filter((x) => x.instructions.trim() || x.title.trim());
+  const canSend = mode === 'visit' ? !!visitDate : filled.length > 0;
+  const target = wholeSchool ? { school_id: row.school_id } : { teacher_ids: [row.id] };
+
+  const send = async () => {
+    setBusy(true); setOk('');
+    try {
+      const r = mode === 'visit'
+        ? await api.connect.request({ kind: 'visit_notice', visit_date: visitDate, message: message || undefined, ...target })
+        : await api.connect.request({ kind: 'other', title: pkgTitle || undefined, message: message || undefined, due_date: due || undefined, ...target,
+            items: filled.map((x) => ({ kind: x.kind, title: x.title.trim() || undefined, instructions: x.instructions.trim() || undefined })) });
+      setOk(`Sent to ${r.created} teacher${r.created === 1 ? '' : 's'}.`);
+      setMessage(''); setPkgTitle(''); setItems([blank()]); setDue(''); setVisitDate('');
+      onSent();
+    } catch (e) { onError((e as Error).message); }
+    setBusy(false);
+  };
+
+  return (
+    <Card title="Give tasks" subtitle="Write numbered tasks. The teacher gets an alert, uploads for each task, and you accept or reject each one.">
+      <div className="mb-4 flex gap-2">
+        <Pill active={mode === 'tasks'} onClick={() => setMode('tasks')}>Tasks</Pill>
+        <Pill active={mode === 'visit'} onClick={() => setMode('visit')}>Visit notice</Pill>
+      </div>
+
+      {mode === 'visit' ? (
+        <div className="grid gap-3">
+          <Field label="Visit date"><Input type="date" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} /></Field>
+          <Field label="Message (optional)"><TextArea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Please keep Class 4 marks and your lesson plan ready." /></Field>
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Heading (optional)"><Input value={pkgTitle} onChange={(e) => setPkgTitle(e.target.value)} placeholder="Before my visit on Friday" /></Field>
+            <Field label="Please send by (optional)"><Input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></Field>
+          </div>
+          <Field label="Message for everything (optional)"><TextArea rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Hello! Please send these before the visit." /></Field>
+
+          <ol className="grid gap-3">
+            {items.map((it, i) => (
+              <li key={i} className="rounded-2xl bg-brand-50/60 p-3 ring-1 ring-brand-100">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">Task {i + 1}</span>
+                  <Select value={it.kind} onChange={(e) => set(i, { kind: e.target.value })} className="!w-auto flex-1">
+                    {(kinds.length ? kinds : [{ code: it.kind, label: it.kind, default_add_to: null }]).map((k) => <option key={k.code} value={k.code}>{k.label}</option>)}
+                  </Select>
+                  {items.length > 1 && <button type="button" onClick={() => setItems((l) => l.filter((_, j) => j !== i))} aria-label={`Remove task ${i + 1}`} className="rounded-full p-2 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>}
+                </div>
+                <Input value={it.title} onChange={(e) => set(i, { title: e.target.value })} placeholder="Short name (optional), for example Class 4 marks" className="mb-2" />
+                <TextArea rows={2} value={it.instructions} onChange={(e) => set(i, { instructions: e.target.value })}
+                  placeholder="What should the teacher add or give? For example: first term marks for all subjects, as an Excel sheet or a clear photo." />
+              </li>
+            ))}
+          </ol>
+          <div><Button variant="soft" icon={<ListPlus size={16} />} onClick={() => setItems((l) => [...l, blank()])}>Add Task {items.length + 1}</Button></div>
+        </div>
+      )}
+
+      <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={wholeSchool} onChange={(e) => setWholeSchool(e.target.checked)} className="h-4 w-4" />Send to all teachers of {row.school_name}</label>
+      <div className="mt-3 flex items-center gap-3">
+        <Button icon={mode === 'visit' ? <CalendarClock size={16} /> : <Send size={16} />} busy={busy} disabled={!canSend} onClick={send}>
+          {mode === 'visit' ? 'Send notice' : `Send ${filled.length > 1 ? `${filled.length} tasks` : 'task'}`}</Button>
+        {ok && <span className="text-sm text-emerald-700">{ok}</span>}
+      </div>
+    </Card>
+  );
+}

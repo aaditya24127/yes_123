@@ -146,7 +146,7 @@ Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, se
 
 ### Done (real-world-v2)
 25 factors + custom factors + manual overrides; bulk upload with sorting / validation / background import; 4-step visit
-evaluation; CRP <-> teacher requests and messages; teacher app (`teacher-app/`, browser version) with logins and phone/browser alerts (Web Push, VAPID keys in `.env`: `python database/cli.py vapid-keys`; no Firebase needed for the browser app; Firebase would only be needed for a native Android build); textbook search + PDF download; replaceable AI layer with
+evaluation; CRP <-> teacher requests and messages; numbered tasks per request (Task 1, 2, 3) with per-task uploads, accept / reject (remarks) and add-to-records, teacher app (`teacher-app/`, browser version) with logins and phone/browser alerts (Web Push, VAPID keys in `.env`: `python database/cli.py vapid-keys`; no Firebase needed for the browser app; Firebase would only be needed for a native Android build); textbook search + PDF download; replaceable AI layer with
 cost log and free connection test; job queue; app-ready frontend (single API address, static export build, phone layout,
 bottom menu); free local speech-to-text verified (99% word match on a demo recording).
 
@@ -198,6 +198,6 @@ Factors: `GET factors`, `GET factors/{code}/preview`, `POST factors/suggest`, `P
 Uploads: `POST uploads` (multipart files), `GET uploads`, `GET uploads/{id}`, `PATCH uploads/items/{id}`, `POST uploads/{id}/import`.
 Visits: `GET brief`, `POST sessions`, `GET|PATCH sessions/{id}`, `POST sessions/{id}/media|questions|evaluate|save`, `DELETE sessions/{id}/media/{mid}`.
 Textbooks: `GET textbooks/search`, `POST|GET resources`, `DELETE resources/{id}`.
-Connect: `GET connect/overview`, `POST|DELETE teachers/{id}/link`, `POST|GET requests`, `PATCH requests/{id}`, `GET|POST teachers/{id}/messages`, `GET notifications`, `POST notifications/read`.
-Teacher page: `GET t/{token}`, `POST t/{token}/messages`, `POST t/{token}/submit`.
+Connect (CRP side): `GET connect/overview`, `GET task-options`, `POST|GET requests` (a request holds numbered tasks = `task_items`), `PATCH requests/{id}`, `POST task-items/{id}/review` (accept, optionally adding the files to the records, or reject with remarks), `GET uploads/items/{id}/raw` (open a teacher's file), `GET|POST teachers/{id}/messages`, `GET notifications`, `POST notifications/read`.
+Teacher app (`/api/teacher/...`, bearer token): `POST login`, `GET home`, `POST submit` (per `item_id`), `POST messages` (concern), `GET visits`, `POST password`, `POST notifications/read`, `GET push/key`, `POST push/subscribe|unsubscribe|test`.
 AI: `GET ai/status`, `POST ai/test`, `GET ai/usage`, `POST ask`. Full interactive list: `http://localhost:8000/docs`.

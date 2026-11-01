@@ -70,9 +70,17 @@ export interface ConnectRow {
   id: string; full_name: string; title: string; designation: string; school_id: string; school_name: string; school_code: string; open_requests: number; submitted: number;
   unread: number; last_message: string | null; email: string | null;
 }
+export interface TaskFile { id: string; name: string; size: number; format: string; status: string; created_at: string }
+export interface TaskItem {
+  id: string; position: number; title: string; instructions: string | null; kind: string; status: 'open' | 'submitted' | 'accepted' | 'rejected';
+  response_text: string | null; review_remark: string | null; added_to: string | null; submitted_at: string | null; reviewed_at: string | null; files: TaskFile[];
+}
+export interface TaskOptions { kinds: { code: string; label: string; default_add_to: string | null }[]; add_to: { code: string; label: string }[] }
+export interface ReviewResult { ok: boolean; status: 'accepted' | 'rejected'; queued: number; skipped_duplicates: number }
 export interface TRequest {
   id: string; teacher_id: string; teacher_name?: string; school_name?: string; kind: string; title: string; message: string | null; due_date: string | null;
   visit_date: string | null; status: string; response_text: string | null; batch_id: string | null; created_at: string; responded_at: string | null;
+  items: TaskItem[];
 }
 export interface Message { id: string; sender: 'crp' | 'teacher' | 'system'; body: string; created_at: string; read_at: string | null; request_id: string | null; is_concern?: boolean }
 export interface Notice { id: string; title: string; body: string | null; link: string | null; created_at: string; read_at: string | null }
