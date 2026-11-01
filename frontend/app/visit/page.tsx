@@ -196,7 +196,7 @@ function VisitHeader({ brief, session, pick, onStartOver }: { brief: Brief; sess
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100">
       <div className="min-w-0 flex-1">
-        <h2 className="font-serif text-2xl font-semibold text-ink-900">{brief.teacher?.name ?? brief.school.name}</h2>
+        <h2 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">{brief.teacher?.name ?? brief.school.name}</h2>
         <p className="text-sm text-ink-500">{brief.teacher ? `${brief.teacher.designation} · ${brief.school.name}` : `${brief.school.board} · ${brief.school.medium} medium · Classes ${brief.school.grades}`}</p>
         {chips.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{chips.map((c) => <Badge key={c} tone="brand">{c}</Badge>)}</div>}
       </div>
@@ -321,12 +321,12 @@ function MediaList({ items, waiting = [], onRemove }: { items: Session['media'];
     <ul className="mt-3 space-y-2">
       {items.map((m) => (
         <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {m.kind === 'crp_notes_file' ? <FileText size={15} className="shrink-0 text-brand-600" /> : <FileAudio size={15} className="shrink-0 text-brand-600" />}
             <span className="min-w-0 flex-1 truncate font-semibold">{m.student_label ?? m.name}</span>
             {m.kind === 'crp_notes_file' && m.file_id && <ExtLink href={api.rawUrl(m.file_id)} className="shrink-0 text-xs font-semibold text-brand-700 underline">Open</ExtLink>}
             {m.duration ? <span className="text-xs text-ink-400">{Math.round(m.duration)} s</span> : null}
-            {m.file_id && m.kind !== 'crp_notes_file' && <audio controls preload="none" src={api.rawUrl(m.file_id)} className="h-8 max-w-[180px]" />}
+            {m.file_id && m.kind !== 'crp_notes_file' && <audio controls preload="none" src={api.rawUrl(m.file_id)} className="order-last h-8 w-full sm:order-none sm:w-auto sm:max-w-[180px]" />}
             <button onClick={() => onRemove(m.id)} className="rounded-full p-1 text-ink-400 hover:text-red-600" aria-label="Remove"><Trash2 size={14} /></button>
           </div>
           {m.transcript ? <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-ink-700">{m.transcript}</p>
@@ -336,10 +336,10 @@ function MediaList({ items, waiting = [], onRemove }: { items: Session['media'];
       ))}
       {waiting.map((m) => (
         <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {m.kind === 'crp_notes_file' ? <FileText size={15} className="shrink-0 text-brand-600" /> : <FileAudio size={15} className="shrink-0 text-brand-600" />}
             <span className="min-w-0 flex-1 truncate font-semibold">{m.student_label ?? m.name}</span>
-            {m.kind !== 'crp_notes_file' && <audio controls preload="auto" src={m.url} className="h-8 max-w-[180px]" />}
+            {m.kind !== 'crp_notes_file' && <audio controls preload="auto" src={m.url} className="order-last h-8 w-full sm:order-none sm:w-auto sm:max-w-[180px]" />}
             <span className="flex shrink-0 items-center gap-1 text-xs text-ink-400"><Loader2 size={12} className="animate-spin" />Saving…</span>
           </div>
         </li>

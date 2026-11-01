@@ -54,7 +54,7 @@ export default function CreateFactor({ open, onClose, onCreated, onUseExisting }
       {open && (
         <motion.div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink-900/30 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <motion.div role="dialog" aria-label="Create a factor" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
-            className="thin-scroll max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[28px] bg-surface p-6 shadow-panel">
+            className="thin-scroll max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[28px] bg-surface p-4 shadow-panel sm:p-6">
             <div className="flex items-start justify-between">
               <h2 className="font-serif text-2xl font-semibold text-ink-900">Create your own factor</h2>
               <button onClick={onClose} aria-label="Close" className="rounded-full p-2 text-ink-500 hover:bg-brand-50"><X size={20} /></button>

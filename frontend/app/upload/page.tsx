@@ -78,11 +78,11 @@ function UploadPage() {
     <PageShell title="Add files" subtitle="Add your school files here. We sort them for you. You check them, then press Import.">
       <ErrorNote error={error} onClose={() => setError('')} />
       <Card title="What can you add?" subtitle="Add anything you have. If you are not sure, add it anyway: we find the right place and ask you to check.">
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
           {KINDS.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex gap-3 rounded-2xl bg-brand-50/60 p-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-brand-600 shadow-float"><Icon size={18} /></span>
-              <span><b className="block text-sm text-ink-900">{title}</b><span className="text-xs text-ink-500">{text}</span></span>
+            <li key={title} className="flex gap-2 rounded-2xl bg-brand-50/60 p-2.5 sm:gap-3 sm:p-3">
+              <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-brand-600 shadow-float min-[400px]:flex"><Icon size={18} /></span>
+              <span><b className="block text-[13px] leading-snug text-ink-900 sm:text-sm">{title}</b><span className="hidden text-xs text-ink-500 sm:inline">{text}</span></span>
             </li>
           ))}
         </ul>

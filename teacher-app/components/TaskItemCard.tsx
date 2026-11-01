@@ -8,7 +8,7 @@ import { Badge, Button } from '@/components/ui';
 
 const HINT: Record<string, string> = {
   marks: 'Upload the marks sheet (Excel, CSV, PDF) or a clear photo of it.', attendance: 'Upload the attendance sheet or a photo of the register.',
-  syllabus_plan: 'Upload your syllabus or year plan.', lesson_plan: 'Upload your lesson plan.', lesson_recording: 'Upload a recording of a lesson (audio file).',
+  syllabus_plan: 'Upload your syllabus or year plan.', lesson_plan: 'Upload your lesson plan.', 
   student_work: 'Upload photos of student work.', reflection: 'Write a short note, or upload it.', other: 'Add what your CRP asked for.',
 };
 const size = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
@@ -21,7 +21,14 @@ export default function TaskItemCard({ item, label, onSent }: { item: TaskItem; 
   const [err, setErr] = useState('');
   const pick = useRef<HTMLInputElement>(null);
   const cam = useRef<HTMLInputElement>(null);
-  const add = (list: FileList | null) => { if (list) setFiles((f) => [...f, ...Array.from(list)]); };
+  // Documents and photos only: audio cannot be sent from this app.
+  const isAudio = (f: File) => f.type.startsWith('audio/') || /\.(mp3|wav|m4a|ogg|webm|aac|opus|amr)$/i.test(f.name);
+  const add = (list: FileList | null) => {
+    if (!list) return;
+    const all = Array.from(list); const ok = all.filter((f) => !isAudio(f));
+    setErr(ok.length < all.length ? 'Audio recordings cannot be sent from this app. Please choose documents or photos.' : '');
+    if (ok.length) setFiles((f) => [...f, ...ok]);
+  };
 
   const accepted = item.status === 'accepted';
   const rejected = item.status === 'rejected';
@@ -73,7 +80,7 @@ export default function TaskItemCard({ item, label, onSent }: { item: TaskItem; 
       {!accepted && (
         <div className="mt-4">
           <p className="mb-2 text-sm text-ink-500">{rejected ? 'Send it again with the changes.' : item.status === 'submitted' ? 'You can send more files or a note.' : HINT[item.kind] ?? HINT.other}</p>
-          <input ref={pick} type="file" multiple hidden onChange={(e) => { add(e.target.files); e.target.value = ''; }} />
+          <input ref={pick} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx,.zip" hidden onChange={(e) => { add(e.target.files); e.target.value = ''; }} />
           <input ref={cam} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { add(e.target.files); e.target.value = ''; }} />
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="soft" onClick={() => pick.current?.click()}><FileUp size={16} />Choose files</Button>

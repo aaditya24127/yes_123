@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Uploa
 from pydantic import BaseModel
 
 from ..services import push, report, tasks, teacher_auth
-from ..services.ingest import pipeline
+from ..services.ingest import pipeline, readers
 from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
 
@@ -115,6 +115,7 @@ async def submit(task_id: str | None = Form(None), item_id: str | None = Form(No
         if r and not it and r['kind'] != 'visit_notice':      # an older app version: answer the first task still waiting
             it = conn.execute("select * from task_items where request_id = %s and status in ('open', 'rejected') order by position limit 1", (task_id,)).fetchone()
     got = [(f.filename or 'file', await f.read()) for f in files if f.filename]
+    if any(readers.format_of(n) in readers.AUDIO for n, _ in got): raise HTTPException(400, 'Audio recordings cannot be sent from this app. Send documents or photos instead.')
     if not got and not text: raise HTTPException(400, 'Add a file or write a note first.')
     kind = it['kind'] if it else (r['kind'] if r else None)
     bid = None

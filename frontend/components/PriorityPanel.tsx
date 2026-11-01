@@ -121,9 +121,9 @@ export default function PriorityPanel({ open, ...body }: BodyProps & { open: boo
     <AnimatePresence>
       {open && (
         <>
-          <motion.div className="fixed inset-0 z-40 bg-ink-900/5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={body.onClose} />
+          <motion.div className="fixed inset-0 z-[59] bg-ink-900/5 sm:z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={body.onClose} />
           <motion.aside role="dialog" aria-label="Priority settings"
-            className="fixed bottom-4 right-4 top-4 z-50 flex w-[min(460px,calc(100vw-2rem))] flex-col rounded-[28px] bg-surface p-6 shadow-panel"
+            className="fixed bottom-2 right-2 top-2 z-[60] flex w-[calc(100vw-1rem)] flex-col rounded-[28px] bg-surface p-4 shadow-panel sm:bottom-4 sm:right-4 sm:top-4 sm:z-50 sm:w-[min(460px,calc(100vw-2rem))] sm:p-6"
             initial={{ x: 480, opacity: 0.6 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 480, opacity: 0.6 }} transition={{ type: 'spring', stiffness: 280, damping: 32 }}>
             <PriorityBody {...body} />
           </motion.aside>

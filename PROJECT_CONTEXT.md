@@ -28,7 +28,7 @@ What it does:
    picks the follow-up time (default 14 days) and can make a **PDF report for the teacher** (what went well, where to improve,
    which questions to ask and how many, what was agreed) and send it: always into the teacher app (with an alert), and by email
    when SMTP is set up (`SMTP_*` in `.env.example`). Every school / teacher card has a **Visit** button.
-4. **Teachers**: requests (send marks, plans, a lesson recording...), visit notices, messages, and a private teacher page.
+4. **Teachers**: requests (send marks, plans, student work...; teachers cannot send or record audio), visit notices, messages, and a private teacher page.
 5. **Textbooks**: search official sites and link a book to a teacher; the PDF is downloaded and remembered.
 6. **Ask the copilot**: questions answered from the latest data.
 

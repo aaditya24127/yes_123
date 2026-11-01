@@ -30,7 +30,7 @@ export const NAV: NavItem[] = [
 ];
 
 // Kinds of things a CRP can ask a teacher for (labels come from the backend too; this is the order shown).
-export const REQUEST_KINDS = ['visit_notice', 'marks', 'attendance', 'syllabus_plan', 'lesson_plan', 'lesson_recording', 'student_work', 'reflection', 'other'] as const;
+export const REQUEST_KINDS = ['visit_notice', 'marks', 'attendance', 'syllabus_plan', 'lesson_plan', 'student_work', 'reflection', 'other'] as const;
 
 // Document types used by the upload sorter (must match backend SECTIONS).
 export const SECTIONS = ['assessments', 'observations', 'followups', 'visits', 'attendance', 'audio', 'roster', 'facts', 'textbooks', 'other'] as const;

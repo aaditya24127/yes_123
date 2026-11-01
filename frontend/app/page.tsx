@@ -43,7 +43,7 @@ export default function Home() {
   const [vw, setVw] = useState(1280);
   const [hdr, setHdr] = useState(170);
   const headerRef = useRef<HTMLElement>(null);
-  const focus = ui !== 'grid';
+  const focus = ui !== 'grid' && vw >= 768;      // the one-by-one and sideways layouts need a wide screen; phones always get the card list
   useEffect(() => { try { const u = localStorage.getItem('crp-ui'); if (u === 'vertical' || u === 'horizontal') setUi(u); } catch { /* ignore */ } }, []);
   const pickUi = (u: UI) => {
     setUi(u); setUiMenu(false); setSide(null); setPanel(false); setSelected(null); setFocusIdx(0);
@@ -118,14 +118,14 @@ export default function Home() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-4 sm:px-8 ${focus ? 'pb-4' : 'pb-16'}`}>
-      <header ref={headerRef} className="sticky top-0 z-30 -mx-4 bg-gradient-to-b from-page via-page/95 to-transparent px-4 pb-4 pt-5 sm:-mx-8 sm:px-8">
-        <div className="flex items-center gap-4">
+      <header ref={headerRef} className={`${focus ? 'sticky' : 'relative sm:sticky'} top-0 z-30 -mx-4 bg-gradient-to-b from-page via-page/95 to-transparent px-4 pb-4 pt-5 sm:-mx-8 sm:px-8`}>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <a href={LANDING_URL} className="flex items-center gap-2.5" aria-label="CRP Mentor Copilot home page" title="Back to the landing page">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">C</div>
             <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 xl:block">CRP Mentor Copilot</span>
           </a>
           <NavLinks compact />
-          <div className="relative shrink-0">
+          <div className="relative hidden shrink-0 md:block">
             <button onClick={() => { setUiMenu((v) => !v); setLangMenu(false); }} aria-label={t('iface')} title={t('iface')}
               className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-float ring-1 ring-brand-100 transition ${uiMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}>U</button>
             <AnimatePresence>
@@ -169,10 +169,10 @@ export default function Home() {
               )}
             </AnimatePresence>
           </div>
-          <div className="relative ms-auto flex h-14 min-w-0 flex-1 max-w-3xl items-center rounded-full bg-surface ps-5 pe-2 shadow-float ring-1 ring-brand-100 transition focus-within:ring-2 focus-within:ring-brand-500">
+          <div className="relative order-last flex h-12 min-w-0 flex-[1_1_100%] items-center sm:order-none sm:ms-auto sm:h-14 sm:flex-1 sm:max-w-3xl sm:items-center rounded-full bg-surface ps-5 pe-2 shadow-float ring-1 ring-brand-100 transition focus-within:ring-2 focus-within:ring-brand-500">
             <Search size={20} className="shrink-0 text-brand-500" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={entity === 'school' ? t('searchSchools') : t('searchTeachers')}
-              className="h-full flex-1 bg-transparent px-3 text-[15px] text-ink-900 outline-none placeholder:text-ink-400" />
+              className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-ink-900 outline-none placeholder:text-ink-400" />
             {query && <button onClick={() => setQuery('')} aria-label={t('clear')} className="me-1 rounded-full p-1.5 text-ink-400 hover:bg-brand-50 hover:text-brand-700"><X size={16} /></button>}
             <button onClick={() => { if (focus) setSide((v) => (v === 'priority' ? null : 'priority')); else { setSelected(null); setPanel((p) => !p); } }} aria-label={t('priorities')} title={t('priorities')}
               className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold shadow-float transition ${(focus ? side === 'priority' : panel) ? 'bg-brand-800 text-white' : 'bg-brand-600 text-white hover:bg-brand-700'}`}>
@@ -182,8 +182,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex rounded-full bg-surface p-1 shadow-float ring-1 ring-brand-100">
+        <div className="no-bar -mx-4 mt-3 flex items-center gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-4 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+          <div className="relative flex shrink-0 rounded-full bg-surface p-1 shadow-float ring-1 ring-brand-100">
             {(['school', 'teacher'] as Entity[]).map((e) => (
               <button key={e} onClick={() => { setEntity(e); setFilter('all'); setFocusIdx(0); }} className={`relative z-10 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${entity === e ? 'text-white' : 'text-ink-500 hover:text-brand-700'}`}>
                 {entity === e && <motion.span layoutId="seg" className="absolute inset-0 -z-10 rounded-full bg-brand-600" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
@@ -191,16 +191,16 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 sm:flex-wrap">
             {chips.map((c) => (
               <button key={c.key} onClick={() => { setFilter(c.key); setFocusIdx(0); }}
-                className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition ${filter === c.key ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : 'bg-surface text-ink-700 ring-brand-100 hover:ring-brand-300'}`}>
+                className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition ${filter === c.key ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : 'bg-surface text-ink-700 ring-brand-100 hover:ring-brand-300'}`}>
                 {c.key !== 'all' && c.key !== 'insufficient' && <span className={`h-2 w-2 rounded-full ${BAND[c.key as Band].bar}`} />}
                 {c.label}<span className={`tabular-nums ${filter === c.key ? 'text-white/80' : 'text-ink-400'}`}>{c.n ?? '–'}</span>
               </button>
             ))}
           </div>
-          {ranking && <span className="ms-auto rounded-full bg-surface px-3.5 py-2 text-xs font-medium text-ink-500 shadow-float ring-1 ring-brand-100">{date(ranking.as_of)}</span>}
+          {ranking && <span className="ms-auto hidden rounded-full bg-surface px-3.5 py-2 text-xs sm:inline font-medium text-ink-500 shadow-float ring-1 ring-brand-100">{date(ranking.as_of)}</span>}
         </div>
       </header>
 

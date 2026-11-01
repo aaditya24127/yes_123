@@ -57,7 +57,7 @@ class RequestReq(BaseModel):
 @router.get('/task-options')
 def task_options():
     """Task types the CRP can ask for, and where an accepted answer can be added in the records (the website lists these, it never hard-codes them)."""
-    return dict(kinds=[dict(code=k, label=v, default_add_to=KIND_SECTION.get(k)) for k, v in KIND_LABEL.items() if k != 'visit_notice'],
+    return dict(kinds=[dict(code=k, label=v, default_add_to=KIND_SECTION.get(k)) for k, v in KIND_LABEL.items() if k not in ('visit_notice', 'lesson_recording')],      # teachers are not asked for audio
                 add_to=[dict(code=k, label=v) for k, v in tasks.ADD_TO])
 
 

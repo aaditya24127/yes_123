@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* A grid with no columns set would grow as wide as its longest line and push the page wider than a phone screen.
+   One shrinkable column is the default; every grid-cols-* class still wins (utilities come after this layer). */
+@layer base { .grid { grid-template-columns: minmax(0, 1fr); } }
+
 /* Phones and the Android / iOS app: keep content clear of the notch, the home bar and the bottom menu. */
 body { padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 @media (max-width: 767px) { body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); } }
