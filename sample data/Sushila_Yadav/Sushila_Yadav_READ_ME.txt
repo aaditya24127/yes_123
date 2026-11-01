@@ -1,4 +1,4 @@
-3GO: PRACTICE VISIT
+MRS. SUSHILA YADAV: PRACTICE VISIT
 A lesson that has improved: percentages with shop examples
 ======================================================================
 
@@ -34,7 +34,7 @@ STEP 1.  START THE VISIT  (Visit page)
 STEP 2.  IN CLASS
 ----------------------------------------------------------------------
    a) Lesson recording. Under "Record the lesson" press the "Upload audio" button and choose:
-         3go_lesson_audio_5min.mp3
+         Sushila_Yadav_lesson_audio_5min.mp3
       (5 minutes). Wait about a minute until the words appear under the recording.
 
    b) Your notes. Copy and paste these two boxes.
@@ -50,7 +50,7 @@ STEP 2.  IN CLASS
          Last time she only dictated formulas. Now she uses shop examples and group work. Still needs to wait longer after questions and check the quiet students.
 
    c) Optional: press "Add a photo of written notes" and choose:
-         3go_my_notes_photo.jpg
+         Sushila_Yadav_my_notes_photo.jpg
       (the same notes as a photo of handwriting).
 
    Press "Next: students".

@@ -1,4 +1,4 @@
-2GO: PRACTICE VISIT
+MR. RAJESH CHORDIA: PRACTICE VISIT
 A lesson where only the teacher speaks: simple present tense
 ======================================================================
 
@@ -34,7 +34,7 @@ STEP 1.  START THE VISIT  (Visit page)
 STEP 2.  IN CLASS
 ----------------------------------------------------------------------
    a) Lesson recording. Under "Record the lesson" press the "Upload audio" button and choose:
-         2go_lesson_audio_5min.mp3
+         Rajesh_Chordia_lesson_audio_5min.mp3
       (5 minutes). Wait about a minute until the words appear under the recording.
 
    b) Your notes. Copy and paste these two boxes.
@@ -50,7 +50,7 @@ STEP 2.  IN CLASS
          Same as the last visit. Spoken English is still weak. The action we agreed (ask students to answer in full sentences) was not followed.
 
    c) Optional: press "Add a photo of written notes" and choose:
-         2go_my_notes_photo.jpg
+         Rajesh_Chordia_my_notes_photo.jpg
       (the same notes as a photo of handwriting).
 
    Press "Next: students".

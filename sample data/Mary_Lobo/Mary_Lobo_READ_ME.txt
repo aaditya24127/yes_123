@@ -1,4 +1,4 @@
-1GO: PRACTICE VISIT
+MRS. MARY LOBO: PRACTICE VISIT
 A good lesson: place value with bundles of sticks
 ======================================================================
 
@@ -34,7 +34,7 @@ STEP 1.  START THE VISIT  (Visit page)
 STEP 2.  IN CLASS
 ----------------------------------------------------------------------
    a) Lesson recording. Under "Record the lesson" press the "Upload audio" button and choose:
-         1go_lesson_audio_5min.mp3
+         Mary_Lobo_lesson_audio_5min.mp3
       (5 minutes). Wait about a minute until the words appear under the recording.
 
    b) Your notes. Copy and paste these two boxes.
@@ -50,7 +50,7 @@ STEP 2.  IN CLASS
          Last time the class only did board work. Now she uses sticks, slates and group answers. Big improvement.
 
    c) Optional: press "Add a photo of written notes" and choose:
-         1go_my_notes_photo.jpg
+         Mary_Lobo_my_notes_photo.jpg
       (the same notes as a photo of handwriting).
 
    Press "Next: students".

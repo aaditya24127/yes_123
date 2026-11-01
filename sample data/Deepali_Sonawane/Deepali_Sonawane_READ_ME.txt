@@ -1,16 +1,16 @@
-4GO: PRACTICE VISIT
-Many questions, but a wrong idea goes unnoticed: parts of a plant
+MRS. DEEPALI SONAWANE: PRACTICE VISIT
+A busy group activity that runs out of time: the water cycle
 ======================================================================
 
 WHO IS THIS FOR
-   School   : Mahavir Jaideep English Medium School (S02)
-   Teacher  : Mr. Vishal Gawade
-   Class    : 6
-   Subject  : Science
-   Topic    : Parts of a plant and what each part does
+   School   : New English School, Palshi (S10)
+   Teacher  : Mrs. Deepali Sonawane
+   Class    : 5
+   Subject  : EVS
+   Topic    : The water cycle
 
 WHAT THIS PRACTICE SHOWS
-   Lots of energy and questions with a real plant. Expect: the same few students answer while the back rows stay silent, and the app points out the wrong idea "plants eat soil", which the teacher praised and did not correct.
+   Good group work with a real activity. Expect: strengths on learning by doing and clear roles in groups. Things to improve: time lost at the start and a noisy class, and no summary or check of every child at the end.
 
 IMPORTANT BEFORE YOU START
    * Everything here is made-up practice material. The lesson audio is a computer voice acting a teacher and children.
@@ -20,37 +20,37 @@ IMPORTANT BEFORE YOU START
 ----------------------------------------------------------------------
 STEP 1.  START THE VISIT  (Visit page)
 ----------------------------------------------------------------------
-   Easiest way: on the first page find "Mahavir Jaideep English Medium School" (or the teacher) and press the Visit button on the card.
+   Easiest way: on the first page find "New English School, Palshi" (or the teacher) and press the Visit button on the card.
    Or open the Visit page and choose:
-      School  : Mahavir Jaideep English Medium School
-      Teacher : Mr. Vishal Gawade
+      School  : New English School, Palshi
+      Teacher : Mrs. Deepali Sonawane
    Then fill in "Today's class":
-      Class   : 6
-      Subject : Science
-      Topic   : (type this)   Parts of a plant and what each part does
+      Class   : 5
+      Subject : EVS
+      Topic   : (type this)   The water cycle
    Press "Start the visit".
 
 ----------------------------------------------------------------------
 STEP 2.  IN CLASS
 ----------------------------------------------------------------------
    a) Lesson recording. Under "Record the lesson" press the "Upload audio" button and choose:
-         4go_lesson_audio_5min.mp3
+         Deepali_Sonawane_lesson_audio_5min.mp3
       (5 minutes). Wait about a minute until the words appear under the recording.
 
    b) Your notes. Copy and paste these two boxes.
 
       Box "What did you see?" (type or paste):
-         Very lively lesson. Teacher asked many questions and used a real plant.
-         The same four or five students answered every question. The back rows stayed silent.
-         One student said plants eat soil for food and the teacher said good and moved on. The wrong idea was not corrected.
-         Teacher did not ask students to explain the reasons, only to name the parts.
-         No written check at the end.
+         Students enjoyed the activity: they heated water in a steel plate and watched the steam.
+         Group work was active and everyone had a role.
+         The first ten minutes went on settling and collecting the material, so time was short at the end.
+         The class became noisy during the group work and the teacher raised her voice a few times.
+         No summary and no written check at the end. The bell rang during the last question.
 
       Box "What is different since the last visit?" (type or paste):
-         New since last visit: he now brings real plants and asks many questions. Needs to include every student and correct wrong ideas.
+         Better than last time: group activity replaced the lecture. Needs to plan the time and finish with a quick check of every child.
 
    c) Optional: press "Add a photo of written notes" and choose:
-         4go_my_notes_photo.jpg
+         Deepali_Sonawane_my_notes_photo.jpg
       (the same notes as a photo of handwriting).
 
    Press "Next: students".
@@ -64,13 +64,13 @@ STEP 3.  STUDENTS
 
    Answers you can say (record them yourself):
    1. [Remember] If the app asks something like: "What did you learn today?"
-      say: Roots, stem, leaves, flower. The roots hold the plant in the soil and take in water.
-   2. [Understand] If the app asks something like: "Explain what leaves do."
-      say: Leaves make food for the plant using sunlight. It is called photosynthesis.
-   3. [Use it] If the app asks something like: "What would happen to a plant kept in a dark cupboard?"
-      say: It will turn yellow and weak, because the leaves cannot make food without sunlight.
-   4. [Think] If the app asks something like: "How does a plant get its food?"
-      say: The plant eats the soil through its roots. That is its food. I am not sure about leaves.
+      say: Water goes up as vapour, makes clouds and comes down as rain. It goes round and round.
+   2. [Understand] If the app asks something like: "Explain evaporation in your own words."
+      say: When the sun heats water in a pond it becomes vapour and goes in the air. That is evaporation.
+   3. [Use it] If the app asks something like: "Where do you see evaporation at home?"
+      say: When my mother dries clothes in the sun. The water in the clothes goes into the air.
+   4. [Think] If the app asks something like: "Why does it rain from clouds?"
+      say: Because the clouds are cold and the vapour turns back to water drops. I forgot the name of it.
 
    Press "Next: results".
 
@@ -78,8 +78,8 @@ STEP 3.  STUDENTS
 STEP 4.  RESULTS
 ----------------------------------------------------------------------
    Wait about a minute. Then check the points. You should see something like this:
-      Lots of energy and questions with a real plant. Expect: the same few students answer while the back rows stay silent, and the app points out the wrong idea "plants eat soil", which the teacher praised and did not correct.
+      Good group work with a real activity. Expect: strengths on learning by doing and clear roles in groups. Things to improve: time lost at the start and a noisy class, and no summary or check of every child at the end.
    Try these:
       * Follow-up days: press 7 days, or type your own number.
       * Press "Generate report" to see the PDF for the teacher.
-      * "Send to teacher" sends it to Mr. Vishal Gawade's app (and to email only if email is set up).
+      * "Send to teacher" sends it to Mrs. Deepali Sonawane's app (and to email only if email is set up).
