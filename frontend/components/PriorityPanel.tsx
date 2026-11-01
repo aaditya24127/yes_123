@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, RotateCcw, Check, Plus, Minus, Sparkles, ChevronDown } from 'lucide-react';
+import { X, RotateCcw, Check, Plus, Minus, Sparkles, ChevronDown, Trash2 } from 'lucide-react';
 import type { Category, Config } from '@/lib/types';
 import { CAT_COLORS } from '@/lib/theme';
 import { useLang } from '@/lib/i18n';
@@ -12,13 +12,29 @@ type LibItem = Config['library'][number];
 interface BodyProps {
   onClose: () => void; categories: Category[]; weights: Record<string, number>;
   onChange: (code: string, v: number) => void; onReset: () => void; onApply: () => void; applying: boolean; dirty: boolean;
-  library?: LibItem[]; onFactorsChanged?: () => void;
+  library?: LibItem[]; onFactorsChanged?: () => void; onDelete?: (code: string) => Promise<void>;
 }
 
-export function PriorityBody({ onClose, categories, weights, onChange, onReset, onApply, applying, dirty, library = [], onFactorsChanged }: BodyProps) {
+export function PriorityBody({ onClose, categories, weights, onChange, onReset, onApply, applying, dirty, library = [], onFactorsChanged, onDelete }: BodyProps) {
   const { t, tx, dir } = useLang();
   const [showLib, setShowLib] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [askDel, setAskDel] = useState('');       // code of the priority waiting for "Yes, delete"
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState('');
+  const doDelete = async (code: string) => {
+    setDeleting(true); setDelErr('');
+    try { await onDelete?.(code); setAskDel(''); } catch (e) { setDelErr(String((e as Error).message || e)); } finally { setDeleting(false); }
+  };
+  // Only priorities you made yourself can be deleted; the ready-made ones can be switched off instead.
+  const deletable = (c: { builtin?: boolean }) => !!onDelete && c.builtin === false;
+  const confirmRow = (code: string) => (
+    <span className="flex items-center gap-1.5 text-xs">
+      <span className="text-ink-700">Delete this priority?</span>
+      <button disabled={deleting} onClick={() => doDelete(code)} className="rounded-full bg-red-600 px-2.5 py-1 font-semibold text-white hover:bg-red-700 disabled:opacity-50">{deleting ? 'Deleting…' : 'Yes, delete'}</button>
+      <button disabled={deleting} onClick={() => { setAskDel(''); setDelErr(''); }} className="rounded-full px-2.5 py-1 font-semibold text-ink-700 hover:bg-brand-50">Keep</button>
+    </span>
+  );
   // Sliders: factors already in the saved list + any library factor the CRP switched on in this session.
   const shown = useMemo(() => [...categories, ...library.filter((c) => (weights[c.code] ?? 0) > 0)], [categories, library, weights]);
   const off = useMemo(() => library.filter((c) => !((weights[c.code] ?? 0) > 0)), [library, weights]);
@@ -54,10 +70,12 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: CAT_COLORS[i] }} /><span className="truncate">{tx('cat', c.code, c.label)}</span>
                 </label>
                 <span className="flex items-center gap-1">
-                  {fromLibrary.has(c.code) && <button onClick={() => onChange(c.code, 0)} title="Switch off" className="rounded-full p-1 text-ink-400 hover:bg-brand-50 hover:text-red-600"><Minus size={14} /></button>}
+                  {fromLibrary.has(c.code) && <button onClick={() => onChange(c.code, 0)} title="Switch off" aria-label="Switch off" className="rounded-full p-1 text-ink-400 hover:bg-brand-50 hover:text-brand-700"><Minus size={14} /></button>}
+                  {deletable(c) && <button onClick={() => { setAskDel(c.code); setDelErr(''); }} title="Delete this priority" aria-label="Delete this priority" className="rounded-full p-1 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
                   <span className="text-lg font-semibold tabular-nums text-ink-900">{v}%</span>
                 </span>
               </div>
+              {askDel === c.code && <div className="mt-1.5">{confirmRow(c.code)}{delErr && <p className="mt-1 text-xs text-red-600">{delErr}</p>}</div>}
               <input id={`w-${c.code}`} type="range" min={0} max={100} step={1} value={v} className="prio-range mt-1" style={{ ['--p' as string]: `${v}%` }}
                 onChange={(e) => onChange(c.code, Number(e.target.value))} />
               <p className="mt-0.5 text-xs text-ink-500">{t('ofRanking', { p: share(c.code) })}</p>
@@ -83,13 +101,17 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
                     <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-ink-400">{g}</p>
                     <ul className="space-y-1.5">
                       {list.map((c) => (
-                        <li key={c.code} className="flex items-start gap-2 rounded-xl bg-surface px-3 py-2 ring-1 ring-brand-100">
+                        <li key={c.code} className="flex flex-wrap items-start gap-2 rounded-xl bg-surface px-3 py-2 ring-1 ring-brand-100">
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-ink-900">{c.name}</p>
                             <p className="text-xs leading-snug text-ink-500">{c.description}</p>
                             {c.data_hint && <p className="mt-0.5 text-[11px] text-ink-400">Uses: {c.data_hint}{c.scope && c.scope !== 'both' ? ` · ${c.scope}s only` : ''}</p>}
                           </div>
-                          <button onClick={() => onChange(c.code, 10)} className="shrink-0 rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700">Add</button>
+                          <div className="flex shrink-0 items-center gap-1">
+                            {deletable(c) && <button onClick={() => { setAskDel(c.code); setDelErr(''); }} title="Delete this priority" aria-label="Delete this priority" className="rounded-full p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
+                            <button onClick={() => onChange(c.code, 10)} className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700">Add</button>
+                          </div>
+                          {askDel === c.code && <div className="basis-full">{confirmRow(c.code)}{delErr && <p className="mt-1 text-xs text-red-600">{delErr}</p>}</div>}
                         </li>
                       ))}
                     </ul>
@@ -102,7 +124,7 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
       </div>
 
       <div className="mt-5 flex items-center gap-3 border-t border-brand-100 pt-4">
-        <button onClick={onReset} className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
+        <button onClick={onReset} title="Go back to the 5 main priorities we started with" className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
           <RotateCcw size={16} /> {t('reset')}
         </button>
         <button onClick={onApply} disabled={applying || total <= 0}

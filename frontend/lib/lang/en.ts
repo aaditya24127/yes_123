@@ -19,6 +19,7 @@ const en = {
   nav_priorities: 'Priorities', nav_upload: 'Upload', nav_visit: 'Visit', nav_connect: 'Teachers', nav_ask: 'Ask', nav_settings: 'Settings',
   addFactor: 'Add a factor', createFactor: 'Create your own factor', moreFactors: 'More factors you can switch on', ask: 'Ask the copilot',
   saved: 'Priorities saved · version {v}',
+  resetDone: 'Back to the 5 main priorities. Press Save priorities to keep them.',
   unranked: 'Unranked',
   notEnough: 'Not enough data to score yet.',
   alerts: 'Alerts',

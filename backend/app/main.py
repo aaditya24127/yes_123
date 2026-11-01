@@ -71,11 +71,12 @@ def config():
         d = Data(conn)
         codes = engine.factor_codes(d)
         cat = lambda c: dict(code=c, label=engine.label(d, c), name=d.categories[c]['name'], description=d.categories[c]['description'],
-                             group=d.categories[c].get('group_name'), scope=d.categories[c].get('entity_scope'), data_hint=d.categories[c].get('data_hint'))
+                             group=d.categories[c].get('group_name'), scope=d.categories[c].get('entity_scope'), data_hint=d.categories[c].get('data_hint'),
+                             builtin=bool(d.categories[c]['is_builtin']))
         active = [c for c in codes if d.weights.get(c, 0) > 0]
         return dict(version=d.config['version'], as_of=str(today()), bands=d.config['band_thresholds'],
                     categories=[cat(c) for c in active], library=[cat(c) for c in codes if c not in active],
-                    weights={c: round(d.weights.get(c, 0), 2) for c in codes})
+                    weights={c: round(d.weights.get(c, 0), 2) for c in codes}, defaults=engine.DEFAULT_WEIGHTS, core=engine.CORE)
 
 
 @app.post('/api/ranking')
