@@ -1,5 +1,11 @@
 # secrets and local config
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*service-account*.json
 
 # local Postgres (portable binaries, data directory, logs)
 database/pgdata/
