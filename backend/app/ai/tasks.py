@@ -4,7 +4,7 @@ A task has: an output JSON schema (every provider's answer is checked against it
 providers (system prompt + a function that turns the task input into a message). Non-LLM providers (rules, your own
 trained model behind a URL) receive the same `input` dict and must return the same output shape.
 """
-import json
+import json, re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -15,8 +15,13 @@ KNOWLEDGE = Path(__file__).resolve().parents[1] / 'knowledge' / 'teaching_practi
 SECTIONS = ['assessments', 'observations', 'followups', 'visits', 'attendance', 'audio', 'roster', 'facts', 'textbooks', 'other']
 
 
-def knowledge():
-    return KNOWLEDGE.read_text(encoding='utf-8') if KNOWLEDGE.is_file() else ''
+def knowledge(sections=None):
+    """The teaching guide, whole or only the numbered sections a job needs (a shorter prompt answers faster)."""
+    text = KNOWLEDGE.read_text(encoding='utf-8') if KNOWLEDGE.is_file() else ''
+    if not sections: return text
+    parts = re.split(r'(?m)^(?=## \d+\. )', text)
+    keep = [p for p in parts if (m := re.match(r'## (\d+)\.', p)) and int(m.group(1)) in sections]
+    return ''.join(keep) or text
 
 
 @dataclass
@@ -134,7 +139,7 @@ VISIT_BRIEF = Task(
     lambda: ('You prepare a Cluster Resource Person (CRP) for a school visit in India. Using only the records given, write: summary (3-4 plain sentences: '
              'where things stand, what changed since last time); focus_points (2-4 things to look at, most important first, each pointing to a record); '
              'ask_teacher (2-4 respectful questions about earlier feedback and agreed actions); check_in_class (2-4 concrete things to watch for in the lesson). '
-             'Be specific and kind. Do not invent facts. Use simple everyday words and very short sentences (summary: at most 3 sentences; every point: at most 15 words, one idea).'),
+             'Be specific and kind. Do not invent facts. Use simple everyday words and very short sentences (summary: at most 3 sentences; every point: at most 15 words, one idea). Do not quote score or rank numbers: say in words how urgent a visit is.'),
     lambda i: _j(i), max_tokens=3000)
 
 
@@ -146,8 +151,10 @@ QUESTIONS = Task(
           'tips': ARR_S}),
     lambda: ('You help a Cluster Resource Person (CRP) check what students learnt in the lesson they just watched. Follow section 6 of this guide exactly '
              '(mix of levels, short spoken questions, language of instruction, expected good answer, common misconception to listen for, ask different '
-             'students).\n\n' + knowledge()),
-    lambda i: _j(i), tier='smart', max_tokens=4000)
+             'students). Keep everything SHORT: exactly 4 questions (one each of recall, understand, apply, reason; for Classes 1 to 5 add a 5th foundational '
+             'reading question). question: at most 20 words. good_answer: at most 15 words. watch_for: at most 12 words. ask_who: at most 6 words. '
+             'tips: exactly 2, each at most 12 words.\n\n' + knowledge((1, 5, 6))),
+    lambda i: _j(i), tier='fast', max_tokens=1500)
 
 
 # ------------------------------------------------------------------ 7. step 4: the evaluation

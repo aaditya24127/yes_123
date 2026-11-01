@@ -11,7 +11,7 @@ pydantic>=2.7
 python-dotenv>=1.0
 
 # database
-psycopg[binary]>=3.2
+psycopg[binary,pool]>=3.2
 
 # reading files for free (no AI needed)
 openpyxl>=3.1               # Excel

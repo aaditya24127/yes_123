@@ -23,7 +23,7 @@ const IDEAS = [
 export default function ConnectPage() {
   const rows = useLoad(() => api.connect.overview(), []);
   const notices = useLoad(() => api.connect.notifications(), []);
-  usePoll(true, () => { rows.reload(); notices.reload(); });
+  usePoll(true, () => { rows.reload(); notices.reload(); }, 10000);     // new messages and answers show up within 10 seconds
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<ConnectRow | null>(null);
   const list = useMemo(() => (rows.data ?? []).filter((r) => !q || `${r.full_name} ${r.school_name} ${r.school_code}`.toLowerCase().includes(q.toLowerCase())), [rows.data, q]);
@@ -64,7 +64,7 @@ export default function ConnectPage() {
 function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void }) {
   const reqs = useLoad(() => api.connect.requests({ teacher_id: row.id }), [row.id]);
   const msgs = useLoad(() => api.connect.messages(row.id), [row.id]);
-  usePoll(true, () => { msgs.reload(); reqs.reload(); });
+  usePoll(true, () => { msgs.reload(); reqs.reload(); }, 8000);
   const [text, setText] = useState('');
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState('');

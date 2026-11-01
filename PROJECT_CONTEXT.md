@@ -62,7 +62,8 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
   Ollama, your own model over HTTP, local Whisper, Groq Whisper, free web search, `rules`). Answers are checked against
   the schema; `rules` (free, no AI) is always the last fallback so the app works with no keys. Current order for most
   jobs: Claude -> Gemini free tier -> Ollama -> rules. Every call is logged with cost in `llm_calls`; `AI_BUDGET_USD`
-  caps paid AI. Gemini models are a list tried in order because Google retires models often. The research the AI must follow: `backend/app/knowledge/teaching_practices.md`.
+  caps paid AI. Gemini models are a list tried in order because Google retires models often. Speed: short jobs (briefing, student questions, factor ideas, ask) use `claude_quick` (Haiku, hidden thinking off, a few seconds); the lesson evaluation (a background job) uses `claude_mid` (Sonnet); Opus (`claude_smart`) is for scans. The research the AI must follow: `backend/app/knowledge/teaching_practices.md`.
+- **Database connections** (`prioritization/data.py`): `get_conn()` hands out connections from a small pool (`DB_POOL_MAX`, default 8) and `Data` reads all tables in one batched round trip. A hosted database is far from the server, so every extra round trip or new connection costs real time. The free Render server sleeps after 15 minutes idle (first request can take up to a minute); the apps wake it on open (`ServerWake`) and retry lookups. To avoid it, ping `/api/health` every 5 minutes from a free uptime monitor, or use a paid instance.
 - **Jobs** (`backend/app/jobs.py`, `job_handlers.py`): queue in `processing_jobs`; workers use
   `FOR UPDATE SKIP LOCKED`, so you can run many (`python -m app.jobs`).
 - **Frontend**: all pages are client components. Menu and feature switches in `frontend/lib/app.config.ts`; every

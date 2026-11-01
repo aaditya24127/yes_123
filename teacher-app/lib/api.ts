@@ -33,9 +33,18 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const t = token.get();
   const headers = new Headers(init.headers);
   if (t) headers.set('Authorization', `Bearer ${t}`);
-  const res = await fetch(path, { ...init, headers });
+  // The free server sleeps when nobody has used it for a while; looking things up is tried again while it wakes up.
+  const safe = !init.method || init.method === 'GET';
+  let res: Response | null = null;
+  for (let i = 0; i < (safe ? 4 : 1); i++) {
+    try { res = await fetch(path, { ...init, headers }); } catch { res = null; }
+    if (res && ![502, 503, 504].includes(res.status)) break;
+    if (safe && i < 3) await new Promise((r) => setTimeout(r, 2500 * (i + 1)));
+  }
+  if (!res) throw new Error('Could not reach the server. Check your internet connection and try again.');
   if (!res.ok) {
     const txt = await res.text();
+    if ([502, 503, 504].includes(res.status) || /ROUTER_EXTERNAL_TARGET_ERROR|FUNCTION_INVOCATION/.test(txt)) throw new Error('The server is waking up. Please wait a few seconds and try again.');
     let msg = txt || res.statusText;
     try { const d = JSON.parse(txt); msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail ?? d); } catch { /* plain text */ }
     if (res.status === 401 && t) throw new AuthError(msg);

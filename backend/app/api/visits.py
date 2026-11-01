@@ -17,10 +17,10 @@ router = APIRouter(prefix='/api', tags=['visits'])
 
 # ---------------------------------------------------------------- step 1
 @router.get('/brief')
-def get_brief(teacher_id: str | None = None, school_id: str | None = None):
+def get_brief(teacher_id: str | None = None, school_id: str | None = None, fast: bool = False):
     if not teacher_id and not school_id: raise HTTPException(400, 'choose a teacher or a school')
     try:
-        return visit.brief(teacher_id, school_id)
+        return visit.brief(teacher_id, school_id, fast=fast)
     except ValueError as e:
         raise HTTPException(404, str(e))
 
@@ -31,11 +31,17 @@ class SessionReq(BaseModel):
     class_no: int | None = None
     subject: str | None = None
     topic: str | None = None
+    brief_text: dict | None = None      # the briefing already shown on screen, so starting a visit does not wait for the AI again
+    brief_by: str | None = None
 
 
 @router.post('/sessions')
 def start_session(req: SessionReq):
-    b = visit.brief(req.teacher_id, req.school_id)
+    if req.brief_text:
+        b = visit.brief(req.teacher_id, req.school_id, fast=True)
+        b['brief'], b['brief_by'] = req.brief_text, req.brief_by
+    else:
+        b = visit.brief(req.teacher_id, req.school_id)
     with get_conn() as conn:
         sid = conn.execute("""insert into visit_sessions (school_id, teacher_id, class_no, subject, topic, stage, brief) values (%s,%s,%s,%s,%s,2,%s) returning id""",
                            (b['school']['id'], req.teacher_id, req.class_no, req.subject, req.topic, json.dumps(b, default=str))).fetchone()['id']

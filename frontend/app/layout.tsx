@@ -6,6 +6,7 @@ import {
 import { LangProvider } from '@/lib/i18n';
 import BottomNav from '@/components/shell/BottomNav';
 import ThemeInit from '@/components/shell/ThemeInit';
+import ServerWake from '@/components/shell/ServerWake';
 import './globals.css';
 
 const sans = Source_Sans_3({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -30,7 +31,7 @@ const fonts = [sans, serif, deva, beng, telu, tami, guju, knda, orya, mlym, arab
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={fonts}>
-      <body className="min-h-screen font-sans antialiased"><LangProvider><ThemeInit />{children}<BottomNav /></LangProvider></body>
+      <body className="min-h-screen font-sans antialiased"><LangProvider><ThemeInit /><ServerWake />{children}<BottomNav /></LangProvider></body>
     </html>
   );
 }

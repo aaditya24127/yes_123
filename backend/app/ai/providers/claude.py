@@ -14,7 +14,7 @@ def client():
     key = os.environ.get('ANTHROPIC_API_KEY', '')
     if key not in _clients:
         import anthropic
-        _clients.clear(); _clients[key] = anthropic.Anthropic(api_key=key or None, max_retries=3)
+        _clients.clear(); _clients[key] = anthropic.Anthropic(api_key=key or None, max_retries=2, timeout=90.0)
     return _clients[key]
 
 
@@ -52,6 +52,7 @@ class ClaudeProvider(Provider):
         kw = dict(model=model, max_tokens=self.cfg.get('max_tokens', task.max_tokens),
                   system=[{'type': 'text', 'text': task.system(), 'cache_control': {'type': 'ephemeral'}}],   # stable instructions are cached (cheaper repeats)
                   messages=[{'role': 'user', 'content': content}])
+        if self.cfg.get('thinking') == 'off': kw['thinking'] = {'type': 'disabled'}      # no hidden thinking: much faster for short, well-defined answers
         oc = {}
         if self.cfg.get('effort'): oc['effort'] = self.cfg['effort']
         if self.cfg.get('web_search'):

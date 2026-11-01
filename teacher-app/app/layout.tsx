@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Source_Sans_3, Source_Serif_4 } from 'next/font/google';
+import ServerWake from '@/components/ServerWake';
 import './globals.css';
 
 const sans = Source_Sans_3({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -14,7 +15,7 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, view
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable}`}>
-      <body className="min-h-screen font-sans antialiased">{children}</body>
+      <body className="min-h-screen font-sans antialiased"><ServerWake />{children}</body>
     </html>
   );
 }
