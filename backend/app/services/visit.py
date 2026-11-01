@@ -31,7 +31,8 @@ def gather(teacher_id=None, school_id=None, as_of=None):
             issues.append(dict(ref=f'O{k}', label=NEED_LABEL.get(last['need_code'], last['need_code']), issue=f"[O{k}] {NEED_LABEL.get(last['need_code'], last['need_code'])} ({last['severity']}): {last['issue_text']}",
                                need_code=last['need_code'], severity=last['severity'], teacher_id=str(last['teacher_id']) if last['teacher_id'] else None,
                                class_label=last['class_label'], subject=last['subject'], since=str(first['observation_date']), last_seen=str(last['observation_date'])))
-        good = [dict(point=o['issue_text'], date=str(o['observation_date'])) for o in ctx.observations if o['need_code'] == 'GOOD_PRACTICE' and o['validation_status'] == 'valid'][-3:]
+        good = [dict(point=o['issue_text'], date=str(o['observation_date']), subject=o['subject'], class_label=o['class_label']) for o in ctx.observations
+                if o['need_code'] == 'GOOD_PRACTICE' and o['validation_status'] == 'valid'][-8:]
         actions = []
         for f in ctx.follow_ups:
             if f['status'] == 'open':
@@ -43,7 +44,7 @@ def gather(teacher_id=None, school_id=None, as_of=None):
                         date=str(a['assessment_date']), exam=a['exam_type']) for a in latest.values()]
         visits = sorted(ctx.visits, key=lambda v: v['visit_date'])
         sess = conn.execute("""select id, started_at, class_no, subject, topic, result from visit_sessions where status in ('evaluated', 'saved') and
-                               (teacher_id = %s or (%s::uuid is null and school_id = %s)) order by started_at desc limit 3""",
+                               (teacher_id = %s or (%s::uuid is null and school_id = %s)) order by started_at desc limit 8""",
                             (t['id'] if t else None, t['id'] if t else None, s['id'])).fetchall()
         prev = [dict(date=str(x['started_at'].date()), cls=x['class_no'], subject=x['subject'], topic=x['topic'], overall=(x['result'] or {}).get('overall'),
                      next_steps=[n['action'] for n in (x['result'] or {}).get('next_steps', [])]) for x in sess]
@@ -61,7 +62,7 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         scores=None if not item else dict(score=item['score'], band=item['band'], rank=item['rank'], flags=[f['label'] for f in item['flags']],
                                           categories=[dict(label=c['label'], score=c['score'], contribution=c['contribution'], explanation=c['explanation']) for c in item['categories']]),
         alerts=[a['message'] for a in (item or {}).get('alerts', [])], open_issues=issues, strengths_seen=good, open_actions=actions,
-        overdue=[a for a in actions if a['overdue_days'] > 0], latest_results=results[:12],
+        overdue=[a for a in actions if a['overdue_days'] > 0], latest_results=results[:30],
         last_visit=str(visits[-1]['visit_date']) if visits else None, visit_count=len(visits), previous_sessions=prev,
         textbooks=[dict(title=b['title'], cls=b['class_no'], subject=b['subject'], url=b['source_url'], chapters=(b['contents'] or [])[:30]) for b in books],
         pending_requests=[dict(title=r['title'], kind=r['kind'], status=r['status'], due=str(r['due_date']) if r['due_date'] else None) for r in reqs])
