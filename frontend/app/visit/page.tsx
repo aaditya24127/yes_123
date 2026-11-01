@@ -78,8 +78,17 @@ function VisitPage() {
     setSession(s); setStep(1); router.replace(`/visit?session=${s.id}`); recent.reload();
   });
   const save = (body: Record<string, unknown>) => session && api.visits.edit(session.id, body).then(setSession).catch((e) => setError(e.message));
-  const addAudio = (kind: string, extra: { question_index?: number; student_label?: string } = {}) => (blob: Blob, name: string) =>
-    session && run(kind + (extra.question_index ?? ''), async () => setSession(await api.visits.addMedia(session.id, blob, kind, extra, name)));
+  // A new recording shows up straight away (you can play it at once) while it is saved in the background.
+  const [pending, setPending] = useState<PendingMedia[]>([]);
+  const addAudio = (kind: string, extra: { question_index?: number; student_label?: string } = {}) => (blob: Blob, name: string) => {
+    if (!session) return;
+    const id = `p${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+    const url = URL.createObjectURL(blob);
+    setPending((p) => [...p, { id, kind, question_index: extra.question_index ?? null, student_label: extra.student_label ?? null, name, url }]);
+    api.visits.addMedia(session.id, blob, kind, extra, name).then(setSession).catch((e) => setError((e as Error).message))
+      .finally(() => { setPending((p) => p.filter((x) => x.id !== id)); reload(); setTimeout(() => URL.revokeObjectURL(url), 10000); });
+  };
+  const waiting = (kind: string, qi?: number) => pending.filter((x) => x.kind === kind && (qi === undefined || x.question_index === qi));
   const startOver = () => { setSession(null); setBrief(null); setStep(0); auto.current = ''; router.replace('/visit'); };
 
   return (
@@ -110,8 +119,8 @@ function VisitPage() {
       {session && step === 1 && (
         <div className="grid gap-5 lg:grid-cols-2">
           <Card title="Record the lesson" subtitle="Record on this phone, or add a recording. It is turned into text for you.">
-            <AudioRecorder onDone={addAudio('lesson_audio')!} busy={busy === 'lesson_audio'} label="Record lesson" />
-            <MediaList items={session.media.filter((m) => m.kind === 'lesson_audio')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
+            <AudioRecorder onDone={addAudio('lesson_audio')!} label="Record lesson" />
+            <MediaList items={session.media.filter((m) => m.kind === 'lesson_audio')} waiting={waiting('lesson_audio')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
           <Card title="Your notes">
             <Field label="What did you see?"><TextArea defaultValue={session.crp_notes ?? ''} onBlur={(e) => save({ crp_notes: e.target.value })} rows={6}
@@ -120,7 +129,7 @@ function VisitPage() {
               placeholder="For example: reading corner now in use; group work started" /></Field>
             <div className="mt-3"><label className="cursor-pointer text-sm font-semibold text-brand-700 underline">Add a photo of written notes
               <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) addAudio('crp_notes_file')!(f, f.name); e.target.value = ''; }} /></label></div>
-            <MediaList items={session.media.filter((m) => m.kind === 'crp_notes_file')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
+            <MediaList items={session.media.filter((m) => m.kind === 'crp_notes_file')} waiting={waiting('crp_notes_file')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
           <div className="lg:col-span-2 flex justify-end"><Button onClick={() => { save({ stage: Math.max(3, session.stage) }); setStep(2); }}>Next: students</Button></div>
         </div>
@@ -136,15 +145,16 @@ function VisitPage() {
               <ol className="space-y-4">
                 {session.questions.map((q, i) => {
                   const answers = session.media.filter((m) => m.kind === 'student_answer' && m.question_index === i);
+                  const label = String.fromCharCode(65 + answers.length + waiting('student_answer', i).length);
                   return (
                     <li key={i} className="rounded-2xl border border-brand-100 p-4">
                       <div className="flex flex-wrap items-center gap-2"><Badge tone="brand">{LEVEL[q.level] ?? q.level}</Badge><span className="text-xs text-ink-400">Ask: {q.ask_who}</span></div>
                       <p className="mt-2 font-semibold text-ink-900">{i + 1}. {q.question}</p>
                       <p className="mt-1 text-sm text-ink-500"><b>A good answer:</b> {q.good_answer}</p>
                       <p className="text-sm text-ink-500"><b>Listen for:</b> {q.watch_for}</p>
-                      <div className="mt-3"><AudioRecorder small label={`Record Student ${String.fromCharCode(65 + answers.length)}`} busy={busy === 'student_answer' + i}
-                        onDone={addAudio('student_answer', { question_index: i, student_label: `Student ${String.fromCharCode(65 + answers.length)}` })!} /></div>
-                      <MediaList items={answers} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
+                      <div className="mt-3"><AudioRecorder small label={`Record Student ${label}`}
+                        onDone={addAudio('student_answer', { question_index: i, student_label: `Student ${label}` })!} /></div>
+                      <MediaList items={answers} waiting={waiting('student_answer', i)} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
                     </li>
                   );
                 })}
@@ -205,9 +215,23 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
   const columns: [string, string[], string][] = [
     ['Look at', point(b.brief?.focus_points), 'bg-sky-50/70'], ['Ask the teacher', point(b.brief?.ask_teacher), 'bg-amber-50/70'], ['Watch in class', point(b.brief?.check_in_class), 'bg-emerald-50/70'],
   ];
-  const earlier = {
-    open: b.open_issues.slice(0, 4), actions: b.open_actions.slice(0, 3), good: b.strengths_seen.slice(0, 2), last: b.previous_sessions.slice(0, 1),
+  // Earlier records for the chosen subject (and class) only. Records about other subjects are left out unless the person asks for them.
+  const [allSubjects, setAllSubjects] = useState(false);
+  const subj = allSubjects ? '' : pick.subject; const clsNo = allSubjects || !pick.class_no ? null : Number(pick.class_no);
+  const subjOk = (x?: string | null) => !subj || (!!x && x.toLowerCase() === subj.toLowerCase());
+  const clsOk = (c?: string | number | null) => {
+    if (!clsNo || c === null || c === undefined || c === '') return true;
+    const n = typeof c === 'number' ? c : Number(String(c).match(/\d+/)?.[0]);
+    return !n || n === clsNo;
   };
+  const issues = b.open_issues.filter((o) => subjOk(o.subject) && clsOk(o.class_label));
+  const goodSeen = b.strengths_seen.filter((x) => subjOk(x.subject) && clsOk(x.class_label));
+  const lastVisits = b.previous_sessions.filter((x) => subjOk(x.subject) && clsOk(x.cls));
+  const results = b.latest_results.filter((r) => subjOk(r.subject) && clsOk(r.cls));
+  const earlier = { open: issues.slice(0, 4), actions: b.open_actions.slice(0, 3), good: goodSeen.slice(0, 3), last: lastVisits.slice(0, 1) };
+  const hasForSubject = issues.length + goodSeen.length + lastVisits.length + results.length > 0;
+  const forWho = b.teacher?.name ?? b.school.name;
+  const scope = subj ? `${subj}${clsNo ? `, Class ${clsNo}` : ''}` : '';
   const nothingBefore = !earlier.open.length && !earlier.actions.length && !earlier.good.length && !earlier.last.length;
   const classes = teacher?.classes_taught.length ? teacher.classes_taught : Array.from({ length: 10 }, (_, i) => i + 1);
   const subjects = teacher?.subjects_taught.length ? teacher.subjects_taught : ['Marathi', 'English', 'Hindi', 'Mathematics', 'EVS', 'Science', 'Social Science'];
@@ -247,12 +271,19 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="From earlier visits">
-          {nothingBefore ? <p className="text-sm text-ink-400">Nothing on record yet.</p> : (
+        <Card title={scope ? `Earlier records: ${scope}` : 'From earlier visits'} subtitle={scope ? `Only what is on record for ${forWho} in this subject.` : undefined}>
+          {scope && !hasForSubject && (
+            <div className="mb-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <b>Nothing on record for {forWho} in {scope}.</b> Records about other subjects are hidden.
+              <button onClick={() => setAllSubjects(true)} className="ms-2 font-semibold underline">Show all subjects</button>
+            </div>
+          )}
+          {allSubjects && pick.subject && <button onClick={() => setAllSubjects(false)} className="mb-3 text-sm font-semibold text-brand-700 underline">Show only {pick.subject}{pick.class_no ? `, Class ${pick.class_no}` : ''}</button>}
+          {nothingBefore && !(scope && !hasForSubject) ? <p className="text-sm text-ink-400">Nothing on record yet.</p> : (
             <div className="space-y-4">
               {earlier.open.length > 0 && <div><p className={head}>Still to improve</p>
                 <List items={earlier.open.map((o) => <span key={o.ref}>{issueName(o)} <span className="text-xs text-ink-400">since {fmtDay(o.since)}</span></span>)} /></div>}
-              {earlier.actions.length > 0 && <div><p className={head}>We agreed to</p>
+              {earlier.actions.length > 0 && <div><p className={head}>We agreed to{scope ? ' (not tied to one subject)' : ''}</p>
                 <List items={earlier.actions.map((a, i) => <span key={i}>{a.action} <span className={a.overdue_days ? 'text-xs font-semibold text-red-600' : 'text-xs text-ink-400'}>{a.overdue_days ? `${a.overdue_days} days late` : `by ${fmtDay(a.due)}`}</span></span>)} /></div>}
               {earlier.good.length > 0 && <div><p className={head}>Going well</p><List items={earlier.good.map((s) => s.point)} /></div>}
               {earlier.last.length > 0 && <div><p className={head}>Last time</p>
@@ -260,9 +291,9 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
             </div>
           )}
         </Card>
-        <Card title="Latest test results" subtitle="Students who need extra help">
-          {!b.latest_results.length ? <p className="text-sm text-ink-400">No results on record.</p> : (
-            <ul className="space-y-2.5 text-sm">{b.latest_results.slice(0, 6).map((r, i) => (
+        <Card title={scope ? `Latest test results: ${scope}` : 'Latest test results'} subtitle="Students who need extra help">
+          {!results.length ? <p className="text-sm text-ink-400">{scope ? `No test results on record for ${scope}.` : 'No results on record.'}</p> : (
+            <ul className="space-y-2.5 text-sm">{results.slice(0, 6).map((r, i) => (
               <li key={i}>
                 <div className="flex justify-between"><span>Class {r.cls} · {r.subject}</span><span className={`font-semibold ${r.below_pct >= 40 ? 'text-red-600' : r.below_pct >= 25 ? 'text-amber-700' : 'text-emerald-700'}`}>{r.below_pct} in 100 need help</span></div>
                 <div className="mt-1 h-2 overflow-hidden rounded-full bg-brand-100"><div className={`h-full rounded-full ${r.below_pct >= 40 ? 'bg-red-500' : r.below_pct >= 25 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(100, r.below_pct)}%` }} /></div>
@@ -282,8 +313,10 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
   );
 }
 
-function MediaList({ items, onRemove }: { items: Session['media']; onRemove: (id: string) => void }) {
-  if (!items.length) return null;
+type PendingMedia = { id: string; kind: string; question_index: number | null; student_label: string | null; name: string; url: string };
+
+function MediaList({ items, waiting = [], onRemove }: { items: Session['media']; waiting?: PendingMedia[]; onRemove: (id: string) => void }) {
+  if (!items.length && !waiting.length) return null;
   return (
     <ul className="mt-3 space-y-2">
       {items.map((m) => (
@@ -299,6 +332,16 @@ function MediaList({ items, onRemove }: { items: Session['media']; onRemove: (id
           {m.transcript ? <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-ink-700">{m.transcript}</p>
             : m.transcript_by ? <p className="mt-2 text-xs text-amber-700">We could not turn this recording into text. Your notes can still be used.</p>
             : m.kind !== 'crp_notes_file' ? <p className="mt-2 flex items-center gap-1 text-xs text-ink-400"><Loader2 size={12} className="animate-spin" />Turning speech into text…</p> : null}
+        </li>
+      ))}
+      {waiting.map((m) => (
+        <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
+          <div className="flex items-center gap-2">
+            {m.kind === 'crp_notes_file' ? <FileText size={15} className="shrink-0 text-brand-600" /> : <FileAudio size={15} className="shrink-0 text-brand-600" />}
+            <span className="min-w-0 flex-1 truncate font-semibold">{m.student_label ?? m.name}</span>
+            {m.kind !== 'crp_notes_file' && <audio controls preload="auto" src={m.url} className="h-8 max-w-[180px]" />}
+            <span className="flex shrink-0 items-center gap-1 text-xs text-ink-400"><Loader2 size={12} className="animate-spin" />Saving…</span>
+          </div>
         </li>
       ))}
     </ul>

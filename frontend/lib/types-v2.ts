@@ -35,9 +35,9 @@ export interface Brief {
   who: string; entity: Entity; school: { id: string; code: string; name: string; board: string; medium: string; grades: string; village: string };
   teacher: { id: string; name: string; designation: string; classes: number[]; subjects: string[]; joined: string | null; email?: string | null } | null;
   scores: { score: number | null; band: Band | null; rank: number | null; flags: string[]; categories: { label: string; score: number | null; contribution: number | null; explanation: string }[] } | null;
-  alerts: string[]; open_issues: { ref: string; label?: string; severity?: string; issue: string; since: string; last_seen: string }[]; strengths_seen: { point: string; date: string }[];
+  alerts: string[]; open_issues: { ref: string; label?: string; severity?: string; subject?: string | null; class_label?: string | null; issue: string; since: string; last_seen: string }[]; strengths_seen: { point: string; date: string; subject?: string | null; class_label?: string | null }[];
   open_actions: { action: string; due: string; overdue_days: number }[]; latest_results: { cls: number; subject: string; skill: string | null; below_pct: number; date: string }[];
-  last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; overall: string | null; next_steps: string[] }[];
+  last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; subject?: string | null; cls?: number | null; overall: string | null; next_steps: string[] }[];
   textbooks: { title: string; cls: number | null; subject: string | null; url: string | null }[]; pending_requests: { title: string; kind: string; status: string; due: string | null }[];
   brief: { summary: string; focus_points: string[]; ask_teacher: string[]; check_in_class: string[] } | null; brief_by: string | null;
 }
