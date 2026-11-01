@@ -1,21 +1,18 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Bell, CalendarClock, Send, TriangleAlert } from 'lucide-react';
+import { Bell, Send, TriangleAlert } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 import TextbookPanel from '@/components/TextbookPanel';
-import { Badge, Button, Card, Empty, ErrorNote, Field, Input, Select, TextArea } from '@/components/ui';
+import TaskComposer from '@/components/TaskComposer';
+import TaskReview from '@/components/TaskReview';
+import { Badge, Button, Card, Empty, ErrorNote, Input } from '@/components/ui';
 import { api } from '@/lib/api';
-import { REQUEST_KINDS } from '@/lib/app.config';
 import { useLoad, usePoll } from '@/lib/hooks';
 import type { ConnectRow } from '@/lib/types';
 
-const KIND: Record<string, string> = {
-  visit_notice: 'Tell them about a visit', marks: 'Send student marks / test results', attendance: 'Send attendance', syllabus_plan: 'Share syllabus / year plan',
-  lesson_plan: 'Share a lesson plan', lesson_recording: 'Record and send a lesson', student_work: 'Send photos of student work', reflection: 'Write a short self-reflection', other: 'Something else',
-};
 const IDEAS = [
-  'Send a visit notice 2–3 days ahead so the teacher keeps marks, attendance and the lesson plan ready.',
+  'Send a visit notice 2–3 days ahead, and give numbered tasks (Task 1 marks, Task 2 attendance ...) so the teacher knows exactly what to prepare.',
   'Ask for a short lesson recording between visits: you can evaluate it from the Visit page without travelling.',
   'Ask for test results right after each unit test; they go straight into the upload sorting.',
   'A monthly self-reflection (“what worked, what was hard”) keeps the conversation going between visits.',
@@ -66,7 +63,6 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
   const reqs = useLoad(() => api.connect.requests({ teacher_id: row.id }), [row.id]);
   const msgs = useLoad(() => api.connect.messages(row.id), [row.id]);
   usePoll(true, () => { msgs.reload(); reqs.reload(); });
-  const [form, setForm] = useState({ kind: 'marks', message: '', due_date: '', visit_date: '', whole_school: false });
   const [text, setText] = useState('');
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -81,26 +77,7 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <Card title="Ask for something">
-          <div className="grid gap-3">
-            <Field label="What"><Select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>{REQUEST_KINDS.map((k) => <option key={k} value={k}>{KIND[k]}</option>)}</Select></Field>
-            {form.kind === 'visit_notice'
-              ? <Field label="Visit date"><Input type="date" value={form.visit_date} onChange={(e) => setForm({ ...form, visit_date: e.target.value })} /></Field>
-              : <Field label="By (optional)"><Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></Field>}
-            <Field label="Message (optional)"><TextArea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={3}
-              placeholder={form.kind === 'visit_notice' ? 'Please keep Class 4 marks and your lesson plan ready.' : 'Please send the first unit test marks for Class 3.'} /></Field>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.whole_school} onChange={(e) => setForm({ ...form, whole_school: e.target.checked })} className="h-4 w-4" />Send to all teachers of {row.school_name}</label>
-            <div className="flex items-center gap-3">
-              <Button icon={form.kind === 'visit_notice' ? <CalendarClock size={16} /> : <Send size={16} />} busy={busy === 'req'} disabled={form.kind === 'visit_notice' && !form.visit_date}
-                onClick={() => run('req', async () => {
-                  const r = await api.connect.request({ kind: form.kind, message: form.message || undefined, due_date: form.due_date || undefined, visit_date: form.visit_date || undefined,
-                    ...(form.whole_school ? { school_id: row.school_id } : { teacher_ids: [row.id] }) });
-                  setOk(`Sent to ${r.created} teacher(s).`); setForm({ ...form, message: '' }); reqs.reload(); msgs.reload(); onChange();
-                })}>Send</Button>
-              {ok && <span className="text-sm text-emerald-700">{ok}</span>}
-            </div>
-          </div>
-        </Card>
+        <TaskComposer row={row} onSent={() => { reqs.reload(); msgs.reload(); onChange(); }} onError={setError} />
 
         <Card title="Messages">
           <div className="thin-scroll flex max-h-80 flex-col gap-2 overflow-y-auto pe-1">
@@ -118,22 +95,7 @@ function TeacherPanel({ row, onChange }: { row: ConnectRow; onChange: () => void
         </Card>
       </div>
 
-      <Card title="Requests">
-        {!reqs.data?.length ? <Empty>No requests yet.</Empty> : (
-          <ul className="divide-y divide-brand-50">
-            {reqs.data.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center gap-2 py-2.5 text-sm">
-                <span className="min-w-0 flex-1"><b>{r.title}</b>{r.due_date && <span className="text-ink-500"> · by {r.due_date}</span>}{r.visit_date && <span className="text-ink-500"> · visit {r.visit_date}</span>}
-                  {r.response_text && <span className="block text-ink-500">Reply: {r.response_text}</span>}</span>
-                <Badge tone={r.status === 'submitted' ? 'good' : r.status === 'accepted' ? 'brand' : r.status === 'cancelled' ? 'neutral' : 'warn'}>{r.status}</Badge>
-                {r.batch_id && <Link href={`/upload?batch=${r.batch_id}`} className="text-brand-700 underline">Check files</Link>}
-                {r.status === 'submitted' && <Button variant="soft" className="px-3 py-1" onClick={() => run('acc', async () => { await api.connect.setRequest(r.id, 'accepted'); reqs.reload(); })}>Accept</Button>}
-                {r.status === 'open' && <Button variant="ghost" className="px-3 py-1" onClick={() => run('can', async () => { await api.connect.setRequest(r.id, 'cancelled'); reqs.reload(); })}>Cancel</Button>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <TaskReview requests={reqs.data} onChange={() => { reqs.reload(); onChange(); }} onError={setError} />
       <TextbookPanel teacherId={row.id} schoolId={row.school_id} />
     </div>
   );

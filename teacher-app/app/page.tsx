@@ -7,21 +7,28 @@ import Shell from '@/components/Shell';
 import AlertsCard from '@/components/AlertsCard';
 import { Badge, Card, Empty } from '@/components/ui';
 
-const isLate = (t: Task) => t.status === 'open' && !!t.due_date && new Date(`${t.due_date}T23:59:59`) < new Date();
+// A task package is "to do" while any of its numbered tasks still needs the teacher (not yet sent, or sent back with remarks).
+const needsTeacher = (t: Task) => (t.items.length ? t.items.some((i) => i.status === 'open' || i.status === 'rejected') : t.status === 'open');
+const isLate = (t: Task) => needsTeacher(t) && !!t.due_date && new Date(`${t.due_date}T23:59:59`) < new Date();
 
 function TaskRow({ t, kinds }: { t: Task; kinds: Record<string, string> }) {
   const late = isLate(t);
+  const todo = needsTeacher(t);
+  const rejected = t.items.some((i) => i.status === 'rejected');
+  const total = t.items.length;
+  const sentCount = t.items.filter((i) => i.status === 'submitted' || i.status === 'accepted').length;
+  const sub = total > 1 ? `${total} tasks · ${sentCount} of ${total} sent` : (kinds[t.kind] ?? t.kind);
   return (
     <Link href={`/task?id=${t.id}`} className="flex items-center gap-3 rounded-3xl bg-surface p-4 shadow-float ring-1 ring-brand-100 transition hover:ring-brand-300">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${t.status === 'open' ? 'bg-amber-50 text-amber-700' : 'bg-brand-50 text-brand-600'}`}>
-        {t.status === 'open' ? <ClipboardList size={20} /> : t.status === 'accepted' ? <CheckCircle2 size={20} /> : <Send size={20} />}
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${rejected ? 'bg-red-50 text-red-600' : todo ? 'bg-amber-50 text-amber-700' : 'bg-brand-50 text-brand-600'}`}>
+        {todo ? <ClipboardList size={20} /> : t.status === 'accepted' ? <CheckCircle2 size={20} /> : <Send size={20} />}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-ink-900">{t.title}</p>
-        <p className="truncate text-sm text-ink-500">{kinds[t.kind] ?? t.kind}{t.due_date ? ` · due ${fmtDate(t.due_date)}` : ''}</p>
+        <p className="truncate text-sm text-ink-500">{sub}{t.due_date ? ` · due ${fmtDate(t.due_date)}` : ''}</p>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        {t.status === 'open' ? <Badge tone={late ? 'late' : 'open'}>{late ? 'Overdue' : 'To do'}</Badge> : <Badge tone={t.status}>{t.status === 'accepted' ? 'Accepted' : 'Sent'}</Badge>}
+        {rejected ? <Badge tone="late">Needs changes</Badge> : todo ? <Badge tone={late ? 'late' : 'open'}>{late ? 'Overdue' : 'To do'}</Badge> : <Badge tone={t.status === 'accepted' ? 'accepted' : 'submitted'}>{t.status === 'accepted' ? 'Accepted' : 'Sent'}</Badge>}
         <ChevronRight size={16} className="text-ink-400" />
       </div>
     </Link>
@@ -32,9 +39,9 @@ export default function Home() {
   const { data, error } = useHome();
 
   if (!data) return <Shell home={null} error={error}><p className="py-20 text-center text-ink-500">Loading…</p></Shell>;
-  const open = data.tasks.filter((t) => t.status === 'open');
-  const sent = data.tasks.filter((t) => t.status === 'submitted');
-  const done = data.tasks.filter((t) => t.status === 'accepted');
+  const open = data.tasks.filter(needsTeacher);
+  const sent = data.tasks.filter((t) => !needsTeacher(t) && t.status === 'submitted');
+  const done = data.tasks.filter((t) => !needsTeacher(t) && t.status === 'accepted');
   const fresh = data.notifications.filter((n) => !n.read_at).slice(0, 3);
   const first = data.teacher.name.split(' ').slice(0, 2).join(' ');
 

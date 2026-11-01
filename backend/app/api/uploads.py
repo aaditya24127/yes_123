@@ -2,9 +2,11 @@
 import datetime as dt
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel
 
-from ..services.ingest import pipeline
+from ..core.storage import get_storage
+from ..services.ingest import pipeline, readers
 from ..services.prioritization.data import get_conn
 
 router = APIRouter(prefix='/api/uploads', tags=['uploads'])
@@ -61,3 +63,15 @@ def edit_item(item_id: str, req: ItemPatch):
 def start_import(batch_id: str):
     n = pipeline.start_import(batch_id)
     return dict(queued=n)
+
+
+@router.get('/items/{item_id}/raw')
+def item_raw(item_id: str):
+    """The file as uploaded (before or after import), so the CRP can open a teacher's file while deciding to accept it."""
+    with get_conn() as conn:
+        u = conn.execute('select original_filename, file_format, temp_path from upload_items where id = %s', (item_id,)).fetchone()
+    if not u: raise HTTPException(404, 'file not found')
+    st = get_storage()
+    if not st.exists(u['temp_path']): raise HTTPException(404, 'file is no longer in storage')
+    name = u['original_filename'].replace('"', '')
+    return Response(st.get(u['temp_path']), media_type=readers.MIME.get(u['file_format'], 'application/octet-stream'), headers={'Content-Disposition': f'inline; filename="{name}"'})

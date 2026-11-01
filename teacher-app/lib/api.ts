@@ -1,8 +1,13 @@
 // Every call to the backend, in one place. The sign-in token is kept on this device only.
 export interface Profile { id: string; name: string; email: string; school: string; classes: number[] | null; subjects: string[] | null }
+export interface TaskFile { id: string; name: string; size: number; format: string; status: string; created_at: string }
+export interface TaskItem {
+  id: string; position: number; title: string; instructions: string | null; kind: string; status: 'open' | 'submitted' | 'accepted' | 'rejected';
+  response_text: string | null; review_remark: string | null; added_to: string | null; submitted_at: string | null; reviewed_at: string | null; files: TaskFile[];
+}
 export interface Task {
   id: string; kind: string; title: string; message: string | null; due_date: string | null; visit_date: string | null;
-  status: 'open' | 'submitted' | 'accepted' | 'cancelled'; response_text: string | null; created_at: string; responded_at: string | null;
+  status: 'open' | 'submitted' | 'accepted' | 'cancelled'; response_text: string | null; created_at: string; responded_at: string | null; items: TaskItem[];
 }
 export interface Msg { id: string; sender: 'crp' | 'teacher' | 'system'; body: string; request_id: string | null; is_concern: boolean; created_at: string; read_at: string | null }
 export interface Notice { id: string; title: string; body: string | null; created_at: string; read_at: string | null }
@@ -44,9 +49,11 @@ export const api = {
   readAll: () => call<{ ok: boolean }>('/api/teacher/notifications/read', { method: 'POST' }),
   message: (body: string, concern: boolean) => call<{ ok: boolean }>('/api/teacher/messages', json({ body, concern })),
   password: (old_password: string, new_password: string) => call<{ ok: boolean }>('/api/teacher/password', json({ old_password, new_password })),
-  submit: (taskId: string | null, text: string, files: File[]) => {
+  /** Send one numbered task (itemId), or confirm a visit notice (taskId). */
+  submit: (target: { itemId?: string; taskId?: string }, text: string, files: File[]) => {
     const f = new FormData();
-    if (taskId) f.append('task_id', taskId);
+    if (target.itemId) f.append('item_id', target.itemId);
+    if (target.taskId) f.append('task_id', target.taskId);
     if (text.trim()) f.append('text', text.trim());
     files.forEach((x) => f.append('files', x, x.name));
     return call<{ ok: boolean; files: number }>('/api/teacher/submit', { method: 'POST', body: f });

@@ -1,7 +1,7 @@
 // Every call to the backend, in one place. Pages never build URLs themselves, so an endpoint can change here only.
 import type {
   AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
-  FileInfo, Message, Notice, Override, Preview, Ranking, Resource, Session, SessionSummary, TextbookHit, TRequest,
+  FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
 } from './types';
 import { apiUrl } from './platform';
 
@@ -91,8 +91,12 @@ export const api = {
 
   connect: {
     overview: () => get<ConnectRow[]>('/api/connect/overview'),
-    request: (body: { teacher_ids?: string[]; school_id?: string; kind: string; title?: string; message?: string; due_date?: string; visit_date?: string }) =>
-      post<{ created: number }>('/api/requests', body),
+    request: (body: { teacher_ids?: string[]; school_id?: string; kind: string; title?: string; message?: string; due_date?: string; visit_date?: string;
+                      items?: { kind: string; title?: string; instructions?: string }[] }) => post<{ created: number }>('/api/requests', body),
+    taskOptions: () => get<TaskOptions>('/api/task-options'),
+    review: (itemId: string, body: { action: 'accept' | 'reject'; remark?: string; add_to?: string; scope?: 'teacher' | 'school' }) =>
+      post<ReviewResult>(`/api/task-items/${itemId}/review`, body),
+    uploadedFileUrl: (uploadItemId: string) => apiUrl(`/api/uploads/items/${uploadItemId}/raw`),
     requests: (p: { teacher_id?: string; status?: string } = {}) => get<TRequest[]>(`/api/requests${qs(p)}`),
     setRequest: (id: string, status: string) => send('PATCH', `/api/requests/${id}`, { status }),
     messages: (tid: string) => get<Message[]>(`/api/teachers/${tid}/messages`),
