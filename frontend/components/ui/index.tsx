@@ -1,6 +1,6 @@
 'use client';
 // Shared building blocks. Change the look of every page from here (colours come from the theme in globals.css / lib/theme.ts).
-import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { forwardRef, useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
 
 type Variant = 'primary' | 'soft' | 'ghost' | 'danger';
@@ -37,7 +37,7 @@ export function Card({ children, className = '', title, action, subtitle }: { ch
 const TONE = { neutral: 'bg-slate-100 text-slate-700', brand: 'bg-brand-50 text-brand-700', good: 'bg-emerald-50 text-emerald-700', warn: 'bg-amber-50 text-amber-800', bad: 'bg-red-50 text-red-700' };
 export type Tone = keyof typeof TONE;
 export function Badge({ tone = 'neutral', children, className = '' }: { tone?: Tone; children: ReactNode; className?: string }) {
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONE[tone]} ${className}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONE[tone]} ${className}`}>{children}</span>;
 }
 
 export function Field({ label, hint, children, className = '' }: { label: ReactNode; hint?: ReactNode; children: ReactNode; className?: string }) {
@@ -88,13 +88,16 @@ export function List({ items, empty }: { items: ReactNode[]; empty?: ReactNode }
 }
 
 export function Stepper({ steps, current, onPick, maxReached }: { steps: string[]; current: number; onPick?: (i: number) => void; maxReached?: number }) {
+  const box = useRef<HTMLOListElement>(null);
+  // On a phone the bar scrolls sideways: keep the current step in view.
+  useEffect(() => { box.current?.querySelector('[aria-current="step"]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }, [current]);
   return (
-    <ol className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+    <ol ref={box} className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {steps.map((s, i) => {
         const done = i < current, here = i === current, can = onPick && i <= (maxReached ?? current);
         return (
           <li key={s} className="flex shrink-0 items-center gap-2">
-            <button disabled={!can} onClick={() => can && onPick?.(i)}
+            <button disabled={!can} aria-current={here ? 'step' : undefined} onClick={() => can && onPick?.(i)}
               className={`flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ${here ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : done ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-ink-400 ring-brand-100'} ${can ? 'cursor-pointer' : 'cursor-default'}`}>
               <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${here ? 'bg-white/20' : 'bg-brand-100 text-brand-700'}`}>{i + 1}</span>{s}
             </button>

@@ -194,14 +194,16 @@ function VisitHeader({ brief, session, pick, onStartOver }: { brief: Brief; sess
   const subject = session?.subject ?? pick.subject; const topic = session?.topic ?? pick.topic;
   const chips = [cls ? `Class ${cls}` : null, subject || null, topic || null, session ? fmtDay(session.started_at) : null].filter(Boolean) as string[];
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100">
-      <div className="min-w-0 flex-1">
+    <div className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+      <div className="min-w-0 sm:flex-1">
         <h2 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">{brief.teacher?.name ?? brief.school.name}</h2>
         <p className="text-sm text-ink-500">{brief.teacher ? `${brief.teacher.designation} · ${brief.school.name}` : `${brief.school.board} · ${brief.school.medium} medium · Classes ${brief.school.grades}`}</p>
         {chips.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{chips.map((c) => <Badge key={c} tone="brand">{c}</Badge>)}</div>}
       </div>
-      {band && brief.scores?.band && <span className={`rounded-full px-3 py-1 text-sm font-semibold ring-1 ${band.chip}`}>{BAND_WORD[brief.scores.band]}</span>}
-      {session && <Button variant="ghost" onClick={onStartOver}>Visit someone else</Button>}
+      <div className="flex flex-wrap items-center gap-2 sm:contents">
+        {band && brief.scores?.band && <span className={`whitespace-nowrap rounded-full px-3 py-1 text-sm font-semibold ring-1 ${band.chip}`}>{BAND_WORD[brief.scores.band]}</span>}
+        {session && <Button variant="ghost" className="whitespace-nowrap" onClick={onStartOver}>Visit someone else</Button>}
+      </div>
     </div>
   );
 }

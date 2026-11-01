@@ -40,8 +40,8 @@ function ItemReview({ item, opts, onChange, onError }: { item: TaskItem; opts: T
     <li className="rounded-2xl bg-brand-50/50 p-3 ring-1 ring-brand-100">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">Task {item.position}</span>
-        <b className="min-w-0 flex-1 text-sm">{item.title}</b>
-        <Badge tone={tone(item.status)}>{label(item.status)}</Badge>
+        <b className="order-last min-w-0 basis-full text-sm sm:order-none sm:flex-1 sm:basis-auto">{item.title}</b>
+        <Badge tone={tone(item.status)} className="ms-auto sm:ms-0">{label(item.status)}</Badge>
       </div>
       {item.instructions && <p className="mt-1.5 whitespace-pre-wrap text-sm text-ink-700">{item.instructions}</p>}
 

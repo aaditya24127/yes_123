@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { X, AlertTriangle, ClipboardCheck, FileSpreadsheet, FileText, FileAudio, Image as ImageIcon, FileType2, CheckCircle2, CircleHelp, Eye } from 'lucide-react';
+import { X, AlertTriangle, ChevronDown, ClipboardCheck, FileSpreadsheet, FileText, FileAudio, Image as ImageIcon, FileType2, CheckCircle2, CircleHelp, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { EvidenceGroup, FileInfo, Item } from '@/lib/types';
 import { BAND, CAT_COLORS, FEED_LABEL, SECTION_LABEL } from '@/lib/theme';
@@ -37,6 +37,10 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
   const [ev, setEv] = useState<EvidenceGroup[] | null>(null);
   const [files, setFiles] = useState<FileInfo[] | null>(null);
   const [sel, setSel] = useState<string | null>(null);
+  // On a phone the files and the viewer are two screens: pick a file, then see it (with a way back). On a wide screen they sit side by side.
+  const [wide, setWide] = useState(true);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  useEffect(() => { const on = () => setWide(window.innerWidth >= 1024); on(); window.addEventListener('resize', on); return () => window.removeEventListener('resize', on); }, []);
 
   useEffect(() => {
     let live = true;
@@ -58,7 +62,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
     visibleFiles.forEach((f) => (g[f.section] ??= []).push(f));
     return g;
   }, [visibleFiles]);
-  useEffect(() => { if (tab === 'Data sources' && !sel && visibleFiles.length) setSel(visibleFiles[0].id); }, [tab, sel, visibleFiles]);
+  useEffect(() => { if (tab === 'Data sources' && !sel && wide && visibleFiles.length) setSel(visibleFiles[0].id); }, [tab, sel, visibleFiles, wide]);
 
   const openFile = (id: string) => { setSel(id); setTab('Data sources'); };
   const band = item.band ? BAND[item.band] : null;
@@ -88,8 +92,13 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
         <button onClick={onClose} aria-label={t('close')} className="rounded-full p-2 text-ink-500 transition hover:bg-brand-100 hover:text-brand-800"><X size={20} /></button>
       </div>
       {item.alerts.length > 0 && (
-        <div className="space-y-1.5 border-b border-brand-100 px-4 py-3 sm:px-6">
-          {item.alerts.map((a, i) => <p key={i} className="flex items-center gap-2 text-sm font-medium text-red-700"><AlertTriangle size={15} className="shrink-0" />{alert(a)}</p>)}
+        <div className="border-b border-brand-100 px-4 py-3 sm:px-6">
+          <button onClick={() => setAlertsOpen((v) => !v)} aria-expanded={alertsOpen} className="flex w-full items-center gap-2 text-sm font-semibold text-red-700 sm:hidden">
+            <AlertTriangle size={15} className="shrink-0" />{item.alerts.length} {item.alerts.length === 1 ? 'alert' : 'alerts'}<ChevronDown size={16} className={`ms-auto transition ${alertsOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <div className={`${alertsOpen ? 'mt-2 block' : 'hidden'} space-y-1.5 sm:mt-0 sm:block`}>
+            {item.alerts.map((a, i) => <p key={i} className="flex items-center gap-2 text-sm font-medium text-red-700"><AlertTriangle size={15} className="shrink-0" />{alert(a)}</p>)}
+          </div>
         </div>
       )}
 
@@ -139,8 +148,8 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
         )}
 
         {tab === 'Data sources' && (
-          <div className={`grid h-full min-h-[480px] gap-4 ${compact ? '' : 'lg:grid-cols-[320px_1fr]'}`}>
-            <div className={`thin-scroll space-y-4 overflow-y-auto pr-1 ${compact ? 'max-h-60' : ''}`}>
+          <div className={`grid h-full gap-4 lg:min-h-[480px] ${compact ? '' : 'lg:grid-cols-[320px_1fr]'}`}>
+            <div className={`thin-scroll space-y-4 overflow-y-auto pr-1 ${compact ? 'max-h-60' : ''} ${!wide && sel ? 'hidden' : ''}`}>
               {!files && <div className="h-40 animate-pulse rounded-2xl bg-brand-50" />}
               {Object.entries(grouped).map(([sec, fs]) => (
                 <div key={sec}>
@@ -150,7 +159,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                       <button key={f.id} onClick={() => setSel(f.id)} className={`flex w-full items-start gap-2.5 rounded-2xl border p-3 text-start transition ${sel === f.id ? 'border-brand-500 bg-brand-50 shadow-float' : 'border-brand-100 bg-surface hover:border-brand-300'}`}>
                         <FileIcon f={f} />
                         <div className="min-w-0 flex-1">
-                          <p dir="auto" className="truncate text-[13px] font-semibold text-ink-900">{f.name}</p>
+                          <p dir="auto" className="break-words text-[13px] font-semibold text-ink-900 sm:truncate">{f.name}</p>
                           <p className="text-[11px] text-ink-500">{f.record_date} · {f.format.toUpperCase()}{f.scanned ? ` · ${t('scanned')}` : ''}</p>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {f.feeds.map((x) => <span key={x} className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-800">{feedLabel(x)}</span>)}
@@ -163,7 +172,8 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                 </div>
               ))}
             </div>
-            <div className="min-h-[480px] min-w-0">
+            <div className={`min-h-[420px] min-w-0 lg:min-h-[480px] ${!wide && !sel ? 'hidden' : ''}`}>
+              {!wide && sel && <button onClick={() => setSel(null)} className="mb-3 text-sm font-semibold text-brand-700 underline">← All files</button>}
               {sel && files ? <DataViewer file={files.find((f) => f.id === sel)!} key={sel} /> : <p className="text-sm text-ink-500">{t('selectFile')}</p>}
             </div>
           </div>
