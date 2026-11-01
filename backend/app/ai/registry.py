@@ -63,6 +63,8 @@ def _reload_env():
         mine = _cache.setdefault('env_keys', set())          # keys this file set earlier
         values = dotenv_values(ENV_PATH) if mt else {}
         for k, v in values.items():
+            if k == 'TARGET' or k.startswith(('DATABASE_', 'SUPABASE_', 'STORAGE_')): continue   # where data lives never changes while running (a test started with TARGET=local must stay local)
+            if k.startswith('AI_') and k in os.environ and k not in mine: continue                # settings given when the program started win
             if v:                                             # only filled-in lines; a blank never hides a key set elsewhere (e.g. on the server)
                 os.environ[k] = v; mine.add(k)
             elif k in mine:                                   # a key was deleted from .env: forget it

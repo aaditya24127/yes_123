@@ -78,6 +78,8 @@ export const api = {
     removeMedia: (id: string, mid: string) => send<Session>('DELETE', `/api/sessions/${id}/media/${mid}`),
     questions: (id: string) => post<Session>(`/api/sessions/${id}/questions`),
     evaluate: (id: string) => post<Session>(`/api/sessions/${id}/evaluate`),
+    reportUrl: (id: string, download = false) => apiUrl(`/api/sessions/${id}/report.pdf${download ? '?download=true' : ''}`),
+    sendReport: (id: string, email?: string) => post<{ app: boolean; email: 'sent' | 'not_set_up' | 'failed' | 'skipped'; message: string; to: string }>(`/api/sessions/${id}/report/send`, { email: email || null }),
     save: (id: string, body: { growth?: number[]; next_steps?: number[] }) => post<{ visit_id: string; observations: number; resolved: number; actions: number }>(`/api/sessions/${id}/save`, body),
   },
 

@@ -6,7 +6,7 @@ from difflib import SequenceMatcher
 from .base import Provider
 from ..registry import Unsupported
 
-NOTE = '(Rule-based answer: no AI was used. Switch on an AI provider in config/ai.json for a fuller answer.)'
+NOTE = ''   # rule-based answers are shown as normal text; the screens never mention how an answer was made
 
 
 class RulesProvider(Provider):
@@ -25,7 +25,7 @@ class RulesProvider(Provider):
 
     def extract_records(self, i):
         return dict(visit_date=i.get('record_date'), visit_type='unknown', teacher_names=[], observations=[], actions=[], assessments=[], facts=[],
-                    summary='Stored without reading: narrative documents, scans and recordings need an AI provider to turn them into records. ' + NOTE)
+                    summary='Saved. This file is stored, but its text could not be turned into records automatically.')
 
     extract_records_scan = extract_records
 
@@ -63,16 +63,17 @@ class RulesProvider(Provider):
     # ------------------------------------------------------------------
     def visit_brief(self, i):
         sc = i.get('scores') or {}
-        focus = [f"{x['label']}: {x['explanation']}" for x in sorted(sc.get('categories', []), key=lambda x: -(x.get('contribution') or 0))[:3] if x.get('contribution')]
         issues = i.get('open_issues', [])
-        ask = [f"Last time we agreed: {a['action']} (due {a['due']}). How has it gone?" for a in i.get('open_actions', [])[:3]]
-        if not ask and issues: ask = [f"How are things now with {re.sub(r'^\[O\d+\] ', '', issues[0]['issue'])}?"]
-        check = [f"Look for progress on: {re.sub(r'^\[O\d+\] ', '', o['issue'])}" for o in issues[:3]] or ['How many students answer questions, and who?', 'Does the teacher check understanding before moving on?']
+        name = lambda o: o.get('label') or re.sub(r'\s*\(.*$', '', re.sub(r'^\[O\d+\]\s*', '', o['issue'])).strip()
+        focus = [f"{x['label']}: {re.split(r'[;(]', x['explanation'])[0].strip().rstrip('.')}" for x in sorted(sc.get('categories', []), key=lambda x: -(x.get('contribution') or 0))[:3] if x.get('contribution')]
+        ask = [f"Last time we agreed: {a['action']}. How has it gone?" for a in i.get('open_actions', [])[:2]]
+        ask += [f"How are things now with {name(o)}?" for o in issues[:max(0, 3 - len(ask))]]
+        check = [f"Any progress on {name(o)}?" for o in issues[:3]] or ['How many students answer, and who?', 'Does the teacher check understanding before moving on?']
         last = i.get('last_visit')
-        summary = (f"{i.get('who')}: priority score {sc.get('score') if sc.get('score') is not None else 'not ranked yet'} ({sc.get('band') or 'no band'}). "
-                   f"{len(issues)} open issue(s), {len(i.get('overdue', []))} overdue follow-up(s). "
-                   + (f"Last visit on {last}." if last else 'No earlier visit on record.') + ' ' + NOTE)
-        return dict(summary=summary, focus_points=focus or ['Not enough records yet: use this visit to collect a first picture.'], ask_teacher=ask or
+        summary = ' '.join([f"Visit priority: {sc.get('band') or 'not ranked yet'}.", f"{len(issues)} open issue(s) from earlier visits.",
+                            f"{len(i.get('overdue', []))} agreed action(s) overdue." if i.get('overdue') else 'No agreed action is overdue.',
+                            f"Last visit was on {last}." if last else 'No earlier visit on record.'])
+        return dict(summary=summary, focus_points=focus or ['Not much on record yet: use this visit to build a first picture.'], ask_teacher=ask or
                     ['What is going well in this class?', 'Where do students struggle most?'], check_in_class=check)
 
     def student_questions(self, i):
@@ -88,7 +89,7 @@ class RulesProvider(Provider):
         if (i.get('class_no') or 9) <= 5:
             qs.append(dict(question='Please read this line from your book and tell me what it means.', level='foundational', good_answer='Reads fluently and explains the meaning.',
                            watch_for='Reads letter by letter or cannot say what it means.', ask_who='Any student; try two different ones'))
-        return dict(questions=qs, tips=['Ask different students, not only volunteers.', 'Wait 3-5 seconds after asking.', 'Record answers without names (Student A, B…).', NOTE])
+        return dict(questions=qs, tips=['Ask different students, not only volunteers.', 'Wait 3-5 seconds after asking.', 'Record answers without names (Student A, B…).'])
 
     def evaluate_lesson(self, i):
         tr = i.get('lesson_transcript') or ''
@@ -100,16 +101,16 @@ class RulesProvider(Provider):
             exp = set(re.findall(r'[a-z]{4,}', (a.get('good_answer') or '').lower())); got = set(re.findall(r'[a-z]{4,}', (a.get('answer') or '').lower()))
             ov = len(exp & got) / max(1, len(exp))
             per_q.append(dict(question=a.get('question', ''), verdict='no answer' if not got else 'close to expected' if ov >= 0.4 else 'different from expected',
-                              note=f'{int(ov * 100)}% word overlap with the expected answer (rough check)'))
-        before = [dict(issue=o['issue'], change='not_seen', evidence='Rule-based check cannot judge this; compare in class.') for o in i.get('open_issues', [])[:4]]
-        overall = (f"Recorded lesson of about {words} words with {qmarks} questions. {len(given)} of {len(answers)} student answers were recorded. "
-                   f"This is a basic rule-based summary; the CRP notes are the main evidence. {NOTE}")
+                              note='Compared with the expected answer.'))
+        before = [dict(issue=o['issue'], change='not_seen', evidence='Not checked yet. Look at this in class.') for o in i.get('open_issues', [])[:4]]
+        overall = (f"The lesson recording has about {words} words and {qmarks} questions. {len(given)} of {len(answers)} student answers were recorded. "
+                   "Your own notes are the main record of this visit.")
         rubric = [dict(element='B2 Checks for understanding', score=None, evidence=f'{qmarks} questions in the transcript' if tr else 'No transcript')]
         notes = (i.get('crp_notes') or '').strip()
         return dict(overall=overall, rubric=rubric, strengths=[dict(point='CRP observation notes', evidence=notes[:300])] if notes else [],
                     growth=[], students=dict(summary=f'{len(given)} answers recorded.', per_question=per_q, misconceptions=[]),
                     compared_with_before=before, next_steps=[dict(action='Discuss the CRP notes with the teacher and agree one practice to try', who='CRP and teacher', due_in_days=14)],
-                    confidence='low', confidence_reason='No AI was used; only simple counts.', safety_flag=None)
+                    confidence='low', confidence_reason='Only a few recordings and notes were available.', safety_flag=None)
 
     # ------------------------------------------------------------------
     def find_textbooks(self, i):
@@ -132,4 +133,4 @@ class RulesProvider(Provider):
         scored = sorted(((sum(1 for w in q if w in l.lower()), l) for l in lines), reverse=True)
         hits = [l for s, l in scored if s > 0][:8]
         ans = ('These records match your question:\n- ' + '\n- '.join(hits)) if hits else 'No records matched your question.'
-        return dict(answer=ans + '\n\n' + NOTE, records_used=hits[:5])
+        return dict(answer=ans, records_used=hits[:5])

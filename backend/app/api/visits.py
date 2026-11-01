@@ -1,13 +1,13 @@
 """The 4-step visit (brief -> class -> students -> results) and textbook search / linking."""
 import hashlib, json
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel
 
 from .. import ai
 from ..core.storage import get_storage
 from ..jobs import enqueue, job_status
-from ..services import textbooks, visit
+from ..services import mailer, push, report, textbooks, visit
 from ..services.ingest import readers
 from ..services.ingest.pipeline import _school_folder
 from ..services.prioritization.data import get_conn
@@ -57,7 +57,8 @@ def get_session(sid: str):
             raise HTTPException(404, str(e))
     job = job_status(str(s['job_id'])) if s['job_id'] else None
     return dict(id=str(s['id']), school_id=str(s['school_id']), teacher_id=str(s['teacher_id']) if s['teacher_id'] else None, class_no=s['class_no'], subject=s['subject'],
-                topic=s['topic'], stage=s['stage'], status=s['status'], brief=s['brief'], crp_notes=s['crp_notes'], changes_since_last=s['changes_since_last'],
+                topic=s['topic'], stage=s['stage'], status=s['status'], brief=s['brief'], followup_days=s.get('followup_days') or 14,
+                report_sent_at=s['report_sent_at'].isoformat() if s.get('report_sent_at') else None, report_sent_to=s.get('report_sent_to'), crp_notes=s['crp_notes'], changes_since_last=s['changes_since_last'],
                 questions=s['questions'], result=s['result'], media=[_media_view(m) for m in media], started_at=s['started_at'].isoformat(),
                 job=None if not job else dict(status=job['status'], error=job['error'], provider=job['provider']), visit_id=str(s['visit_id']) if s['visit_id'] else None)
 
@@ -81,12 +82,14 @@ class SessionPatch(BaseModel):
     stage: int | None = None
     questions: list | None = None
     status: str | None = None
+    followup_days: int | None = None
 
 
 @router.patch('/sessions/{sid}')
 def edit_session(sid: str, req: SessionPatch):
     ch = req.model_dump(exclude_unset=True)
     if 'status' in ch and ch['status'] not in ('in_progress', 'cancelled'): raise HTTPException(400, 'bad status')
+    if 'followup_days' in ch and not (ch['followup_days'] and 1 <= ch['followup_days'] <= 365): raise HTTPException(400, 'Follow-up days must be between 1 and 365.')
     if 'questions' in ch: ch['questions'] = json.dumps(ch['questions'])
     if ch:
         with get_conn() as conn:
@@ -167,6 +170,69 @@ def save(sid: str, req: SaveReq):
         return visit.save_to_records(sid, req.growth, req.next_steps)
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+# ---------------------------------------------------------------- the written report for the teacher
+def _pdf_response(name: str, pdf: bytes, download: bool):
+    return Response(pdf, media_type='application/pdf', headers={'Content-Disposition': f'{"attachment" if download else "inline"}; filename="{name}"'})
+
+
+@router.get('/sessions/{sid}/report.pdf')
+def report_pdf(sid: str, download: bool = False):
+    try:
+        name, pdf = report.build(sid)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return _pdf_response(name, pdf, download)
+
+
+@router.get('/report/{sid}.pdf')
+def report_for_teacher(sid: str, sig: str = ''):
+    """Link inside the teacher app: works only with the signed code that was sent with the report."""
+    if not report.sig_ok(sid, sig): raise HTTPException(404, 'This report link is not valid.')
+    try:
+        name, pdf = report.build(sid)
+    except ValueError:
+        raise HTTPException(404, 'This report is not ready.')
+    return _pdf_response(name, pdf, False)
+
+
+class SendReportReq(BaseModel):
+    email: str | None = None
+
+
+@router.post('/sessions/{sid}/report/send')
+def send_report(sid: str, req: SendReportReq):
+    """Send the report to the teacher: always inside the teacher app (with an alert), and by email when a mail account is set up."""
+    with get_conn() as conn:
+        try:
+            s, _ = visit.load_session(conn, sid)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        if not s['teacher_id']: raise HTTPException(400, 'This visit was for the whole school. Start a visit for one teacher to send a report.')
+        acc = conn.execute('select email from teacher_accounts where teacher_id = %s', (s['teacher_id'],)).fetchone()
+    try:
+        name, pdf = report.build(sid)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    to = (req.email or (acc or {}).get('email') or '').strip()
+    who = ((s['brief'] or {}).get('teacher') or {}).get('name') or 'teacher'
+    email_state, email_msg = ('skipped', '')
+    if to:
+        text = (f'Dear {who},' + chr(10) * 2 + 'Thank you for the visit. Your report is attached. It lists what went well, where to improve, '
+                'the questions to ask in class and what we agreed to do next.' + chr(10) * 2 + 'Your CRP')
+        email_state, email_msg = mailer.send(to, 'Your visit report', text, [(name, pdf, 'application/pdf')])
+    with get_conn() as conn:
+        conn.execute("insert into messages (teacher_id, sender, body) values (%s,'crp',%s)", (s['teacher_id'], 'Your visit report is ready. Open My visits to read it.'))
+        conn.execute("insert into notifications (recipient_type, teacher_id, title, body, link) values ('teacher', %s, 'Your visit report is ready', 'Open My visits to read it.', '/visits')", (s['teacher_id'],))
+        conn.commit()
+    try:     # the "sent" stamp needs migration 0017; if it is missing the report has still been delivered
+        with get_conn() as conn:
+            conn.execute('update visit_sessions set report_sent_at = now(), report_sent_to = %s where id = %s', (to if email_state == 'sent' else None, sid)); conn.commit()
+    except Exception:
+        pass
+    push.notify_teacher(s['teacher_id'], 'Your visit report is ready', 'Open My visits to read it.', '/visits')
+    return dict(app=True, email=email_state, message=email_msg, to=to)
 
 
 # ---------------------------------------------------------------- textbooks

@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, AlertTriangle, FileSpreadsheet, FileText, FileAudio, Image as ImageIcon, FileType2, CheckCircle2, CircleHelp, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, AlertTriangle, ClipboardCheck, FileSpreadsheet, FileText, FileAudio, Image as ImageIcon, FileType2, CheckCircle2, CircleHelp, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { EvidenceGroup, FileInfo, Item } from '@/lib/types';
 import { BAND, CAT_COLORS, FEED_LABEL, SECTION_LABEL } from '@/lib/theme';
@@ -10,9 +11,10 @@ import DataViewer from './DataViewer';
 import { useLang, type Key } from '@/lib/i18n';
 import OverrideBox from './OverrideBox';
 import { FEATURES } from '@/lib/app.config';
+import { visitHref } from '@/lib/visit-text';
 
-const TABS = ['Overview', 'Evidence', 'Data sources'] as const;
-const TAB_KEY: Record<(typeof TABS)[number], Key> = { Overview: 'overview', Evidence: 'evidence', 'Data sources': 'dataSources' };
+const TABS = ['Evidence', 'Data sources'] as const;
+const TAB_KEY: Record<(typeof TABS)[number], Key> = { Evidence: 'evidence', 'Data sources': 'dataSources' };
 type Tab = (typeof TABS)[number];
 
 function FileIcon({ f }: { f: FileInfo }) {
@@ -24,17 +26,14 @@ function FileIcon({ f }: { f: FileInfo }) {
   return <FileText size={18} className={c} />;
 }
 
-const STATUS: Record<string, string> = {
-  verified: 'bg-emerald-50 text-emerald-700', provisional: 'bg-sky-50 text-sky-700', unknown: 'bg-slate-100 text-slate-600', review: 'bg-amber-50 text-amber-700',
-  na: 'bg-slate-50 text-slate-400',
-};
 // Feed names that reuse the section wording.
 const FEED_AS_SECTION: Record<string, string> = { overdue_followup: 'followups', time_since_visit: 'visits', attendance: 'attendance' };
 
 export function DetailBody({ item, onClose, compact = false }: { item: Item; onClose: () => void; compact?: boolean }) {
   const { t, tx, dir, alert } = useLang();
   const feedLabel = (x: string) => (FEED_AS_SECTION[x] ? tx('sec', FEED_AS_SECTION[x], x) : tx('feed', x, FEED_LABEL[x] ?? x));
-  const [tab, setTab] = useState<Tab>('Overview');
+  const router = useRouter();
+  const [tab, setTab] = useState<Tab>('Evidence');
   const [ev, setEv] = useState<EvidenceGroup[] | null>(null);
   const [files, setFiles] = useState<FileInfo[] | null>(null);
   const [sel, setSel] = useState<string | null>(null);
@@ -82,8 +81,16 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
             <span className="font-semibold text-ink-700">{Math.round(item.coverage)}%</span>
           </div>
         </div>
+        <button onClick={() => router.push(visitHref(item))} className="flex shrink-0 items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-float transition hover:bg-brand-700">
+          <ClipboardCheck size={17} />{t('visit')}
+        </button>
         <button onClick={onClose} aria-label={t('close')} className="rounded-full p-2 text-ink-500 transition hover:bg-brand-100 hover:text-brand-800"><X size={20} /></button>
       </div>
+      {item.alerts.length > 0 && (
+        <div className="space-y-1.5 border-b border-brand-100 px-6 py-3">
+          {item.alerts.map((a, i) => <p key={i} className="flex items-center gap-2 text-sm font-medium text-red-700"><AlertTriangle size={15} className="shrink-0" />{alert(a)}</p>)}
+        </div>
+      )}
 
       <div className="flex gap-1 border-b border-brand-100 px-6 pt-2">
         {TABS.map((tb) => (
@@ -95,45 +102,11 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
       </div>
 
       <div className="thin-scroll min-h-0 flex-1 overflow-y-auto p-6">
-        {tab === 'Overview' && (
-          <div className="space-y-5">
-            {item.alerts.length > 0 && (
-              <div className="space-y-2">
-                {item.alerts.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700"><AlertTriangle size={16} />{alert(a)}</div>
-                ))}
-              </div>
-            )}
-            {item.flags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {item.flags.map((f) => <span key={f.code} className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">{tx('flag', f.code, f.label)}</span>)}
-              </div>
-            )}
-            <div className={`grid gap-3 ${compact ? '' : 'md:grid-cols-2'}`}>
-              {item.categories.map((c, i) => (
-                <div key={c.code} className="rounded-2xl border border-brand-100 bg-surface p-4 shadow-float">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 text-sm font-semibold text-ink-900"><span className="h-2.5 w-2.5 rounded-full" style={{ background: CAT_COLORS[i] }} />{tx('cat', c.code, c.label)}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS[c.status]}`}>{t(`st_${c.status}` as Key)}</span>
-                  </div>
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-brand-50">
-                      <motion.div className="h-full rounded-full" style={{ background: CAT_COLORS[i] }} initial={{ width: 0 }} animate={{ width: `${c.score ?? 0}%` }} transition={{ duration: 0.6 }} />
-                    </div>
-                    <span className="w-10 text-end text-sm font-semibold tabular-nums">{c.score == null ? '–' : Math.round(c.score)}</span>
-                  </div>
-                  <p dir="auto" className="mt-2 text-[13px] leading-snug text-ink-700">{c.explanation}</p>
-                </div>
-              ))}
-            </div>
-            {FEATURES.overrides && !item.insufficient && <OverrideBox item={item} />}
-          </div>
-        )}
-
         {tab === 'Evidence' && (
           <div className="space-y-4">
             {!ev && <div className="h-40 animate-pulse rounded-2xl bg-brand-50" />}
-            {ev?.map((g, i) => (
+            {ev?.length && ev.every((g) => g.records.length === 0) ? <p className="rounded-2xl bg-brand-50/60 px-4 py-6 text-center text-sm text-ink-500">{t('notEnough')}</p> : null}
+            {ev?.map((g, i) => g.records.length === 0 ? null : (
               <div key={g.code} className="rounded-2xl border border-brand-100">
                 <div className="flex items-center justify-between gap-3 border-b border-brand-50 px-4 py-3">
                   <span className="flex items-center gap-2 text-sm font-semibold text-ink-900"><span className="h-2.5 w-2.5 rounded-full" style={{ background: CAT_COLORS[i] }} />{tx('cat', g.code, g.label)}</span>
@@ -155,6 +128,12 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                 </ul>
               </div>
             ))}
+            {FEATURES.overrides && !item.insufficient && (
+              <details className="rounded-2xl border border-brand-100 p-4">
+                <summary className="cursor-pointer text-sm font-semibold text-brand-700">Change this priority by hand</summary>
+                <div className="mt-3"><OverrideBox item={item} /></div>
+              </details>
+            )}
           </div>
         )}
 

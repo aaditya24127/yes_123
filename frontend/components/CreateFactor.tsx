@@ -1,5 +1,5 @@
 'use client';
-// "Create your own factor": the CRP describes it in plain words, the AI (or the free rules) suggests a definition, the CRP
+// "Create your own factor": the CRP describes it in plain words, a definition is suggested, the CRP
 // adjusts it, optionally types in or uploads the numbers per school, and switches it on.
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -75,7 +75,7 @@ export default function CreateFactor({ open, onClose, onCreated, onUseExisting }
 
             {s && !s.existing_code && (
               <div className="mt-4 space-y-4">
-                <Note>{s.explanation} <span className="text-xs opacity-70">(suggested by {s.suggested_by === 'rules' ? 'built-in rules' : s.suggested_by})</span></Note>
+                <Note>{s.explanation}</Note>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Factor name"><Input value={s.name} onChange={(e) => set('name', e.target.value)} /></Field>
                   <Field label="The number each school needs"><Input value={s.fact_label} onChange={(e) => set('fact_label', e.target.value)} /></Field>

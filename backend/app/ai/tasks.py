@@ -134,7 +134,7 @@ VISIT_BRIEF = Task(
     lambda: ('You prepare a Cluster Resource Person (CRP) for a school visit in India. Using only the records given, write: summary (3-4 plain sentences: '
              'where things stand, what changed since last time); focus_points (2-4 things to look at, most important first, each pointing to a record); '
              'ask_teacher (2-4 respectful questions about earlier feedback and agreed actions); check_in_class (2-4 concrete things to watch for in the lesson). '
-             'Be specific and kind. Do not invent facts.'),
+             'Be specific and kind. Do not invent facts. Use simple everyday words and very short sentences (summary: at most 3 sentences; every point: at most 15 words, one idea).'),
     lambda i: _j(i), max_tokens=3000)
 
 
@@ -170,7 +170,8 @@ EVALUATE = Task(
     }),
     lambda: ('You evaluate a classroom lesson for a Cluster Resource Person (CRP) in India and write the result the CRP will discuss with the teacher. '
              'Follow the guide below exactly: ground rules (section 1), the framework (section 2, scores 1-5 or null when not observed), reading student '
-             'answers (section 5) and the result structure (section 7). Every strength and growth point needs evidence (transcript time, CRP note, student '
+             'answers (section 5) and the result structure (section 7). Write for a busy CRP and a teacher: very short sentences in simple everyday words, '
+             'one idea each (overall: 3 or 4 short sentences); no jargon and no framework names or codes inside the sentences. Every strength and growth point needs evidence (transcript time, CRP note, student '
              'answer or record). growth: at most 2. next_steps: 1-3. source: the guide source codes, e.g. "S1, S3". safety_flag: null unless there is harm.\n\n'
              + knowledge()),
     lambda i: _j(i), tier='smart', max_tokens=12000)

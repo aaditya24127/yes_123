@@ -4,7 +4,7 @@ This file is the single starting point for anyone (person or AI assistant) worki
 before your own prompt. It explains what the product is, how the code is organised, how to run it, the rules every change
 must follow, and what is still to do in each area (security, frontend, backend, AI, mobile app, data).
 
-Last updated: 27 October 2026 (branch `real-world-v2`).
+Last updated: 1 November 2026.
 
 ---
 
@@ -23,8 +23,11 @@ What it does:
 2. **Upload**: drop many files (Excel, CSV, Word, PDF, scans, photos of handwritten notes, audio). Each is sorted to a
    school / teacher / type / date, checked for duplicates and conflicting numbers, confirmed by the CRP, then imported.
 3. **Visit (4 steps)**: before class (history and brief) -> in class (record lesson, notes) -> students (4-5 suggested
-   questions, record answers) -> results (evaluation against a teaching-research file, saved as observations and
-   follow-ups that feed the ranking).
+   questions, record answers) -> results (evaluation against a teaching-research file, shown as short points, saved as
+   observations and follow-ups that feed the ranking). The school / teacher header is shown on every step. In Results the CRP
+   picks the follow-up time (default 14 days) and can make a **PDF report for the teacher** (what went well, where to improve,
+   which questions to ask and how many, what was agreed) and send it: always into the teacher app (with an alert), and by email
+   when SMTP is set up (`SMTP_*` in `.env.example`). Every school / teacher card has a **Visit** button.
 4. **Teachers**: requests (send marks, plans, a lesson recording...), visit notices, messages, and a private teacher page.
 5. **Textbooks**: search official sites and link a book to a teacher; the PDF is downloaded and remembered.
 6. **Ask the copilot**: questions answered from the latest data.
@@ -79,11 +82,11 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `backend/app/core/storage.py` | local folder or Supabase Storage, same keys |
 | `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (not yet test-built) |
 | `config/ai.json` | who does each AI task |
-| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0010; `*.supabase.sql` = row-level security, Supabase only) |
+| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0017; `*.supabase.sql` = row-level security, Supabase only) |
 | `backend/app/core/settings.py` | `TARGET=local|supabase` picks the database (`DATABASE_URL` / `SUPABASE_DATABASE_URL`) and storage |
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
-| `frontend/app/` | pages: `/` priorities, `/upload`, `/visit`, `/connect`, `/settings`, `/teacher?k=` |
+| `frontend/app/` | pages: `/` priorities, `/upload` (add files), `/visit`, `/connect` (teachers), `/ask`, `/settings` (colours, layout, language, log out; nothing technical) |
 | `teacher-app/` | the teachers' browser app (Next.js 15, same Evergreen look, port 3001): `cd teacher-app && npm install --legacy-peer-deps && npm run dev`. Sign in, tasks from the CRP, upload answers, send concerns, own visits. Backend: `backend/app/api/teacher_app.py`, `services/teacher_auth.py` |
 | `landing/` | public landing page (separate Vite + React 19 + Tailwind 4 site): `cd landing && npm install && npm run dev` (port 5173). Every "Open the app" button goes to the app (`VITE_APP_URL`, default localhost:3000), and the app's logo goes back here (`NEXT_PUBLIC_LANDING_URL`, default localhost:5173) |
 | `frontend/components/` | page parts; `ui/` shared kit; `shell/` menu and page frame |
@@ -181,7 +184,7 @@ fonts).
 - Then: Capacitor app (`docs/MOBILE_APP.md`).
 
 ### Backend / AI
-- Test the Claude path end to end once a key is added (Settings > Test AI connections, then a real upload and a visit
+- Test the Claude path end to end once a key is added (`POST /api/ai/test`, then a real upload and a visit
   evaluation); tune prompts in `backend/app/ai/tasks.py`.
 - Evaluation set for extraction: compare AI-extracted records with `evaluation/ground_truth/file_to_records.json`.
 - Real-classroom audio (noise, Marathi / Hindi): try Whisper `small`/`medium` or an Indian-language speech service via a
@@ -196,7 +199,7 @@ Ranking: `GET config`, `POST ranking`, `POST evidence`, `POST config/apply`, `GE
 Factors: `GET factors`, `GET factors/{code}/preview`, `POST factors/suggest`, `POST factors`, `PATCH|DELETE factors/{code}`,
 `GET|POST facts/{key}`, `POST facts/{key}/upload`, `GET|POST overrides`, `DELETE overrides/{id}`.
 Uploads: `POST uploads` (multipart files), `GET uploads`, `GET uploads/{id}`, `PATCH uploads/items/{id}`, `POST uploads/{id}/import`.
-Visits: `GET brief`, `POST sessions`, `GET|PATCH sessions/{id}`, `POST sessions/{id}/media|questions|evaluate|save`, `DELETE sessions/{id}/media/{mid}`.
+Visits: `GET brief`, `POST sessions`, `GET|PATCH sessions/{id}`, `POST sessions/{id}/media|questions|evaluate|save`, `DELETE sessions/{id}/media/{mid}`, `GET sessions/{id}/report.pdf` (teacher report), `POST sessions/{id}/report/send` (teacher app + email), `GET report/{id}.pdf?sig=` (signed link used inside the teacher app).
 Textbooks: `GET textbooks/search`, `POST|GET resources`, `DELETE resources/{id}`.
 Connect (CRP side): `GET connect/overview`, `GET task-options`, `POST|GET requests` (a request holds numbered tasks = `task_items`), `PATCH requests/{id}`, `POST task-items/{id}/review` (accept, optionally adding the files to the records, or reject with remarks), `GET uploads/items/{id}/raw` (open a teacher's file), `GET|POST teachers/{id}/messages`, `GET notifications`, `POST notifications/read`.
 Teacher app (`/api/teacher/...`, bearer token): `POST login`, `GET home`, `POST submit` (per `item_id`), `POST messages` (concern), `GET visits`, `POST password`, `POST notifications/read`, `GET push/key`, `POST push/subscribe|unsubscribe|test`.
