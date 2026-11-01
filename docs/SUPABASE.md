@@ -27,13 +27,18 @@ Set `TARGET=supabase` in `.env`, then from the project folder:
 backend\.venv\Scripts\python database\cli.py setup
 ```
 
-This creates all tables (migrations 0001-0009), turns on row-level security (`0005_rls.supabase.sql`, `0010_rls_v2.supabase.sql`),
+This creates all tables (migrations 0001-0011), turns on row-level security (`0005_rls.supabase.sql`, `0010_rls_v2.supabase.sql`, `0012_rls_teacher_accounts.supabase.sql`),
 creates the private `crp-files` storage bucket, loads the demo data, uploads every demo file to the bucket under the same
 name, and checks counts and file fingerprints. It is safe to run again.
 
 Restart the backend. The website now reads and writes Supabase. `TARGET=local` switches back to this computer's database.
 
 Individual steps: `migrate`, `seed`, `storage-sync`, `verify`. `reset` refuses to run against Supabase.
+
+Tips from the first real setup (Nov 2026): in the new-project form turn **off** "Automatically expose new tables" and turn **on**
+"Enable automatic RLS"; use the **Session pooler** string (the direct one needs IPv6); use the **legacy `service_role`** key
+(Project Settings > API Keys > "Legacy anon, service_role API keys"), which the storage code expects. Teacher demo logins are created
+automatically when the API starts.
 
 ## Security notes
 
