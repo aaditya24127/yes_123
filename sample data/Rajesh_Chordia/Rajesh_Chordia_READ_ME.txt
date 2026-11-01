@@ -59,7 +59,8 @@ STEP 2.  IN CLASS
 STEP 3.  STUDENTS
 ----------------------------------------------------------------------
    Press "Get questions". The app writes 4 or 5 questions for this class and topic. They are not always the same,
-   so read each question and answer in the same style as below. For each question press "Record Student A",
+   so read each question and answer in the same style as below.
+   For each question press "Record Student A",
    say the answer out loud in a child's voice (10 to 20 seconds), and stop. Use Student B, C, D for the next children.
 
    Answers you can say (record them yourself):

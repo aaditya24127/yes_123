@@ -3,9 +3,10 @@ SAMPLE DATA: START HERE
 
 This folder has practice material for the CRP app. Everything is made up.
 
-FIVE PRACTICE VISITS (each folder has a 5 minute lesson recording, a photo of notes, and a READ_ME.txt that tells you
-exactly what to choose, what to type and what to say)
+PRACTICE VISITS. Each folder has a 5 minute lesson recording, a photo of notes, and a READ_ME.txt that tells you
+exactly what to choose, what to type and what to say.
 
+Set 1: five different kinds of lesson
    Mary_Lobo          Mrs. Mary Lobo         Class 4  Mathematics  Place value: ones, tens and hundreds
         A good lesson: place value with bundles of sticks
    Rajesh_Chordia     Mr. Rajesh Chordia     Class 7  English      Simple present tense
@@ -16,6 +17,18 @@ exactly what to choose, what to type and what to say)
         Many questions, but a wrong idea goes unnoticed: parts of a plant
    Deepali_Sonawane   Mrs. Deepali Sonawane  Class 5  EVS          The water cycle
         A busy group activity that runs out of time: the water cycle
+
+Set 2: the five teachers highest on the priority list (checked on 1 November 2026)
+   Farhana_Inamdar    Mrs. Farhana Inamdar   Class 4  Mathematics  Multiplication tables of 3 and 4
+        Chanting tables without understanding: multiplication
+   Pooja_Lonkar       Mrs. Pooja Lonkar      Class 4  EVS          Where our food comes from: plants and animals
+        A friendly lesson with local examples, but she moves on too fast: where food comes from
+   Smita_Raut         Mrs. Smita Raut        Class 6  Science      Separating substances: filtering and evaporation
+        A demonstration with a safety problem: separating substances
+   Vaishali_Kulkarni  Mrs. Vaishali Kulkarni Class 2  English      Reading three-letter words: cat, bat, hat, mat
+        Reading three-letter words, but a child is laughed at: Class 2 English
+   Sunita_Jadhav      Mrs. Sunita Jadhav     Class 3  Mathematics  Subtraction with regrouping (borrowing)
+        Finding and fixing wrong ideas with slates: subtraction with regrouping
 
 ONE PRACTICE PRIORITY
    priority1   A new reason to visit a school sooner (students who walk far), with the numbers to add.
