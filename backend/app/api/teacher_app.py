@@ -1,9 +1,9 @@
 """Teacher app API: sign in, see tasks and notifications from the CRP, upload what was asked, send concerns, see own visits.
 Everything is limited to the signed-in teacher (the id comes from the token, never from the request)."""
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ..services import teacher_auth
+from ..services import push, teacher_auth
 from ..services.ingest import pipeline
 from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
@@ -19,6 +19,20 @@ class LoginReq(BaseModel):
 class PasswordReq(BaseModel):
     old_password: str
     new_password: str
+
+
+class PushKeys(BaseModel):
+    p256dh: str
+    auth: str
+
+
+class PushSub(BaseModel):
+    endpoint: str
+    keys: PushKeys
+
+
+class PushOff(BaseModel):
+    endpoint: str
 
 
 class MessageReq(BaseModel):
@@ -126,3 +140,37 @@ def change_password(req: PasswordReq, tid: str = Depends(teacher_auth.current_te
         if not a or not teacher_auth.check_password(req.old_password, a['password_hash']): raise HTTPException(400, 'Your current password is not correct.')
         conn.execute('update teacher_accounts set password_hash = %s where teacher_id = %s', (teacher_auth.hash_password(req.new_password), tid)); conn.commit()
     return dict(ok=True)
+
+
+# ---------------------------------------------------------------- phone / browser alerts (Web Push)
+@router.get('/push/key')
+def push_key():
+    """The public key the browser needs to subscribe (null = push is not set up on this server)."""
+    return dict(key=push.public_key())
+
+
+@router.post('/push/subscribe')
+def push_subscribe(sub: PushSub, tid: str = Depends(teacher_auth.current_teacher), user_agent: str | None = Header(None)):
+    if not push.configured(): raise HTTPException(503, 'Alerts are not set up on the server yet.')
+    if not sub.endpoint.startswith('https://'): raise HTTPException(400, 'Not a valid push address.')
+    with get_conn() as conn:
+        push.save_subscription(conn, tid, sub.endpoint, sub.keys.p256dh, sub.keys.auth, user_agent)
+    return dict(ok=True)
+
+
+@router.post('/push/unsubscribe')
+def push_unsubscribe(off: PushOff, tid: str = Depends(teacher_auth.current_teacher)):
+    with get_conn() as conn:
+        push.remove_subscription(conn, tid, off.endpoint)
+    return dict(ok=True)
+
+
+@router.post('/push/test')
+def push_test(tid: str = Depends(teacher_auth.current_teacher)):
+    """Send a test alert to this teacher's own devices."""
+    if not push.configured(): raise HTTPException(503, 'Alerts are not set up on the server yet.')
+    with get_conn() as conn:
+        n = push.count_for(conn, tid)
+    if not n: raise HTTPException(400, 'Turn on alerts on this device first.')
+    push.notify_teacher(tid, 'Test alert', 'If you can see this, alerts are working.', '/', wait=True)
+    return dict(ok=True, devices=n)

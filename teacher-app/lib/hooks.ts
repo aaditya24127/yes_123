@@ -7,8 +7,7 @@ const EVERY_MS = 10000;
 
 /**
  * The signed-in teacher's data, refreshed every few seconds while the app is open (this is how a new task from the CRP appears).
- * Not signed in, or the sign-in expired: goes to /login. When something new arrives while the app is in the background,
- * the browser shows a notification (if the teacher allowed it).
+ * Not signed in, or the sign-in expired: goes to /login. (Alerts while the app is closed come from Web Push, see lib/push.ts.)
  */
 export function useHome() {
   const router = useRouter();
@@ -21,12 +20,7 @@ export function useHome() {
     try {
       const h = await api.home();
       setData(h); setError('');
-      const count = h.notifications.length;
-      if (seen.current !== null && count > seen.current && h.unread > 0 && document.hidden && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        const n = h.notifications[0];
-        new Notification(n.title, { body: n.body ?? undefined });
-      }
-      seen.current = count;
+      seen.current = h.notifications.length;
     } catch (e) {
       if (e instanceof AuthError) { token.clear(); router.replace('/login'); return; }
       setError('Cannot reach the server. Showing the last information.');

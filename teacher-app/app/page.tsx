@@ -1,11 +1,11 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { BellRing, CalendarClock, CheckCircle2, ChevronRight, ClipboardList, Clock, Send } from 'lucide-react';
+import { CalendarClock, CheckCircle2, ChevronRight, ClipboardList, Clock, Send } from 'lucide-react';
 import { useHome, fmtAgo, fmtDate } from '@/lib/hooks';
 import type { Task } from '@/lib/api';
 import Shell from '@/components/Shell';
-import { Badge, Button, Card, Empty } from '@/components/ui';
+import AlertsCard from '@/components/AlertsCard';
+import { Badge, Card, Empty } from '@/components/ui';
 
 const isLate = (t: Task) => t.status === 'open' && !!t.due_date && new Date(`${t.due_date}T23:59:59`) < new Date();
 
@@ -30,8 +30,6 @@ function TaskRow({ t, kinds }: { t: Task; kinds: Record<string, string> }) {
 
 export default function Home() {
   const { data, error } = useHome();
-  const [perm, setPerm] = useState<string>('granted');
-  useEffect(() => { if (typeof Notification !== 'undefined') setPerm(Notification.permission); }, []);
 
   if (!data) return <Shell home={null} error={error}><p className="py-20 text-center text-ink-500">Loading…</p></Shell>;
   const open = data.tasks.filter((t) => t.status === 'open');
@@ -55,13 +53,7 @@ export default function Home() {
         </Card>
       )}
 
-      {perm === 'default' && (
-        <Card className="mb-4 flex items-center gap-3">
-          <BellRing size={22} className="shrink-0 text-brand-600" />
-          <p className="flex-1 text-sm text-ink-700">Turn on alerts to be told when your CRP sends something new.</p>
-          <Button variant="soft" className="!px-4 !py-2" onClick={async () => setPerm(await Notification.requestPermission())}>Turn on</Button>
-        </Card>
-      )}
+      <AlertsCard className="mb-4" />
 
       {fresh.length > 0 && (
         <Card className="mb-5">

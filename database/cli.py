@@ -142,11 +142,24 @@ def status(conn):
         for r in cur.fetchall(): print(r[0], r[1])
 
 
+def vapid_keys():
+    """Make a key pair for Web Push alerts. Put them in .env (and in the host's settings); the private key must stay secret."""
+    import base64
+    from cryptography.hazmat.primitives import serialization
+    from py_vapid import Vapid
+    v = Vapid(); v.generate_keys()
+    b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b'=').decode()
+    pub = b64(v.public_key.public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint))
+    priv = b64(v.private_key.private_numbers().private_value.to_bytes(32, 'big'))
+    print('VAPID_PUBLIC_KEY=' + pub); print('VAPID_PRIVATE_KEY=' + priv + '    <- keep secret')
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['migrate', 'seed', 'storage-sync', 'verify', 'reset', 'status', 'setup'])
+    ap.add_argument('cmd', choices=['migrate', 'seed', 'storage-sync', 'verify', 'reset', 'status', 'setup', 'vapid-keys'])
     ap.add_argument('--yes', action='store_true', help='confirm destructive reset')
     a = ap.parse_args()
+    if a.cmd == 'vapid-keys': return vapid_keys()
     target = os.environ.get('TARGET', 'local').lower()
     ok = True
     with connect() as conn:

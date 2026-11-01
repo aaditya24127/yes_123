@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { KeyRound, LogOut, School } from 'lucide-react';
 import { api, token } from '@/lib/api';
 import { useHome } from '@/lib/hooks';
+import AlertsCard from '@/components/AlertsCard';
 import Shell from '@/components/Shell';
 import { Button, Card, Title } from '@/components/ui';
 
@@ -37,6 +38,7 @@ export default function Account() {
           {data.teacher.subjects && <p className="mt-1 text-sm text-ink-500">{data.teacher.subjects.join(', ')}{data.teacher.classes?.length ? ` · Class ${data.teacher.classes.join(', ')}` : ''}</p>}
         </Card>
       )}
+      <AlertsCard always className="mt-4" />
       <form onSubmit={change} className="mt-4 rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100">
         <h2 className="flex items-center gap-2 font-serif text-lg font-semibold text-ink-900"><KeyRound size={18} className="text-brand-500" />Change password</h2>
         <label className="mt-3 block text-sm font-semibold text-ink-700">Current password<input type="password" value={oldPw} onChange={(e) => setOld(e.target.value)} required autoComplete="current-password" className={field} /></label>

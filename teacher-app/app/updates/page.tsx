@@ -1,15 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Bell, BellRing } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useHome, fmtAgo } from '@/lib/hooks';
 import Shell from '@/components/Shell';
-import { Button, Card, Empty, Title } from '@/components/ui';
+import AlertsCard from '@/components/AlertsCard';
+import { Empty, Title } from '@/components/ui';
 
 export default function Updates() {
   const { data, error, reload } = useHome();
-  const [perm, setPerm] = useState('granted');
-  useEffect(() => { if (typeof Notification !== 'undefined') setPerm(Notification.permission); }, []);
   const unread = data?.unread ?? 0;
   const [firstUnread] = useState(() => new Set<string>());
   data?.notifications.forEach((n) => { if (!n.read_at) firstUnread.add(n.id); });   // keep the dots while this page is open
@@ -18,10 +17,7 @@ export default function Updates() {
   return (
     <Shell home={data} error={error}>
       <Title sub="Everything your CRP has sent you.">What&apos;s new</Title>
-      {perm === 'default' && (
-        <Card className="mb-4 flex items-center gap-3"><BellRing size={22} className="shrink-0 text-brand-600" />
-          <p className="flex-1 text-sm text-ink-700">Turn on alerts to be told when something new arrives.</p>
-          <Button variant="soft" className="!px-4 !py-2" onClick={async () => setPerm(await Notification.requestPermission())}>Turn on</Button></Card>)}
+      <AlertsCard className="mb-4" />
       {data && data.notifications.length === 0 ? <Empty icon={<Bell size={34} />} title="Nothing yet" hint="Tasks and messages from your CRP will be listed here." /> : (
         <ul className="space-y-3">{data?.notifications.map((n) => (
           <li key={n.id} className="flex gap-3 rounded-3xl bg-surface p-4 shadow-float ring-1 ring-brand-100">
