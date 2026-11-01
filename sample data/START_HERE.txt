@@ -1,0 +1,26 @@
+SAMPLE DATA: START HERE
+======================================================================
+
+This folder has practice material for the CRP app. Everything is made up.
+
+FIVE PRACTICE VISITS (each folder has a 5 minute lesson recording, a photo of notes, and a READ_ME.txt that tells you
+exactly what to choose, what to type and what to say)
+
+   1go  Mrs. Mary Lobo         Class 4  Mathematics  Place value: ones, tens and hundreds
+        A good lesson: place value with bundles of sticks
+   2go  Mr. Rajesh Chordia     Class 7  English      Simple present tense
+        A lesson where only the teacher speaks: simple present tense
+   3go  Mrs. Sushila Yadav     Class 8  Mathematics  Percentage
+        A lesson that has improved: percentages with shop examples
+   4go  Mr. Vishal Gawade      Class 6  Science      Parts of a plant and what each part does
+        Many questions, but a wrong idea goes unnoticed: parts of a plant
+   5go  Mrs. Deepali Sonawane  Class 5  EVS          The water cycle
+        A busy group activity that runs out of time: the water cycle
+
+ONE PRACTICE PRIORITY
+   priority1   A new reason to visit a school sooner (students who walk far), with the numbers to add.
+
+ALSO HERE
+   teacher_notes_pooja_lonkar_nandur.pdf   Unsorted notes from a teacher: use it on the Add files page.
+
+LIVE APP:  https://crp-mentor-copilot.vercel.app
