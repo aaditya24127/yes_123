@@ -89,13 +89,13 @@ export function List({ items, empty }: { items: ReactNode[]; empty?: ReactNode }
 
 export function Stepper({ steps, current, onPick, maxReached }: { steps: string[]; current: number; onPick?: (i: number) => void; maxReached?: number }) {
   return (
-    <ol className="flex flex-wrap items-center gap-2">
+    <ol className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {steps.map((s, i) => {
         const done = i < current, here = i === current, can = onPick && i <= (maxReached ?? current);
         return (
-          <li key={s} className="flex items-center gap-2">
+          <li key={s} className="flex shrink-0 items-center gap-2">
             <button disabled={!can} onClick={() => can && onPick?.(i)}
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ${here ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : done ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-ink-400 ring-brand-100'} ${can ? 'cursor-pointer' : 'cursor-default'}`}>
+              className={`flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ${here ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : done ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-ink-400 ring-brand-100'} ${can ? 'cursor-pointer' : 'cursor-default'}`}>
               <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${here ? 'bg-white/20' : 'bg-brand-100 text-brand-700'}`}>{i + 1}</span>{s}
             </button>
             {i < steps.length - 1 && <span className="h-px w-4 bg-brand-200" />}

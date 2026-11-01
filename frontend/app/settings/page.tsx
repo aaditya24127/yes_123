@@ -30,10 +30,10 @@ export default function SettingsPage() {
   return (
     <PageShell title="Settings" subtitle="Choose how the app looks and which language it speaks.">
       <Card title="Colours" subtitle="Pick the colours you like. The change is saved on this device.">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
           {THEMES.map((t, i) => (
             <button key={t.name} onClick={() => pickTheme(i)} aria-pressed={theme === i}
-              className={`flex items-center gap-3 rounded-2xl p-3 text-start ring-1 transition ${theme === i ? 'bg-brand-50 ring-2 ring-brand-600' : 'bg-surface ring-brand-100 hover:ring-brand-300'}`}>
+              className={`flex flex-col items-start gap-2 rounded-2xl p-3 text-start ring-1 transition sm:flex-row sm:items-center sm:gap-3 ${theme === i ? 'bg-brand-50 ring-2 ring-brand-600' : 'bg-surface ring-brand-100 hover:ring-brand-300'}`}>
               <span className="flex shrink-0 overflow-hidden rounded-xl ring-1 ring-black/5">{[t.brand[3], t.brand[6], t.brand[8], t.page].map((c) => <span key={c} className="h-9 w-4" style={{ background: c }} />)}</span>
               <span className="min-w-0 flex-1 text-sm font-semibold text-ink-900">{t.name}</span>
               {theme === i && <Check size={16} className="shrink-0 text-brand-700" />}
@@ -42,7 +42,7 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card title="Layout of your priority list" subtitle="How the schools and teachers are shown on the first page.">
+      <Card className="hidden md:block" title="Layout of your priority list" subtitle="How the schools and teachers are shown on the first page (wide screens).">
         <div className="grid gap-3 sm:grid-cols-3">
           {LAYOUTS.map(({ key, label, text, Icon }) => (
             <button key={key} onClick={() => pickLayout(key)} aria-pressed={layout === key}
