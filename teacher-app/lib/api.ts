@@ -36,11 +36,14 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   // The free server sleeps when nobody has used it for a while; looking things up is tried again while it wakes up.
   const safe = !init.method || init.method === 'GET';
   let res: Response | null = null;
-  for (let i = 0; i < (safe ? 4 : 1); i++) {
+  // The host sometimes answers with a "checking your browser" web page when many people use it at once: wait and try again.
+  const busyPage = (r: Response) => (r.headers.get('content-type') || '').includes('text/html') || r.status === 429;
+  for (let i = 0; i < (safe ? 5 : 1); i++) {
     try { res = await fetch(path, { ...init, headers }); } catch { res = null; }
-    if (res && ![502, 503, 504].includes(res.status)) break;
-    if (safe && i < 3) await new Promise((r) => setTimeout(r, 2500 * (i + 1)));
+    if (res && ![502, 503, 504].includes(res.status) && !busyPage(res)) break;
+    if (safe && i < 4) await new Promise((r) => setTimeout(r, 3500 * (i + 1)));
   }
+  if (res && busyPage(res)) throw new Error('The system is busy right now. Please wait a minute and try again.');
   if (!res) throw new Error('Could not reach the server. Check your internet connection and try again.');
   if (!res.ok) {
     const txt = await res.text();

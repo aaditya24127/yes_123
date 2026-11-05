@@ -6,10 +6,13 @@ import type {
 import { apiUrl } from './platform';
 
 const WAKING = 'The server is waking up. Please wait a few seconds and try again.';
+const BUSY = 'The system is busy right now. Please wait a minute and try again.';
+/** The host sometimes answers with a "checking your browser" web page instead of data when many people use it at once. */
+const isBusyPage = (res: Response) => (res.headers.get('content-type') || '').includes('text/html') || res.status === 429;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Looking things up can safely be tried again when the server is still waking up (it sleeps when nobody has used it for a while). */
 async function run(url: string, init: RequestInit | undefined, safe: boolean): Promise<Response> {
-  const tries = safe ? 4 : 1;
+  const tries = safe ? 5 : 1;
   for (let i = 0; i < tries; i++) {
     let res: Response;
     try { res = await fetch(url, init); } catch {
@@ -17,6 +20,7 @@ async function run(url: string, init: RequestInit | undefined, safe: boolean): P
       throw new Error('Could not reach the server. Check your internet connection and try again.');
     }
     if ([502, 503, 504].includes(res.status) && i < tries - 1) { await sleep(2500 * (i + 1)); continue; }
+    if (isBusyPage(res)) { if (i < tries - 1) { await sleep(4000 * (i + 1)); continue; } throw new Error(BUSY); }
     return res;
   }
   throw new Error(WAKING);
