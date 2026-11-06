@@ -135,3 +135,7 @@ With the database set up: `python evaluation/prioritization_tests/run_engine.py`
 ## Contributing
 
 Work on a branch and open a pull request into `main`; do not push to `main` directly. Follow the rules in `PROJECT_CONTEXT.md` section 5.
+
+## License
+
+This project is open source under the [MIT License](LICENSE). You may use, copy, modify and share it, as long as the license text stays with it.
