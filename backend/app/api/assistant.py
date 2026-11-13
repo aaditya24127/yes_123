@@ -77,6 +77,30 @@ def ai_test():
     return ai.test_all()
 
 
+# One row per API key: which of the providers in config/ai.json use it (the key itself is never sent anywhere).
+KEY_GROUPS = [
+    ('claude', 'Claude (Anthropic)', 'ANTHROPIC_API_KEY', 'Paid. Reads files, writes briefs and evaluates lessons.', 'paid'),
+    ('gemini', 'Gemini (Google)', 'GEMINI_API_KEY', 'Free plan. Used as a first, free reader of files.', 'free'),
+    ('groq', 'Groq (voice to text)', 'GROQ_API_KEY', 'Free plan. Turns recordings into text.', 'free'),
+]
+
+
+def _by_key(days: int):
+    with get_conn() as conn:
+        rows = conn.execute("""select provider, count(*) as calls, count(*) filter (where not ok) as failed, coalesce(sum(input_tokens),0) as tin, coalesce(sum(output_tokens),0) as tout,
+                               coalesce(sum(cost_usd),0) as cost, count(*) filter (where created_at > now() - make_interval(days => %s)) as calls_recent,
+                               coalesce(sum(cost_usd) filter (where created_at > now() - make_interval(days => %s)),0) as cost_recent
+                               from llm_calls group by 1""", (days, days)).fetchall()
+    out = []
+    for prefix, label, env, note, plan in KEY_GROUPS:
+        mine = [r for r in rows if r['provider'].startswith(prefix)]
+        s = lambda k: sum(float(r[k] or 0) for r in mine)
+        out.append(dict(id=prefix, label=label, env=env, note=note, plan=plan, key_set=bool((os.environ.get(env) or '').strip()),
+                        calls=int(s('calls')), failed=int(s('failed')), tokens_in=int(s('tin')), tokens_out=int(s('tout')), cost_usd=s('cost'),
+                        calls_recent=int(s('calls_recent')), cost_recent_usd=s('cost_recent')))
+    return out
+
+
 @router.get('/ai/usage')
 def ai_usage(days: int = 30):
     with get_conn() as conn:
@@ -85,8 +109,9 @@ def ai_usage(days: int = 30):
         by = conn.execute("""select task, provider, model, count(*) as calls, sum(input_tokens) as input_tokens, sum(output_tokens) as output_tokens, sum(cost_usd) as cost,
                              count(*) filter (where not ok) as failed from llm_calls where created_at > now() - make_interval(days => %s) group by 1,2,3 order by cost desc, calls desc""", (days,)).fetchall()
     f = lambda x: float(x or 0)
+    keys = _by_key(days)
     cap = (os.environ.get('AI_BUDGET_USD') or '').strip()
     try: budget = float(cap) if cap else None
     except ValueError: budget = None
-    return dict(days=days, cost_usd=f(tot['cost']), calls=tot['calls'], failed=tot['failed'], all_time_cost_usd=f(alltime['cost']), all_time_calls=alltime['calls'], budget_usd=budget,
+    return dict(days=days, cost_usd=f(tot['cost']), calls=tot['calls'], failed=tot['failed'], all_time_cost_usd=f(alltime['cost']), all_time_calls=alltime['calls'], budget_usd=budget, by_key=keys,
                 by_task=[dict(r, cost=f(r['cost'])) for r in by])
