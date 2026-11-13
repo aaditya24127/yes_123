@@ -2,6 +2,7 @@
 
 All data comes fresh from the database on every call, so anything uploaded or imported a minute ago is included.
 """
+import threading
 import datetime as dt, json
 
 from .. import ai
@@ -154,7 +155,19 @@ def evaluate(sid):
         conn.execute("insert into notifications (recipient_type, title, body, link) values ('crp', 'Visit evaluation ready', %s, %s)",
                      ((s['brief'] or {}).get('who', ''), f'/visit?session={sid}'))
         conn.commit()
+    _warm_report(sid)
     return r.provider
+
+
+def _warm_report(sid):
+    """Draw the teacher report in the background now, so it is ready (kept in memory) when the CRP opens or sends it."""
+    def go():
+        try:
+            from . import report
+            report.build(str(sid))
+        except Exception:
+            pass
+    threading.Thread(target=go, daemon=True).start()
 
 
 def save_to_records(sid, approved_growth=None, approved_steps=None):
