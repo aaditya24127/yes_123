@@ -2,6 +2,7 @@
 import datetime as dt
 import hashlib, json, re
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ from ..core.storage import get_storage
 from ..jobs import enqueue, job_status
 from ..services import crp_auth, mailer, push, report, textbooks, visit
 from ..services.ingest import readers
-from ..services.ingest.pipeline import _school_folder, transcribe
+from ..services.ingest.pipeline import _school_folder, looks_like_silence, transcribe
 from ..services.prioritization.data import get_conn
 
 router = APIRouter(prefix='/api', tags=['visits'])
@@ -93,7 +94,7 @@ def list_sessions(teacher_id: str | None = None, school_id: str | None = None, l
 
 # ---------------------------------------------------------------- visit notes by voice, photo or in another language
 # Nothing here is stored: the recording or photo is read, the text goes back to the screen, and the file is dropped.
-NOT_SPEECH = {'you', 'thank you', 'thanks', 'thanks for watching', 'thank you for watching', 'bye', 'okay', 'ok', 'uh', 'um', 'hmm', 'the', 'so', 'subtitles by the amaraorg community'}
+SHORT_CLIP = 120                       # seconds: recordings up to this are turned into text while the person waits
 MAX_NOTE_AUDIO = 24 * 1024 * 1024
 MAX_NOTE_PHOTO = 12 * 1024 * 1024
 
@@ -107,8 +108,7 @@ def notes_voice(file: UploadFile = File(...)):
     tr, _ = transcribe(data, file.filename or 'note.webm')
     if not tr: raise HTTPException(503, 'We could not turn the recording into text right now. Please type the note, or try again in a minute.')
     text = (tr.get('text') or '').strip() or ' '.join((x.get('text') or '').strip() for x in tr.get('segments', [])).strip()
-    said = re.sub(r'[^\w\s]', '', text.lower()).strip()
-    if not said or said in NOT_SPEECH or (len(said.split()) <= 2 and len(data) > 60000):       # silence or noise that was read as a word or two
+    if looks_like_silence(text, len(data)):       # silence or noise that was read as a word or two
         raise HTTPException(422, 'We could not hear clear speech. Check that the microphone is on, speak close to it, and try again.')
     return dict(text=text, language=tr.get('language'))
 
@@ -217,7 +217,16 @@ async def add_media(sid: str, file: UploadFile = File(...), kind: str = Form(...
         mid = conn.execute('insert into session_media (session_id, kind, question_index, student_label, source_file_id, transcript) values (%s,%s,%s,%s,%s,%s) returning id',
                            (sid, kind, question_index, student_label, sf, rr.text or None)).fetchone()['id']
         if fmt in readers.AUDIO:
-            enqueue('transcribe_media', {'media_id': str(mid)}, sf, conn=conn)
+            if (rr.duration or 0) <= SHORT_CLIP:                       # a short answer is read right now (a few seconds), not queued
+                tr, note = await run_in_threadpool(transcribe, data, name)
+                if tr:
+                    text = (tr.get('text') or '').strip() or ' '.join(x['text'] for x in tr.get('segments', []))
+                    conn.execute('update session_media set transcript = %s, transcript_by = %s where id = %s', (text, tr['by'], mid))
+                    conn.execute('update source_files set extracted_text = %s where id = %s', (text, sf))
+                else:
+                    conn.execute('update session_media set transcript_by = %s where id = %s', (note, mid))
+            else:
+                enqueue('transcribe_media', {'media_id': str(mid)}, sf, conn=conn)
         conn.commit()
     return get_session(sid)
 
