@@ -38,6 +38,12 @@ What it does:
    when the API starts and the sign-in page can fill it in; people can also make their own account. Demo and own accounts use the
    same table (`crp_accounts`), hashing, tokens and checks (`backend/app/services/crp_auth.py`, `backend/app/api/auth.py`). All
    accounts work on the one demo cluster today.
+   **Show allocation** (Upload page, every file card): a table of which priority each part of the file feeds (data taken, number of records,
+   an example, counted or not). Before Import it says what that kind of file feeds; after Import it reads the records the file really
+   produced (`backend/app/services/ingest/allocation.py`, `GET /api/uploads/items/{id}/allocation`).
+   **Speed between pages:** `frontend/lib/api.ts` keeps recent lookups for a few seconds (`keep()`; cleared by any save / upload / sign-in or
+   sign-out; polled lists are never kept) and `api.warm()` fetches the next pages' data right after sign-in; `useLoad(..., lastKey)` shows the
+   last list at once while a fresh one loads.
 8. **Tutorial mode** (the graduation-cap button at the top): a guide walks through the whole app like a game: a strip of text, a glowing
    ring around the thing it talks about, a tapping hand when the person must tap, and a recorded voice. 51 steps, 11 languages
    (text for all; voice for 10, Odia has no voice file yet). Steps: `frontend/lib/tutorial/steps.ts`; words: `frontend/lib/tutorial/lang/*.json`
@@ -221,3 +227,8 @@ Connect (CRP side): `GET connect/overview`, `GET task-options`, `POST|GET reques
 Teacher app (`/api/teacher/...`, bearer token): `POST login`, `GET home`, `POST submit` (per `item_id`), `POST messages` (concern), `GET visits`, `POST password`, `POST notifications/read`, `GET push/key`, `POST push/subscribe|unsubscribe|test`.
 Sign in: `GET auth/demo`, `POST auth/login|signup|logout|password`, `GET auth/me`.
 AI: `GET ai/status`, `POST ai/test`, `GET ai/usage`, `POST ask`. Full interactive list: `http://localhost:8000/docs`.
+
+## Upload: new school / no school detected
+- `ingest/newschool.py` (free rules, no AI) runs in `pipeline.create_batch` when no known school matches: stores `upload_items.detected` (migration 0020: `{kind:'new_school', school, teachers, data}` or `{kind:'no_school'}`). The Add files page shows a panel under the file: View details / Add school and data / Remove data (skip), or for no school: choose a school / Remove data.
+- `POST /api/uploads/items/{id}/add-school` creates the school (next code S##, assigned to the first CRP), the ticked teachers, and files the upload under it. `refreshDirectory()` now notifies every `useDirectory()` user. New schools have empty village/taluka (the ranking handles that).
+- Migration 0020 must be applied to Supabase before deploying this.

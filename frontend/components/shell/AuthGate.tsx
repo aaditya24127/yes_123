@@ -23,6 +23,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return session.onChange(sync);
   }, []);
 
+  // Once signed in, quietly fetch what the other pages will ask for, so the first move to each of them is quick.
+  useEffect(() => { if (!ready || !signedIn) return; const h = setTimeout(() => { api.warm(); }, 600); return () => clearTimeout(h); }, [ready, signedIn]);
+
   useEffect(() => {
     if (!ready) return;
     if (!signedIn && !onLogin) router.replace('/login');

@@ -163,7 +163,7 @@ def rank(data, scored, raw_weights, entity):
         base = dict(entity=entity, id=str(t['id'] if t else s['id']), school_id=str(s['id']), school_name=s['name'], school_code=s['code'],
                     name=(f"{t['title']} {t['full_name']}" if t else s['name']),
                     subtitle=(f"{t['designation']} · {s['name']}" if t else f"{s['school_type']} · {s['board']} · {s['medium']} medium"),
-                    location=(s['village'] + ', ' + (s['taluka'] or '') if not t else ', '.join(map(str, t['subjects_taught'][:3]))),
+                    location=(', '.join(x for x in (s['village'], s['taluka']) if x) if not t else ', '.join(map(str, t['subjects_taught'][:3]))),
                     grades=(f"Classes {s['grade_from']}–{s['grade_to']}" if not t else 'Classes ' + ', '.join(map(str, t['classes_taught'])) if t['classes_taught'] else ''))
         items.append(dict(base, score=None if (score is None or insufficient) else round(score, 1), band=band, coverage=round(coverage, 1), provisional=provisional,
                           insufficient=insufficient, needs_review=needs_review, flags=[dict(code=f, label=FLAG_LABEL.get(f, f)) for f in dict.fromkeys(flags)],

@@ -56,7 +56,7 @@ def gather(teacher_id=None, school_id=None, as_of=None):
                             (s['id'], t['id'] if t else None, t['id'] if t else None)).fetchall()
     return dict(
         who=_who(t, s), entity=entity, school=dict(id=str(s['id']), code=s['code'], name=s['name'], type=s['school_type'], board=s['board'], medium=s['medium'],
-                                                    grades=f"{s['grade_from']}-{s['grade_to']}", village=s['village']),
+                                                    grades=f"{s['grade_from']}-{s['grade_to']}", village=s['village'] or ''),
         teacher=None if not t else dict(id=str(t['id']), name=f"{t['title'] or ''} {t['full_name']}".strip(), designation=t['designation'], classes=t['classes_taught'],
                                         subjects=t['subjects_taught'], joined=str(t['joined_date']) if t['joined_date'] else None, email=email),
         scores=None if not item else dict(score=item['score'], band=item['band'], rank=item['rank'], flags=[f['label'] for f in item['flags']],

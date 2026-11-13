@@ -1,14 +1,14 @@
 'use client';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertTriangle, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Copy, FileText, GraduationCap, Loader2, Mic, Table2, Users, XCircle } from 'lucide-react';
+import { AlertTriangle, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Copy, FileText, GraduationCap, ListTree, Loader2, Mic, School, Table2, Users, XCircle } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 import FileDrop from '@/components/ui/FileDrop';
 import { Badge, Button, Card, Empty, ErrorNote, Field, Input, Note, Select, Spinner } from '@/components/ui';
 import { api } from '@/lib/api';
 import { SECTIONS } from '@/lib/app.config';
-import { useDirectory, useLoad, usePoll } from '@/lib/hooks';
-import type { Batch, UploadItem } from '@/lib/types';
+import { refreshDirectory, useDirectory, useLoad, usePoll } from '@/lib/hooks';
+import type { Allocation, AllocationRow, Batch, Detected, UploadItem } from '@/lib/types';
 
 const SECTION_NAME: Record<string, string> = {
   assessments: 'Test marks', observations: 'Visit report or notes', followups: 'Agreed actions', visits: 'List of visits', attendance: 'Attendance',
@@ -59,6 +59,9 @@ function UploadPage() {
   const edit = async (it: UploadItem, ch: Record<string, string | null>) => {
     setBatch((b) => b && { ...b, items: b.items.map((x) => (x.id === it.id ? { ...x, ...ch } as UploadItem : x)) });
     try { await api.uploads.editItem(it.id, ch); await refresh(); } catch (e) { setError((e as Error).message); refresh(); }
+  };
+  const addSchool = async (it: UploadItem, name: string, teachers: string[]) => {
+    try { await api.uploads.addSchool(it.id, { name, teachers }); refreshDirectory(); await refresh(); } catch (e) { setError((e as Error).message); }
   };
   const doImport = async () => {
     if (!batch) return; setBusy(true);
@@ -119,12 +122,12 @@ function UploadPage() {
           </div>
           {groups.attention.length > 0 && (
             <Card title="Please check these" subtitle="We were not sure about these. Choose the right school, teacher and kind, and they move to Ready.">
-              <Rows items={groups.attention} onEdit={edit} dir={dir} />
+              <Rows items={groups.attention} onEdit={edit} onAdd={addSchool} dir={dir} />
             </Card>
           )}
-          {(groups.ready.length > 0 || groups.working.length > 0) && <Card title="Ready to import"><Rows items={[...groups.working, ...groups.ready]} onEdit={edit} dir={dir} /></Card>}
-          {groups.done.length > 0 && <Card title="Added to your records"><Rows items={groups.done} onEdit={edit} dir={dir} done /></Card>}
-          {groups.other.length > 0 && <Card title="Not added" subtitle="Files you added before are skipped, so nothing is counted twice."><Rows items={groups.other} onEdit={edit} dir={dir} /></Card>}
+          {(groups.ready.length > 0 || groups.working.length > 0) && <Card title="Ready to import"><Rows items={[...groups.working, ...groups.ready]} onEdit={edit} onAdd={addSchool} dir={dir} /></Card>}
+          {groups.done.length > 0 && <Card title="Added to your records"><Rows items={groups.done} onEdit={edit} onAdd={addSchool} dir={dir} done /></Card>}
+          {groups.other.length > 0 && <Card title="Not added" subtitle="Files you added before are skipped, so nothing is counted twice."><Rows items={groups.other} onEdit={edit} onAdd={addSchool} dir={dir} /></Card>}
         </>
       )}
 
@@ -147,8 +150,103 @@ function UploadPage() {
   );
 }
 
-function Rows({ items, onEdit, dir, done }: { items: UploadItem[]; onEdit: (it: UploadItem, ch: Record<string, string | null>) => void; dir: ReturnType<typeof useDirectory>; done?: boolean }) {
+/** "Show allocation": which part of the file feeds which priority. Before Import it says what the kind of file feeds; after Import, exactly what was taken. */
+function AllocationTable({ itemId, status }: { itemId: string; status: UploadItem['status'] }) {
+  const [data, setData] = useState<Allocation | null>(null);
+  const [err, setErr] = useState('');
+  useEffect(() => { let live = true; setData(null); setErr(''); api.uploads.allocation(itemId).then((d) => live && setData(d)).catch((e) => live && setErr(String(e.message || e))); return () => { live = false; }; }, [itemId, status]);
+  if (err) return <p className="mt-2 text-xs text-red-700">{err}</p>;
+  if (!data) return <div className="mt-2"><Spinner label="Looking at the file…" /></div>;
+  const mark = (c: AllocationRow['counted']) => c === 'yes' ? <Badge tone="good">Counted</Badge> : c === 'after_import' ? <Badge tone="brand">After Import</Badge> : <Badge tone="neutral">Not counted</Badge>;
+  return (
+    <div className="mt-2 rounded-2xl bg-brand-50/60 p-3">
+      <p className="text-xs font-semibold text-ink-700">
+        {data.state === 'done' ? (data.nothing ? 'Nothing from this file changes a priority.' : 'This is where the data of this file went:') : 'This is where the data of this file will go when you press Import:'}
+      </p>
+      <div className="thin-scroll mt-2 overflow-x-auto rounded-xl bg-surface ring-1 ring-brand-100">
+        <table className="w-full min-w-[640px] text-start text-xs">
+          <thead><tr className="bg-brand-50 text-ink-500">
+            {['Priority it feeds', 'Data taken from the file', 'Records', 'Example from the file', 'Used?'].map((h) => <th key={h} scope="col" className="px-3 py-2 text-start font-semibold">{h}</th>)}
+          </tr></thead>
+          <tbody className="divide-y divide-brand-50">
+            {data.rows.map((r, i) => (
+              <tr key={i} className="align-top">
+                <td className="px-3 py-2 font-semibold text-ink-900">{r.priority}</td>
+                <td className="px-3 py-2 text-ink-700">{r.takes}{r.note && <span className="mt-0.5 block text-ink-500">{r.note}</span>}</td>
+                <td className="px-3 py-2 tabular-nums text-ink-700">{r.records ?? '–'}</td>
+                <td dir="auto" className="px-3 py-2 text-ink-700">{r.example ?? '–'}</td>
+                <td className="px-3 py-2">{mark(r.counted)}</td>
+              </tr>))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** A file whose school is not on the list: either a new school we found in it (add it with its teachers and data), or no school at all. */
+function DetectedPanel({ it, found, onAdd, onRemove }: { it: UploadItem; found: Detected; onAdd: (it: UploadItem, name: string, teachers: string[]) => Promise<void>; onRemove: () => void }) {
+  const isNew = found.kind === 'new_school';
+  const [view, setView] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [name, setName] = useState(isNew ? found.school.name : '');
+  const [picked, setPicked] = useState<string[]>(isNew ? found.teachers : []);
+  const toggle = (t: string) => setPicked((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
+  const add = async () => { setBusy(true); try { await onAdd(it, name, picked); } finally { setBusy(false); } };
+  if (!isNew) {
+    return (
+      <div className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
+        <p className="flex items-center gap-2 font-semibold"><AlertTriangle size={16} />No school detected</p>
+        <p className="mt-1 text-xs">We could not find a school name in this file. Choose the school above to add the data to it, or do not upload this file.</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={() => { const el = document.getElementById(`school-${it.id}`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); (el as HTMLElement | null)?.focus(); }}>Add data: choose a school</Button>
+          <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={onRemove}>Remove data: don&apos;t upload</Button>
+        </div>
+      </div>
+    );
+  }
+  const d = found.data;
+  return (
+    <div className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
+      <p className="flex items-start gap-2 font-semibold"><School size={16} className="shrink-0" /><span className="min-w-0 break-words">New school detected: <span dir="auto">{found.school.name}</span></span></p>
+      <p className="mt-1 text-xs">This school is not on your list yet. You can add it with the teachers and the data we found, pick another school above, or not upload this file.</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={() => setView((v) => !v)} aria-expanded={view}>{view ? 'Hide details' : 'View details'}</Button>
+        <Button className="px-3 py-1.5 text-xs" busy={busy} disabled={name.trim().length < 3} onClick={add}>Add school and data</Button>
+        <Button variant="ghost" className="px-3 py-1.5 text-xs" disabled={busy} onClick={onRemove}>Remove data: don&apos;t upload</Button>
+      </div>
+      {view && (
+        <div className="mt-3 space-y-3 rounded-2xl bg-surface p-3 text-xs text-ink-700 ring-1 ring-amber-100">
+          <div>
+            <p className="font-semibold text-ink-900">School</p>
+            <Input aria-label="School name" className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
+            <p className="mt-1 text-ink-500">{[found.school.school_type, found.school.board, found.school.medium].filter((x) => x && x !== 'Not stated').join(' · ') || 'Type, board and medium are not in the file; you can fill them in later.'} · Classes {found.school.grade_from} to {found.school.grade_to}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-ink-900">Teachers found in the file</p>
+            {found.teachers.length === 0 ? <p className="mt-1 text-ink-500">No teacher names were found.</p> : (
+              <ul className="mt-1 space-y-1">{found.teachers.map((t) => (
+                <li key={t}><label className="flex items-center gap-2"><input type="checkbox" checked={picked.includes(t)} onChange={() => toggle(t)} />{t}</label></li>))}</ul>)}
+          </div>
+          <div>
+            <p className="font-semibold text-ink-900">Data found</p>
+            <ul className="mt-1 list-disc ps-4">
+              <li>Kind of file: {SECTION_NAME[d.section ?? 'other'] ?? 'Something else'}</li>
+              <li>Date: {d.record_date ?? 'not found in the file'}</li>
+              {d.table_rows ? <li>{d.table_rows} rows in its tables</li> : null}
+            </ul>
+            {it.preview && <p dir="auto" className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-xl bg-brand-50/60 p-2 text-ink-500">{it.preview.slice(0, 600)}</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Rows({ items, onEdit, onAdd, dir, done }: { items: UploadItem[]; onEdit: (it: UploadItem, ch: Record<string, string | null>) => void; onAdd: (it: UploadItem, name: string, teachers: string[]) => Promise<void>; dir: ReturnType<typeof useDirectory>; done?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [alloc, setAlloc] = useState<Set<string>>(new Set());
+  const flip = (id: string) => setAlloc((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   return (
     <ul className="divide-y divide-brand-50">
       {items.map((it) => {
@@ -165,7 +263,7 @@ function Rows({ items, onEdit, dir, done }: { items: UploadItem[]; onEdit: (it: 
               <button onClick={() => setOpen(open === it.id ? null : it.id)} className="rounded-full p-1 text-ink-400 hover:bg-brand-50" aria-label="Why we put it here"><ChevronDown size={16} /></button>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-4">
-              <Select disabled={locked} value={it.school_id ?? ''} onChange={(e) => onEdit(it, { school_id: e.target.value || null, teacher_id: null })}>
+              <Select id={`school-${it.id}`} disabled={locked} value={it.school_id ?? ''} onChange={(e) => onEdit(it, { school_id: e.target.value || null, teacher_id: null })}>
                 <option value="">Which school?</option>{dir?.schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
               <Select disabled={locked || !it.school_id} value={it.teacher_id ?? ''} onChange={(e) => onEdit(it, { teacher_id: e.target.value || null })}>
                 <option value="">The whole school</option>{dir?.teachers.filter((t) => t.school_id === it.school_id).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
@@ -176,12 +274,22 @@ function Rows({ items, onEdit, dir, done }: { items: UploadItem[]; onEdit: (it: 
                 {!locked && it.status !== 'skipped' && <Button variant="ghost" className="px-2" onClick={() => onEdit(it, { status: 'skipped' })}>Skip</Button>}
               </div>
             </div>
+            {it.status === 'needs_attention' && !it.school_id && it.detected && <DetectedPanel it={it} found={it.detected} onAdd={onAdd} onRemove={() => onEdit(it, { status: 'skipped' })} />}
             {done && (
               <div className="mt-2 text-sm text-ink-700">
                 {counts.length > 0 ? <span>Found {counts.map(([k, v]) => `${v} ${COUNT_LABEL[k]}`).join(', ')}.</span> : <span className="text-ink-500">Saved with your files.</span>}
                 {typeof it.result?.counts?.summary === 'string' && <p className="mt-1 text-ink-500">{it.result.counts.summary}</p>}
                 {it.result?.warnings?.map((w, i) => <p key={i} className="mt-1 text-amber-700">⚠ {w}</p>)}
                 {it.error && <p className="mt-1 text-red-700">{it.error}</p>}
+              </div>
+            )}
+            {it.status !== 'duplicate' && it.status !== 'skipped' && it.status !== 'failed' && (
+              <div className="mt-2">
+                <button type="button" onClick={() => flip(it.id)} aria-expanded={alloc.has(it.id)} data-tour="u-allocation"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-100 transition hover:bg-brand-100">
+                  <ListTree size={14} />{alloc.has(it.id) ? 'Hide allocation' : 'Show allocation'}
+                </button>
+                {alloc.has(it.id) && <AllocationTable itemId={it.id} status={it.status} />}
               </div>
             )}
             {open === it.id && (

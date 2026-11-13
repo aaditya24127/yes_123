@@ -1,7 +1,7 @@
 """Bulk upload: receive -> sort -> (CRP confirms) -> import. Used by the Upload page, the visit flow and the teacher link."""
 import datetime as dt, hashlib, io, json, re, threading, traceback, zipfile
 from pathlib import PurePosixPath
-from . import readers, sorter, importer
+from . import readers, sorter, importer, newschool
 from ... import ai
 from ...core.storage import get_storage
 from ..prioritization.data import get_conn
@@ -57,6 +57,11 @@ def create_batch(files, origin='crp', created_by=None, hint_school_id=None, hint
                 if hint_section: g['section'] = hint_section
                 status = 'duplicate' if prev else ('sorted' if g['school_id'] and g['confidence'] >= 0.6 and g['section'] != 'other' else 'needs_attention')
                 reasons = g['reasons'] + ([f"Already uploaded before as {prev['original_filename']}"] if prev else [])
+                detected = None
+                if not g['school_id'] and not prev:                 # no known school: say what we found (a new school, or no school at all)
+                    try: detected = newschool.detect(name, rr, g['section'], g['record_date'], schools, teachers)
+                    except Exception: detected = None
+                if detected: row['detected'] = json.dumps(detected)
                 row.update(school_id=g['school_id'], teacher_id=g['teacher_id'], section=g['section'], record_date=g['record_date'], doc_kind=g['doc_kind'],
                            confidence=g['confidence'], sorted_by=g['sorted_by'], reasons=json.dumps(reasons), text_preview=(rr.text or rr.note)[:1200],
                            status=status, duplicate_of=prev['id'] if prev else None)
@@ -81,7 +86,7 @@ def batch_view(batch_id):
                         school_name=u['school_name'], school_code=u['school_code'], teacher_id=str(u['teacher_id']) if u['teacher_id'] else None, teacher_name=u['teacher_name'],
                         section=u['section'], record_date=str(u['record_date']) if u['record_date'] else None, kind=u['doc_kind'], confidence=float(u['confidence']),
                         sorted_by=u['sorted_by'], reasons=u['reasons'], preview=u['text_preview'], status=u['status'], result=u['result'], error=u['error'],
-                        source_file_id=str(u['source_file_id']) if u['source_file_id'] else None))
+                        source_file_id=str(u['source_file_id']) if u['source_file_id'] else None, detected=u.get('detected')))
     counts = {}
     for i in out: counts[i['status']] = counts.get(i['status'], 0) + 1
     return dict(id=str(b['id']), status=b['status'], origin=b['origin'], created_at=b['created_at'].isoformat(), counts=counts, items=out)
@@ -182,3 +187,43 @@ def transcribe(data, filename):
         return dict(r.data, by=r.model or r.provider), None
     except ai.AIUnavailable:
         return None, 'Not transcribed: no speech-to-text available'
+
+
+def add_detected_school(item_id, school=None, teacher_names=None, crp_code=None):
+    """The CRP chose "Add school and data" on a New school detected file: creates the school (and the chosen teachers), puts the CRP in
+    charge of it and files the upload under it, ready to import."""
+    school = school or {}
+    with get_conn() as conn:
+        u = conn.execute('select * from upload_items where id = %s', (item_id,)).fetchone()
+        if not u or u['status'] in ('imported', 'importing'): raise ValueError('This file is already imported')
+        d = u['detected'] or {}
+        info = {**(d.get('school') or {}), **{k: v for k, v in school.items() if v not in (None, '')}}
+        name = re.sub(r'\s+', ' ', str(info.get('name') or '')).strip()
+        if len(name) < 3: raise ValueError('Please type the school name')
+        gf, gt = int(info.get('grade_from') or 1), int(info.get('grade_to') or 10)
+        if not (1 <= gf <= gt <= 12): raise ValueError('Classes must be between 1 and 12, first class before last')
+        old = conn.execute('select id from schools where lower(name) = lower(%s) and is_active', (name,)).fetchone()
+        if old: sid = old['id']
+        else:
+            n = 1 + max([int(m.group(1)) for r in conn.execute("select code from schools").fetchall() if (m := re.fullmatch(r'S(\d+)', r['code']))] or [0])
+            code = f'S{n:02d}'
+            sid = conn.execute("""insert into schools (code, name, school_type, board, medium, grade_from, grade_to, village, taluka, district, cluster)
+                                  values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) returning id""",
+                               (code, name, info.get('school_type') or 'Not stated', info.get('board') or 'Not stated', info.get('medium') or 'Not stated', gf, gt,
+                                '', '', '', '')).fetchone()['id']
+            crp = conn.execute('select id from crps order by created_at limit 1').fetchone()
+            if crp: conn.execute('insert into school_assignments (crp_id, school_id, assigned_on) values (%s,%s,current_date) on conflict do nothing', (crp['id'], sid))
+        sch = conn.execute('select * from schools where id = %s', (sid,)).fetchone()
+        added = 0
+        for full in (teacher_names if teacher_names is not None else (d.get('teachers') or [])):
+            m = re.match(r'^(Mr|Mrs|Ms|Miss|Dr|Smt|Shri)\.?\s+(.*)$', full.strip())
+            title, clean = (m.group(1) + '.', m.group(2).strip()) if m else (None, full.strip())
+            if len(clean) < 2 or conn.execute('select 1 from teachers where school_id = %s and lower(full_name) = lower(%s)', (sid, clean)).fetchone(): continue
+            k = conn.execute('select count(*) as n from teachers where school_id = %s', (sid,)).fetchone()['n'] + 1
+            code = f"{sch['code']}-T{k:02d}"
+            while conn.execute('select 1 from teachers where teacher_code = %s', (code,)).fetchone(): k += 1; code = f"{sch['code']}-T{k:02d}"
+            conn.execute('insert into teachers (school_id, teacher_code, full_name, title) values (%s,%s,%s,%s)', (sid, code, clean, title)); added += 1
+        status = 'sorted' if u['section'] and u['section'] != 'other' else 'needs_attention'
+        conn.execute("update upload_items set school_id = %s, status = %s, detected = null, sorted_by = 'crp', confidence = 1 where id = %s", (sid, status, item_id))
+        conn.commit()
+    return dict(school_id=str(sid), school_name=sch['name'], teachers_added=added, status=status)

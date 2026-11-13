@@ -31,7 +31,7 @@ function VisitPage() {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
-  const recent = useLoad(() => api.visits.list(), []);
+  const recent = useLoad(() => api.visits.list(), [], 'visits:recent');
 
   const sid = params.get('session');
   useEffect(() => {
