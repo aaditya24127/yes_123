@@ -27,7 +27,13 @@ export interface UploadItem {
   teacher_name: string | null; section: string | null; record_date: string | null; kind: string | null; confidence: number; sorted_by: string | null; reasons: string[];
   preview: string | null; status: UploadStatus; error: string | null; source_file_id: string | null;
   result: { counts?: Record<string, number | string>; warnings?: string[]; read_by?: string; transcribed_by?: string };
+  detected?: Detected | null;
 }
+/** What the sorter found in a file whose school is not on the list: a new school (with its teachers and data), or no school at all. */
+export type Detected =
+  | { kind: 'new_school'; school: { name: string; school_type: string; board: string; medium: string; grade_from: number; grade_to: number }; teachers: string[];
+      data: { section: string | null; record_date: string | null; table_rows: number | null } }
+  | { kind: 'no_school' };
 export interface Batch { id: string; status: string; origin: string; created_at: string; counts: Record<string, number>; items: UploadItem[] }
 export interface BatchSummary { id: string; created_at: string; status: string; origin: string; note: string | null; files: number; imported: number; attention: number }
 
@@ -94,3 +100,7 @@ export interface AIUsage {
   days: number; cost_usd: number; calls: number; failed: number; all_time_cost_usd: number; all_time_calls: number;
   by_task: { task: string; provider: string; model: string; calls: number; input_tokens: number; output_tokens: number; cost: number; failed: number }[];
 }
+
+/** Where the data of an uploaded file goes (GET /api/uploads/items/{id}/allocation): one row per priority. */
+export interface AllocationRow { code: string; priority: string; takes: string; records: number | null; example: string | null; counted: 'yes' | 'no' | 'after_import'; note: string | null }
+export interface Allocation { state: 'expected' | 'done'; rows: AllocationRow[]; nothing?: boolean }

@@ -1,7 +1,7 @@
 // Every call to the backend, in one place. Pages never build URLs themselves, so an endpoint can change here only.
 import type {
   AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
-  FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
+  Allocation, FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
 } from './types';
 import { apiUrl } from './platform';
 import { session, type CrpUser } from './auth';
@@ -45,15 +45,34 @@ async function j<T>(res: Response): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+// Recent answers are kept for a few seconds, so moving between pages shows the page at once instead of asking the server again.
+// Asking twice at the same moment shares one request. Anything the person changes (a save, an upload, a new priority) clears it,
+// and so does signing in or out. Only lookups that do not change by themselves are kept: lists that are polled are never cached.
+const kept = new Map<string, { at: number; p: Promise<unknown> }>();
+function keep<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
+  const hit = kept.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.p as Promise<T>;
+  const entry = { at: Date.now(), p: fn() };
+  kept.set(key, entry);
+  entry.p.catch(() => { if (kept.get(key) === entry) kept.delete(key); });      // a failed lookup is never remembered
+  return entry.p as Promise<T>;
+}
+export const forgetAnswers = () => kept.clear();
+if (typeof window !== 'undefined') {
+  let who = session.token();
+  session.onChange(() => { const now = session.token(); if (now !== who) { who = now; forgetAnswers(); } });      // signing in or out; refreshing the name does not clear anything
+}
+
 const get = <T>(url: string) => run(apiUrl(url), undefined, true).then(j<T>);
 const send = <T>(method: string, url: string, body?: unknown, safe = false) =>
-  run(apiUrl(url), { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }, safe).then(j<T>);
+  run(apiUrl(url), { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }, safe).then(j<T>)
+    .then((r) => { if (!safe) forgetAnswers(); return r; });      // safe = a lookup sent as POST (ranking, evidence): nothing changed
 const post = <T>(url: string, body?: unknown, safe = false) => send<T>('POST', url, body ?? {}, safe);
 const form = <T>(url: string, fields: Record<string, string | number | null | undefined>, files: File[] | Blob[] = [], fileField = 'files', fileName?: string) => {
   const f = new FormData();
   Object.entries(fields).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') f.append(k, String(v)); });
   files.forEach((x) => f.append(fileField, x as Blob, fileName ?? (x as File).name ?? 'recording.webm'));
-  return run(apiUrl(url), { method: 'POST', body: f }, false).then(j<T>);
+  return run(apiUrl(url), { method: 'POST', body: f }, false).then(j<T>).then((r) => { forgetAnswers(); return r; });
 };
 const qs = (o: Record<string, string | number | boolean | null | undefined>) =>
   '?' + Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
@@ -69,16 +88,21 @@ export const api = {
   },
 
   // ranking (original screens)
-  config: () => get<Config>('/api/config'),
-  ranking: (entity: Entity, weights?: Record<string, number>) => post<Ranking>('/api/ranking', { entity, weights }, true),
-  evidence: (entity: Entity, id: string) => post<EvidenceGroup[]>('/api/evidence', { entity, id }, true),
-  files: (schoolId: string) => get<FileInfo[]>(`/api/schools/${schoolId}/files`),
+  config: () => keep('config', 30000, () => get<Config>('/api/config')),
+  ranking: (entity: Entity, weights?: Record<string, number>) => {
+    const ask = () => post<Ranking>('/api/ranking', { entity, weights }, true);
+    return weights ? ask() : keep(`ranking:${entity}`, 30000, ask);      // while a slider is being moved the answer is never kept
+  },
+  evidence: (entity: Entity, id: string) => keep(`evidence:${entity}:${id}`, 120000, () => post<EvidenceGroup[]>('/api/evidence', { entity, id }, true)),
+  files: (schoolId: string) => keep(`files:${schoolId}`, 120000, () => get<FileInfo[]>(`/api/schools/${schoolId}/files`)),
   preview: (fileId: string) => get<Preview>(`/api/files/${fileId}/preview`),
   rawUrl: (fileId: string) => apiUrl(`/api/files/${fileId}/raw`),
   pageUrl: (fileId: string, n: number) => apiUrl(`/api/files/${fileId}/page/${n}`),
   apply: (weights: Record<string, number>) => post<{ version: number }>('/api/config/apply', { weights }),
 
-  directory: () => get<Directory>('/api/directory'),
+  directory: () => keep('directory', 300000, () => get<Directory>('/api/directory')),
+  /** Quietly gets what the next pages need, right after signing in, so the first move to each page is quick. */
+  warm: () => Promise.allSettled([api.config(), api.ranking('school'), api.directory(), api.visits.list(), api.uploads.recent(), api.connect.overview(), api.connect.notifications()]),
   health: () => get<{ ok: boolean }>('/api/health'),
 
   factors: {
@@ -100,19 +124,22 @@ export const api = {
   },
 
   uploads: {
-    recent: () => get<BatchSummary[]>('/api/uploads'),
+    recent: () => keep('uploads:recent', 15000, () => get<BatchSummary[]>('/api/uploads')),
     send: (files: File[], hints: { school_id?: string; teacher_id?: string; section?: string } = {}) => form<Batch>('/api/uploads', hints, files),
     get: (id: string) => get<Batch>(`/api/uploads/${id}`),
     editItem: (id: string, body: Partial<{ school_id: string | null; teacher_id: string | null; section: string; record_date: string; status: string }>) =>
       send('PATCH', `/api/uploads/items/${id}`, body),
     import: (id: string) => post<{ queued: number }>(`/api/uploads/${id}/import`),
+    addSchool: (itemId: string, body: { name: string; teachers: string[]; grade_from?: number; grade_to?: number }) =>
+      post<{ school_id: string; school_name: string; teachers_added: number; status: string }>(`/api/uploads/items/${itemId}/add-school`, body),
+    allocation: (itemId: string) => get<Allocation>(`/api/uploads/items/${itemId}/allocation`),
   },
 
   visits: {
     brief: (p: { teacher_id?: string; school_id?: string }, fast = false) => get<Brief>(`/api/brief${qs({ ...p, fast: fast || undefined })}`),
     start: (body: { school_id?: string; teacher_id?: string; class_no?: number | null; subject?: string; topic?: string; brief_text?: Brief['brief']; brief_by?: string | null }) => post<Session>('/api/sessions', body),
     get: (id: string) => get<Session>(`/api/sessions/${id}`),
-    list: (p: { teacher_id?: string; school_id?: string } = {}) => get<SessionSummary[]>(`/api/sessions${qs(p)}`),
+    list: (p: { teacher_id?: string; school_id?: string } = {}) => keep(`visits:list:${qs(p)}`, 15000, () => get<SessionSummary[]>(`/api/sessions${qs(p)}`)),
     edit: (id: string, body: Record<string, unknown>) => send<Session>('PATCH', `/api/sessions/${id}`, body),
     addMedia: (id: string, file: Blob, kind: string, extra: { question_index?: number; student_label?: string } = {}, name?: string) =>
       form<Session>(`/api/sessions/${id}/media`, { kind, ...extra }, [file], 'file', name),
@@ -133,7 +160,7 @@ export const api = {
   },
 
   connect: {
-    overview: () => get<ConnectRow[]>('/api/connect/overview'),
+    overview: () => keep('connect:overview', 8000, () => get<ConnectRow[]>('/api/connect/overview')),      // polled every 10 s, so 8 s old is never shown as final
     request: (body: { teacher_ids?: string[]; school_id?: string; kind: string; title?: string; message?: string; due_date?: string; visit_date?: string;
                       items?: { kind: string; title?: string; instructions?: string }[] }) => post<{ created: number }>('/api/requests', body),
     taskOptions: () => get<TaskOptions>('/api/task-options'),
@@ -144,7 +171,7 @@ export const api = {
     setRequest: (id: string, status: string) => send('PATCH', `/api/requests/${id}`, { status }),
     messages: (tid: string) => get<Message[]>(`/api/teachers/${tid}/messages`),
     send: (tid: string, body: string) => post<Message[]>(`/api/teachers/${tid}/messages`, { body }),
-    notifications: () => get<Notice[]>('/api/notifications'),
+    notifications: () => keep('connect:notices', 8000, () => get<Notice[]>('/api/notifications')),
     readAll: () => post('/api/notifications/read'),
   },
 

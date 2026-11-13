@@ -21,8 +21,8 @@ const IDEAS = [
 ];
 
 export default function ConnectPage() {
-  const rows = useLoad(() => api.connect.overview(), []);
-  const notices = useLoad(() => api.connect.notifications(), []);
+  const rows = useLoad(() => api.connect.overview(), [], 'connect:overview');
+  const notices = useLoad(() => api.connect.notifications(), [], 'connect:notices');
   usePoll(true, () => { rows.reload(); notices.reload(); }, 10000);     // new messages and answers show up within 10 seconds
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<ConnectRow | null>(null);

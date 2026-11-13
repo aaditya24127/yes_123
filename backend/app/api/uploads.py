@@ -6,7 +6,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from ..core.storage import get_storage
-from ..services.ingest import pipeline, readers
+from ..services.ingest import allocation, pipeline, readers
 from ..services.prioritization.data import get_conn
 
 router = APIRouter(prefix='/api/uploads', tags=['uploads'])
@@ -59,10 +59,42 @@ def edit_item(item_id: str, req: ItemPatch):
     return dict(ok=True)
 
 
+class AddSchool(BaseModel):
+    name: str | None = None
+    school_type: str | None = None
+    board: str | None = None
+    medium: str | None = None
+    grade_from: int | None = None
+    grade_to: int | None = None
+    teachers: list[str] | None = None
+
+
+@router.post('/items/{item_id}/add-school')
+def add_school(item_id: str, req: AddSchool):
+    """New school detected -> add it (with the teachers the CRP kept) and file this upload under it."""
+    try:
+        return pipeline.add_detected_school(item_id, req.model_dump(exclude={'teachers'}, exclude_unset=True), req.teachers)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @router.post('/{batch_id}/import')
 def start_import(batch_id: str):
     n = pipeline.start_import(batch_id)
     return dict(queued=n)
+
+
+@router.get('/items/{item_id}/allocation')
+def item_allocation(item_id: str):
+    """Which priority each part of this file feeds (before Import: what its kind feeds; after Import: what was really taken)."""
+    with get_conn() as conn:
+        u = conn.execute('select section, status, source_file_id, result from upload_items where id = %s', (item_id,)).fetchone()
+        if not u: raise HTTPException(404, 'file not found')
+        if u['status'] == 'imported' and u['source_file_id']:
+            rows = allocation.actual(conn, u['source_file_id'], (u['result'] or {}).get('counts'))
+            if rows: return dict(state='done', rows=rows)
+            return dict(state='done', rows=allocation.expected(conn, 'other'), nothing=True)
+        return dict(state='expected', section=u['section'], rows=allocation.expected(conn, u['section'] or 'other'))
 
 
 @router.get('/items/{item_id}/raw')
