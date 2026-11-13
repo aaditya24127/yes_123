@@ -92,12 +92,73 @@ def guess_profile(text: str) -> dict:
     return dict(school_type=kind or 'Not stated', board=board or 'Not stated', medium=medium or 'Not stated', grade_from=lo, grade_to=hi)
 
 
-def detect(name, rr, section, record_date, schools, teachers):
+def _clip(x, n=170):
+    x = re.sub(r'\s+', ' ', str(x or '')).strip()
+    return x if len(x) <= n else x[:n].rsplit(' ', 1)[0] + '…'
+
+
+def _plain_lines(text: str, limit: int = 8) -> list[str]:
+    """Free fallback: the readable lines of the file (no page markers, headings or fragments)."""
+    out, seen = [], set()
+    for ln in (text or '').splitlines():
+        ln = ln.strip(' 	-•*–')
+        if len(ln) < 18 or ln.startswith('#') or re.fullmatch(r'(?i)page\s*\d+', ln): continue
+        k = _norm(ln)
+        if k in seen: continue
+        seen.add(k); out.append(_clip(ln)); 
+        if len(out) >= limit: break
+    return out
+
+
+def read_data(rr, data, name, section, record_date, school_name, teachers) -> dict:
+    """What is really inside the file, read the same way Import will read it (AI when the free rules find nothing).
+    Returns {by, summary, teachers, observations, actions, results, facts, notes}; never raises."""
+    from . import importer                      # late import: importer pulls in the whole AI layer
+    out = dict(by='rules', summary=None, teachers=[], observations=[], actions=[], results=[], facts=[], notes=[])
+    if section in ('textbooks', 'other', 'audio') or not (rr.text or rr.scanned):
+        out['notes'] = _plain_lines(rr.text)
+        return out
+    try:
+        ctx = dict(school=dict(name=school_name or 'Unknown school', code='NEW'), teachers=[dict(full_name=t['full_name']) for t in teachers[:30]], section=section,
+                   filename=name, record_date=record_date)
+        j, err, prov = importer.ai_extract(rr, data, ctx, None, [])
+    except Exception:
+        j, prov = None, None
+    if not j:
+        out['notes'] = _plain_lines(rr.text); return out
+    out['visit_date'] = j.get('visit_date')
+    out['by'] = prov or 'ai'; out['summary'] = _clip(j.get('summary'), 300) or None
+    out['teachers'] = [n for n in dict.fromkeys(_clip(x, 60) for x in j.get('teacher_names', []) if x) if len(n) > 2]
+    sev = {'critical': 'Urgent', 'significant': 'Serious', 'minor': 'Small', 'none': 'Good'}
+    for o in j.get('observations', [])[:30]:
+        where = ', '.join(x for x in (f"Class {o['class_label']}" if o.get('class_label') and str(o['class_label']).isdigit() else o.get('class_label'), o.get('subject')) if x)
+        out['observations'].append(dict(text=_clip(o.get('issue_text')), where=where or None, level=sev.get(o.get('severity'))))
+    for a in j.get('actions', [])[:30]: out['actions'].append(dict(text=_clip(a.get('action')), due=a.get('due_date')))
+    for a in j.get('assessments', [])[:30]:
+        bits = [f"Class {a.get('class_no')} {a.get('subject')}"] + ([f"{a['students_below']} of {a['students_assessed']} below 40%"] if a.get('students_below') is not None and a.get('students_assessed') else [])
+        out['results'].append(_clip(' · '.join(bits)))
+    for f in j.get('facts', [])[:30]: out['facts'].append(_clip(f"{str(f.get('fact_key', '')).replace('_', ' ')}: {f.get('value')}"))
+    out['counts'] = dict(observations=len(j.get('observations', [])), actions=len(j.get('actions', [])), results=len(j.get('assessments', [])), facts=len(j.get('facts', [])))
+    return out
+
+
+def merge_teachers(titled, read):
+    """Names the AI read plus the titled names the rules found; a name in both is kept once, with its title."""
+    out = list(read)
+    for n in titled:
+        core = _norm(n.split('.', 1)[-1])
+        i = next((k for k, x in enumerate(out) if core and (core in _norm(x) or _norm(x) in core)), None)
+        if i is None: out.append(n)
+        else: out[i] = n
+    return out[:15]
+
+
+def detect(name, rr, section, record_date, schools, teachers, data=None):
     """What to tell the CRP about a file whose school we could not match. Returns None when nothing needs saying."""
     cand = find_school_name(rr.text, name)
     if cand and known_name(cand, schools): return None          # it is a school we know; the ordinary "please check" is enough
     if cand:
         rows = sum(max(0, len(t.get('rows', [])) - 1) for t in (rr.tables or []))
         return dict(kind='new_school', school=dict(name=cand, **guess_profile(rr.text)), teachers=find_teacher_names(rr.text, teachers),
-                    data=dict(section=section, record_date=str(record_date) if record_date else None, table_rows=rows or None))
+                    data=dict(section=section, record_date=str(record_date) if record_date else None, table_rows=rows or None, found=None))
     return dict(kind='no_school')

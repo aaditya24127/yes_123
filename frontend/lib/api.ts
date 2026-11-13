@@ -1,7 +1,7 @@
 // Every call to the backend, in one place. Pages never build URLs themselves, so an endpoint can change here only.
 import type {
   AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
-  Allocation, FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
+  Allocation, Detected, FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
 } from './types';
 import { apiUrl } from './platform';
 import { session, type CrpUser } from './auth';
@@ -130,6 +130,7 @@ export const api = {
     editItem: (id: string, body: Partial<{ school_id: string | null; teacher_id: string | null; section: string; record_date: string; status: string }>) =>
       send('PATCH', `/api/uploads/items/${id}`, body),
     import: (id: string) => post<{ queued: number }>(`/api/uploads/${id}/import`),
+    found: (itemId: string) => get<Extract<Detected, { kind: 'new_school' }>>(`/api/uploads/items/${itemId}/found`),
     addSchool: (itemId: string, body: { name: string; teachers: string[]; grade_from?: number; grade_to?: number }) =>
       post<{ school_id: string; school_name: string; teachers_added: number; status: string }>(`/api/uploads/items/${itemId}/add-school`, body),
     allocation: (itemId: string) => get<Allocation>(`/api/uploads/items/${itemId}/allocation`),
