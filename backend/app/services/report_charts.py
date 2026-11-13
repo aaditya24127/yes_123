@@ -22,7 +22,7 @@ def _safe(fn):
     return run
 
 
-def _png(fig, dpi=200) -> bytes:
+def _png(fig, dpi=150) -> bytes:
     buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', facecolor='white', pad_inches=0.12); plt.close(fig)
     return buf.getvalue()
 
@@ -63,7 +63,7 @@ def pie3d(values, labels, colors, center=None, size=(6.4, 4.3)):
     for v, l, c in items:
         th = 360.0 * v / tot; wedges.append((ang - th, ang, c, v)); ang -= th
     tr = mt.Affine2D().scale(1, squash) + ax.transData
-    layers = 28
+    layers = 14
     for k in range(layers, 0, -1):                                   # the side wall: the same pie, pushed down a little at a time
         for a1, a2, c, _ in wedges:
             w = Wedge((0, -depth * k / layers), 1, a1, a2, fc=_shade(c, 0.66), ec=_shade(c, 0.66), lw=0.2); w.set_transform(tr); ax.add_patch(w)
@@ -115,7 +115,7 @@ def chalkboard(topic, columns):
             for part in textwrap.wrap(ln, 24) or ['']:
                 ax.text(x0 + 2.6, yy, part, ha='left', va='center', fontsize=9.6, color='#f5f1e6'); yy -= 3.6
             yy -= 1.6
-    return _png(fig, 190)
+    return _png(fig, 150)
 
 
 @_safe
@@ -128,4 +128,4 @@ def score_ring(value, top=5, label='out of 5'):
     ax.add_patch(Wedge((0, 0), 1, 90 - 360 * value / top, 90, width=0.22, fc=col, ec='none'))
     ax.text(0, 0.07, f'{value:.1f}', ha='center', va='center', fontsize=34, fontweight='bold', color=INK)
     ax.text(0, -0.33, label, ha='center', va='center', fontsize=10.5, color=MUTED); ax.set_xlim(-1.1, 1.1); ax.set_ylim(-1.1, 1.1)
-    return _png(fig, 200)
+    return _png(fig, 150)
