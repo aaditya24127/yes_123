@@ -179,7 +179,8 @@ EVALUATE = Task(
              'Follow the guide below exactly: ground rules (section 1), the framework (section 2, scores 1-5 or null when not observed), reading student '
              'answers (section 5) and the result structure (section 7). Write for a busy CRP and a teacher: very short sentences in simple everyday words, '
              'one idea each (overall: 3 or 4 short sentences); no jargon and no framework names or codes inside the sentences. Every strength and growth point needs evidence (transcript time, CRP note, student '
-             'answer or record). growth: at most 2. next_steps: 1-3. source: the guide source codes, e.g. "S1, S3". safety_flag: null unless there is harm.\n\n'
+             'answer or record). growth: at most 2. In every growth try_this, name something cheap the teacher already has (chalk and blackboard, pencils, slates, stones, paper, a rope, the school yard) '
+             'and say exactly how to use it in this lesson, for example "draw the triangle on the board, then let each group make it with 3 pencils". next_steps: 1-3. source: the guide source codes, e.g. "S1, S3". safety_flag: null unless there is harm.\n\n'
              + knowledge()),
     lambda i: _j(i), tier='smart', max_tokens=12000)
 

@@ -20,6 +20,8 @@ pymupdf>=1.24               # PDF text + page images
 pillow>=10.0                # images
 
 imageio-ffmpeg>=0.5        # re-packs very long recordings so the speech service accepts them
+reportlab>=4.0              # the teacher report PDF
+matplotlib>=3.8             # charts and pictures in the teacher report
 mutagen>=1.47               # length of audio recordings
 pywebpush>=2.0              # alerts to the teachers' phones and browsers (Web Push)
 
