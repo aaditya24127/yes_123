@@ -23,7 +23,7 @@ export default function AskPage() {
   };
   return (
     <PageShell title="Ask a question" subtitle="Ask anything about your schools and teachers. The answer comes from your latest records, including files you added a minute ago.">
-      <Card title={<span className="flex items-center gap-2"><MessageSquareText size={18} className="text-brand-600" />Your question</span>}>
+      <Card tour="a-card" title={<span className="flex items-center gap-2"><MessageSquareText size={18} className="text-brand-600" />Your question</span>}>
         <div className="grid gap-3 sm:grid-cols-[1fr_260px]">
           <TextArea value={q} onChange={(e) => setQ(e.target.value)} rows={3} placeholder="Type your question here" />
           <Field label="About"><Select value={scope} onChange={(e) => setScope(e.target.value)}><option value="">All schools</option>

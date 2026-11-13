@@ -77,7 +77,7 @@ function UploadPage() {
   return (
     <PageShell title="Add files" subtitle="Add your school files here. We sort them for you. You check them, then press Import.">
       <ErrorNote error={error} onClose={() => setError('')} />
-      <Card title="What can you add?" subtitle="Add anything you have. If you are not sure, add it anyway: we find the right place and ask you to check.">
+      <Card tour="u-what" title="What can you add?" subtitle="Add anything you have. If you are not sure, add it anyway: we find the right place and ask you to check.">
         <ul className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
           {KINDS.map(({ icon: Icon, title, text }) => (
             <li key={title} className="flex gap-2 rounded-2xl bg-brand-50/60 p-2.5 sm:gap-3 sm:p-3">
@@ -91,7 +91,7 @@ function UploadPage() {
             <li key={t} className="flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 ring-1 ring-brand-100"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[11px] text-white">{i + 1}</span>{t}</li>))}
         </ol>
       </Card>
-      <Card>
+      <Card tour="u-drop">
         <FileDrop onFiles={send} title={busy ? 'Reading your files…' : 'Drop files here, or tap to choose'}
           hint="You can add many files at once, or one zip. Nothing changes your priorities until you press Import." />
         <details className="mt-3">
@@ -128,7 +128,7 @@ function UploadPage() {
         </>
       )}
 
-      <Card title="Files you added before">
+      <Card tour="u-before" title="Files you added before">
         {recent.loading && !recent.data ? <Spinner /> : !recent.data?.length ? <Empty>Nothing added yet.</Empty> : (
           <ul className="divide-y divide-brand-50">
             {recent.data.map((b) => (

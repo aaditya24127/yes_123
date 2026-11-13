@@ -41,11 +41,11 @@ export default function ConnectPage() {
         </Card>
       )}
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-        <Card title="All teachers" className={`self-start ${sel ? 'hidden lg:block' : ''}`}>
+        <Card tour="t-list" title="All teachers" className={`self-start ${sel ? 'hidden lg:block' : ''}`}>
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search teacher or school" />
           <ul className="thin-scroll mt-3 max-h-[70vh] space-y-1 overflow-y-auto pe-1">
             {list.map((r) => (
-              <li key={r.id}><button onClick={() => setSel(r)} className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-start text-sm transition ${sel?.id === r.id ? 'bg-brand-600 text-white' : 'hover:bg-brand-50'}`}>
+              <li key={r.id}><button onClick={() => setSel(r)} data-tour="t-item" className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-start text-sm transition ${sel?.id === r.id ? 'bg-brand-600 text-white' : 'hover:bg-brand-50'}`}>
                 <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{r.title} {r.full_name}</span><span className={`block truncate text-xs ${sel?.id === r.id ? 'text-white/80' : 'text-ink-500'}`}>{r.school_code} · {r.school_name}</span></span>
                 {r.unread > 0 && <Badge tone="bad">{r.unread}</Badge>}{r.submitted > 0 && <Badge tone="good">{r.submitted} sent</Badge>}{r.open_requests > 0 && <Badge tone="warn">{r.open_requests} open</Badge>}
               </button></li>
@@ -85,7 +85,7 @@ function TeacherPanel({ row, onChange, onBack }: { row: ConnectRow; onChange: ()
       <div className="grid gap-5 xl:grid-cols-2">
         <TaskComposer row={row} onSent={() => { reqs.reload(); msgs.reload(); onChange(); }} onError={setError} />
 
-        <Card title="Messages">
+        <Card tour="t-messages" title="Messages">
           <div className="thin-scroll flex max-h-80 flex-col gap-2 overflow-y-auto pe-1">
             {!msgs.data?.length ? <Empty>No messages yet.</Empty> : msgs.data.map((m) => (
               <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.sender === 'crp' ? 'self-end bg-brand-600 text-white' : m.sender === 'teacher' ? 'self-start bg-brand-50 text-ink-900' : 'self-center bg-slate-100 text-xs text-ink-500'}`}>

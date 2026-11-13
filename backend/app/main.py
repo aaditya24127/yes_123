@@ -8,31 +8,53 @@ load_dotenv(ROOT / '.env')
 
 import openpyxl
 from docx import Document
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 from app.core.storage import get_storage, LocalStorage
 from app.services.prioritization import engine
 from app.services.prioritization.data import Data, get_conn
 from app.api import factors as factors_api, uploads as uploads_api, visits as visits_api, connect as connect_api, assistant as assistant_api, teacher_app as teacher_api
+from app.api import auth as auth_api
+from app.services import crp_auth
 from app import jobs
 
 app = FastAPI(title='CRP Mentor Copilot')
+
+# Everything under /api needs a signed-in CRP, except: the health check, signing in itself, the teacher app (its own logins)
+# and the signed report link a teacher opens. Added first, so CORS (added below) still wraps the "please sign in" answer.
+PUBLIC_API = ('/api/health', '/api/auth/', '/api/teacher/', '/api/report/')
+
+
+@app.middleware('http')
+async def require_crp(request: Request, call_next):
+    path = request.url.path
+    if request.method == 'OPTIONS' or not path.startswith('/api/') or path.startswith(PUBLIC_API):
+        return await call_next(request)
+    account_id = crp_auth.from_request(request)
+    if not account_id:
+        return JSONResponse({'detail': 'Please sign in.'}, status_code=401)
+    request.state.crp_account_id = account_id
+    return await call_next(request)
+
+
 # Which websites may call this API: comma-separated in ALLOWED_ORIGINS (add the real domain when the site goes live).
 ORIGINS = [o.strip() for o in os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=['*'], allow_headers=['*'])
 app.add_middleware(GZipMiddleware, minimum_size=1000)      # big answers (priority list, evidence) travel compressed
-for r in (factors_api, uploads_api, visits_api, connect_api, assistant_api, teacher_api):
+for r in (auth_api, factors_api, uploads_api, visits_api, connect_api, assistant_api, teacher_api):
     app.include_router(r.router)
 
 
 @app.on_event('startup')
 def _start_workers():
     from app.services import teacher_auth
-    with get_conn() as conn: teacher_auth.ensure_accounts(conn)     # demo logins for every teacher (firstname.lastname@crp.com)
+    with get_conn() as conn:
+        teacher_auth.ensure_accounts(conn)     # demo logins for every teacher (firstname.lastname@crp.com)
+        crp_auth.ensure_demo(conn)             # the demo CRP login (DEMO_CRP_EMAIL), unless DEMO_CRP_LOGIN=0
     jobs.start_in_api()     # background workers inside the API (WORKERS_IN_API, default 1); more can run separately: python -m app.jobs
 
 

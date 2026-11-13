@@ -86,10 +86,10 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
             <span className="font-semibold text-ink-700">{Math.round(item.coverage)}%</span>
           </div>
         </div>
-        <button onClick={() => router.push(visitHref(item))} className="order-last flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 sm:order-none sm:w-auto text-sm font-semibold text-white shadow-float transition hover:bg-brand-700">
+        <button onClick={() => router.push(visitHref(item))} data-tour="detail-visit" className="order-last flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 sm:order-none sm:w-auto text-sm font-semibold text-white shadow-float transition hover:bg-brand-700">
           <ClipboardCheck size={17} />{t('visit')}
         </button>
-        <button onClick={onClose} aria-label={t('close')} className="rounded-full p-2 text-ink-500 transition hover:bg-brand-100 hover:text-brand-800"><X size={20} /></button>
+        <button onClick={onClose} aria-label={t('close')} data-tour="detail-close" className="rounded-full p-2 text-ink-500 transition hover:bg-brand-100 hover:text-brand-800"><X size={20} /></button>
       </div>
       {item.alerts.length > 0 && (
         <div className="border-b border-brand-100 px-4 py-3 sm:px-6">
@@ -102,9 +102,9 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
         </div>
       )}
 
-      <div className="flex gap-1 border-b border-brand-100 px-4 pt-2 sm:px-6">
+      <div data-tour="detail-tabs" className="flex gap-1 border-b border-brand-100 px-4 pt-2 sm:px-6">
         {TABS.map((tb) => (
-          <button key={tb} onClick={() => setTab(tb)} className={`relative rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${tab === tb ? 'text-brand-700' : 'text-ink-500 hover:text-ink-900'}`}>
+          <button key={tb} onClick={() => setTab(tb)} data-tour={tb === 'Evidence' ? 'tab-evidence' : 'tab-sources'} className={`relative rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${tab === tb ? 'text-brand-700' : 'text-ink-500 hover:text-ink-900'}`}>
             {t(TAB_KEY[tb])}
             {tab === tb && <motion.span layoutId="tabline" className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-brand-600" />}
           </button>
@@ -113,7 +113,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
 
       <div className="thin-scroll min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
         {tab === 'Evidence' && (
-          <div className="space-y-4">
+          <div data-tour="evidence" className="space-y-4">
             {!ev && <div className="h-40 animate-pulse rounded-2xl bg-brand-50" />}
             {ev?.length && ev.every((g) => g.records.length === 0) ? <p className="rounded-2xl bg-brand-50/60 px-4 py-6 text-center text-sm text-ink-500">{t('notEnough')}</p> : null}
             {ev?.map((g, i) => g.records.length === 0 ? null : (
@@ -129,7 +129,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                       <span className="mt-0.5 w-20 shrink-0 text-xs font-medium text-ink-400">{r.date}</span>
                       <p dir="auto" className="flex-1 text-[13px] leading-snug text-ink-700">{r.summary}</p>
                       {r.file && (
-                        <button onClick={() => openFile(r.file!.id)} className="flex max-w-full shrink-0 items-center gap-1.5 rounded-full sm:max-w-[220px] bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100" title={r.locator ?? ''}>
+                        <button onClick={() => openFile(r.file!.id)} data-tour="evidence-file" className="flex max-w-full shrink-0 items-center gap-1.5 rounded-full sm:max-w-[220px] bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100" title={r.locator ?? ''}>
                           <Eye size={13} /><span className="truncate">{r.file.name}</span>
                         </button>
                       )}
@@ -172,7 +172,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                 </div>
               ))}
             </div>
-            <div className={`min-h-[420px] min-w-0 lg:min-h-[480px] ${!wide && !sel ? 'hidden' : ''}`}>
+            <div data-tour="file-viewer" className={`min-h-[420px] min-w-0 lg:min-h-[480px] ${!wide && !sel ? 'hidden' : ''}`}>
               {!wide && sel && <button onClick={() => setSel(null)} className="mb-3 text-sm font-semibold text-brand-700 underline">← All files</button>}
               {sel && files ? <DataViewer file={files.find((f) => f.id === sel)!} key={sel} /> : <p className="text-sm text-ink-500">{t('selectFile')}</p>}
             </div>
