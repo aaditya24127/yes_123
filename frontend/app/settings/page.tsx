@@ -18,31 +18,44 @@ const LAYOUTS: { key: Layout; label: string; text: string; Icon: typeof LayoutGr
   { key: 'horizontal', label: 'Sideways', text: 'Swipe left and right', Icon: ArrowLeftRight },
 ];
 
-/** TEMPORARY: how much paid AI credit the app has used. The app counts every call it makes; the balance on your AI account is the real one. */
+/** TEMPORARY: what each AI key has used. The app counts every call it makes; type the credit you loaded on a key to see what is left of it. */
 function AICredits() {
   const [u, setU] = useState<AIUsage | null>(null);
   const [err, setErr] = useState('');
-  const [start, setStart] = useState('');
-  useEffect(() => { api.ai.usage(30).then(setU).catch((e) => setErr(String(e.message || e))); try { setStart(localStorage.getItem('crp_ai_credit') ?? ''); } catch { /* private window */ } }, []);
-  const save = (v: string) => { setStart(v); try { localStorage.setItem('crp_ai_credit', v); } catch { /* private window */ } };
+  const [loaded, setLoaded] = useState<Record<string, string>>({});
+  useEffect(() => {
+    api.ai.usage(30).then(setU).catch((e) => setErr(String(e.message || e)));
+    try { setLoaded(JSON.parse(localStorage.getItem('crp_ai_credits') ?? '{}')); } catch { /* private window */ }
+  }, []);
+  const save = (id: string, v: string) => setLoaded((m) => { const n = { ...m, [id]: v }; try { localStorage.setItem('crp_ai_credits', JSON.stringify(n)); } catch { /* private window */ } return n; });
   const money = (x: number) => `$${x.toFixed(x < 1 ? 4 : 2)}`;
-  const loaded = parseFloat(start); const cap = u?.budget_usd ?? null;
-  const left = u ? (Number.isFinite(loaded) ? loaded - u.all_time_cost_usd : cap != null ? cap - u.all_time_cost_usd : null) : null;
+  const num = (x: number) => x.toLocaleString('en-IN');
   return (
-    <Card title="AI credits used" subtitle="Temporary. The money the app has spent on AI so far.">
+    <Card title="AI credits by key" subtitle="Temporary. What each AI key has used so far.">
       {err ? <p className="text-sm text-red-700">{err}</p> : !u ? <p className="text-sm text-ink-500">Loading…</p> : (
         <>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {[['Used so far', money(u.all_time_cost_usd), `${u.all_time_calls} AI calls`], ['Used in the last 30 days', money(u.cost_usd), `${u.calls} AI calls${u.failed ? `, ${u.failed} failed` : ''}`],
-              ['Left', left == null ? '–' : money(Math.max(0, left)), left == null ? 'Type your credit below' : Number.isFinite(loaded) ? `of ${money(loaded)} you entered` : `of the app limit ${money(cap as number)}`]].map(([t, v, n]) => (
-              <div key={t} className="rounded-2xl bg-brand-50/60 p-3"><p className="text-xs font-semibold text-ink-500">{t}</p><p className="mt-0.5 font-serif text-2xl font-semibold text-ink-900">{v}</p><p className="text-xs text-ink-500">{n}</p></div>))}
-          </div>
-          <label className="mt-3 block text-sm font-semibold text-ink-700"><span className="block">Credit you loaded on the AI account (US dollars)</span>
-            <Input className="mt-1 max-w-[12rem]" inputMode="decimal" placeholder="for example 20" value={start} onChange={(e) => save(e.target.value)} /></label>
-          <p className="mt-2 text-xs text-ink-500">The app adds up the cost of every AI call it makes (an estimate). It cannot read your account balance, so type the credit you loaded to see what is left. The exact balance is on your AI account&apos;s billing page.</p>
-          {u.by_task.length > 0 && (
-            <ul className="mt-3 divide-y divide-brand-50 text-sm">{Object.values(u.by_task.reduce<Record<string, { task: string; calls: number; cost: number }>>((m, r) => { (m[r.task] ??= { task: r.task, calls: 0, cost: 0 }); m[r.task].calls += r.calls; m[r.task].cost += r.cost; return m; }, {})).sort((a, b) => b.cost - a.cost).slice(0, 6).map((r) => (
-              <li key={r.task} className="flex flex-wrap items-center justify-between gap-2 py-1.5"><span className="text-ink-700">{r.task.replace(/_/g, ' ')} <span className="text-xs text-ink-400">({r.calls} calls)</span></span><b className="tabular-nums text-ink-900">{money(r.cost)}</b></li>))}</ul>)}
+          <ul className="grid gap-3 lg:grid-cols-3">
+            {u.by_key.map((k) => {
+              const have = parseFloat(loaded[k.id] ?? ''); const ok = Number.isFinite(have);
+              return (
+                <li key={k.id} className="rounded-2xl bg-brand-50/60 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-ink-900">{k.label}</p>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${k.key_set ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{k.key_set ? 'Key connected' : 'No key'}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-ink-500">{k.note}</p>
+                  <p className="mt-2 text-xs font-semibold text-ink-500">Used so far</p>
+                  <p className="font-serif text-2xl font-semibold text-ink-900">{k.plan === 'free' && k.cost_usd === 0 ? 'Free' : money(k.cost_usd)}</p>
+                  <p className="text-xs text-ink-500">{num(k.calls)} calls{k.failed ? `, ${k.failed} failed` : ''} · last 30 days: {num(k.calls_recent)}</p>
+                  {(k.tokens_in > 0 || k.tokens_out > 0) && <p className="text-xs text-ink-500">{num(k.tokens_in)} tokens in · {num(k.tokens_out)} tokens out</p>}
+                  <label className="mt-2 block text-xs font-semibold text-ink-700"><span className="block">Credit you loaded on this key ($)</span>
+                    <Input className="mt-1" inputMode="decimal" placeholder="for example 20" value={loaded[k.id] ?? ''} onChange={(e) => save(k.id, e.target.value)} /></label>
+                  {ok && <p className="mt-2 text-sm text-ink-700">Left: <b className="text-ink-900">{money(Math.max(0, have - k.cost_usd))}</b> of {money(have)}</p>}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-xs text-ink-500">The app adds up the cost of every AI call it makes, so the amounts are an estimate. It cannot read the balance on your AI accounts: type the credit you loaded on each key to see what is left. The exact balance is on each account&apos;s billing page.</p>
         </>
       )}
     </Card>

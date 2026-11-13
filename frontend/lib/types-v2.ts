@@ -103,6 +103,7 @@ export interface AIStatus {
 }
 export interface AIUsage {
   days: number; cost_usd: number; calls: number; failed: number; all_time_cost_usd: number; all_time_calls: number; budget_usd?: number | null;
+  by_key: { id: string; label: string; env: string; note: string; plan: 'paid' | 'free'; key_set: boolean; calls: number; failed: number; tokens_in: number; tokens_out: number; cost_usd: number; calls_recent: number; cost_recent_usd: number }[];
   by_task: { task: string; provider: string; model: string; calls: number; input_tokens: number; output_tokens: number; cost: number; failed: number }[];
 }
 
