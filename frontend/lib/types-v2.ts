@@ -30,9 +30,14 @@ export interface UploadItem {
   detected?: Detected | null;
 }
 /** What the sorter found in a file whose school is not on the list: a new school (with its teachers and data), or no school at all. */
+/** What is inside the file, read the same way Import reads it. */
+export interface FoundData {
+  by: string; visit_date?: string | null; summary: string | null; observations: { text: string; where: string | null; level: string | null }[]; actions: { text: string; due: string | null }[];
+  results: string[]; facts: string[]; notes: string[]; counts?: { observations: number; actions: number; results: number; facts: number };
+}
 export type Detected =
   | { kind: 'new_school'; school: { name: string; school_type: string; board: string; medium: string; grade_from: number; grade_to: number }; teachers: string[];
-      data: { section: string | null; record_date: string | null; table_rows: number | null } }
+      data: { section: string | null; record_date: string | null; table_rows: number | null; found?: FoundData } }
   | { kind: 'no_school' };
 export interface Batch { id: string; status: string; origin: string; created_at: string; counts: Record<string, number>; items: UploadItem[] }
 export interface BatchSummary { id: string; created_at: string; status: string; origin: string; note: string | null; files: number; imported: number; attention: number }
@@ -97,7 +102,7 @@ export interface AIStatus {
   tasks: Record<string, { chain: string[]; will_use: string | null; description: string }>;
 }
 export interface AIUsage {
-  days: number; cost_usd: number; calls: number; failed: number; all_time_cost_usd: number; all_time_calls: number;
+  days: number; cost_usd: number; calls: number; failed: number; all_time_cost_usd: number; all_time_calls: number; budget_usd?: number | null;
   by_task: { task: string; provider: string; model: string; calls: number; input_tokens: number; output_tokens: number; cost: number; failed: number }[];
 }
 

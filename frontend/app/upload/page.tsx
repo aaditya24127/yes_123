@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, Building2, CheckCircle2, ChevronDown, ClipboardCheck, Copy, FileText, GraduationCap, ListTree, Loader2, Mic, School, Table2, Users, XCircle } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 import FileDrop from '@/components/ui/FileDrop';
+import ExtLink from '@/components/ui/ExtLink';
 import { Badge, Button, Card, Empty, ErrorNote, Field, Input, Note, Select, Spinner } from '@/components/ui';
 import { api } from '@/lib/api';
 import { SECTIONS } from '@/lib/app.config';
@@ -121,7 +122,7 @@ function UploadPage() {
             </Button>
           </div>
           {groups.attention.length > 0 && (
-            <Card title="Please check these" subtitle="We were not sure about these. Choose the right school, teacher and kind, and they move to Ready.">
+            <Card title="Please check these" subtitle="Pick the school, teacher and kind for each file. It then moves to Ready.">
               <Rows items={groups.attention} onEdit={edit} onAdd={addSchool} dir={dir} />
             </Card>
           )}
@@ -184,59 +185,73 @@ function AllocationTable({ itemId, status }: { itemId: string; status: UploadIte
   );
 }
 
-/** A file whose school is not on the list: either a new school we found in it (add it with its teachers and data), or no school at all. */
-function DetectedPanel({ it, found, onAdd, onRemove }: { it: UploadItem; found: Detected; onAdd: (it: UploadItem, name: string, teachers: string[]) => Promise<void>; onRemove: () => void }) {
+/** A file whose school is not on the list: either a new school found in it (add it with its teachers and data), or no school at all. */
+function DetectedPanel({ it, found: first, onAdd, onRemove }: { it: UploadItem; found: Detected; onAdd: (it: UploadItem, name: string, teachers: string[]) => Promise<void>; onRemove: () => void }) {
+  const [found, setFound] = useState<Detected>(first);
   const isNew = found.kind === 'new_school';
   const [view, setView] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const [name, setName] = useState(isNew ? found.school.name : '');
   const [picked, setPicked] = useState<string[]>(isNew ? found.teachers : []);
+  const open = () => {
+    setView((v) => !v);
+    if (view || !isNew || found.data.found) return;
+    setReading(true);                    // the file is read in the background after upload; this waits for it if it is not done yet
+    api.uploads.found(it.id).then((d) => { setFound(d); setPicked((p) => Array.from(new Set([...p, ...d.teachers]))); }).catch(() => {}).finally(() => setReading(false));
+  };
   const toggle = (t: string) => setPicked((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
   const add = async () => { setBusy(true); try { await onAdd(it, name, picked); } finally { setBusy(false); } };
   if (!isNew) {
     return (
       <div className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
-        <p className="flex items-center gap-2 font-semibold"><AlertTriangle size={16} />No school detected</p>
-        <p className="mt-1 text-xs">We could not find a school name in this file. Choose the school above to add the data to it, or do not upload this file.</p>
+        <p className="flex items-center gap-2 font-semibold"><AlertTriangle size={16} className="shrink-0" />No school found in this file</p>
+        <p className="mt-1 text-xs">Choose a school above to add this file to it, or don&apos;t upload it.</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={() => { const el = document.getElementById(`school-${it.id}`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); (el as HTMLElement | null)?.focus(); }}>Add data: choose a school</Button>
-          <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={onRemove}>Remove data: don&apos;t upload</Button>
+          <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={() => { const el = document.getElementById(`school-${it.id}`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); (el as HTMLElement | null)?.focus(); }}>Choose a school</Button>
+          <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={onRemove}>Don&apos;t upload</Button>
         </div>
       </div>
     );
   }
-  const d = found.data;
+  const d = found.data; const f = d.found; const c = f?.counts;
+  const date = f ? f.visit_date : d.record_date;
+  const total = (c?.observations ?? 0) + (c?.actions ?? 0) + (c?.results ?? 0) + (c?.facts ?? 0);
+  const known = [found.school.school_type, found.school.board, found.school.medium].filter((x) => x && x !== 'Not stated');
+  const Group = ({ title, rows }: { title: string; rows: string[] }) => rows.length === 0 ? null : (
+    <div className="mt-2"><p className="font-semibold text-ink-900">{title}</p><ul dir="auto" className="mt-0.5 list-disc space-y-0.5 ps-4">{rows.map((r, i) => <li key={i}>{r}</li>)}</ul></div>);
   return (
     <div className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
-      <p className="flex items-start gap-2 font-semibold"><School size={16} className="shrink-0" /><span className="min-w-0 break-words">New school detected: <span dir="auto">{found.school.name}</span></span></p>
-      <p className="mt-1 text-xs">This school is not on your list yet. You can add it with the teachers and the data we found, pick another school above, or not upload this file.</p>
+      <p className="flex items-start gap-2 font-semibold"><School size={16} className="mt-0.5 shrink-0" /><span className="min-w-0 break-words">New school: <span dir="auto">{found.school.name}</span></span></p>
+      <p className="mt-1 text-xs">It is not on your list. Add it with this file, or choose another school above.</p>
       <div className="mt-2 flex flex-wrap gap-2">
-        <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={() => setView((v) => !v)} aria-expanded={view}>{view ? 'Hide details' : 'View details'}</Button>
+        <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={open} aria-expanded={view}>{view ? 'Hide details' : 'View details'}</Button>
         <Button className="px-3 py-1.5 text-xs" busy={busy} disabled={name.trim().length < 3} onClick={add}>Add school and data</Button>
-        <Button variant="ghost" className="px-3 py-1.5 text-xs" disabled={busy} onClick={onRemove}>Remove data: don&apos;t upload</Button>
+        <Button variant="ghost" className="px-3 py-1.5 text-xs" disabled={busy} onClick={onRemove}>Don&apos;t upload</Button>
       </div>
       {view && (
-        <div className="mt-3 space-y-3 rounded-2xl bg-surface p-3 text-xs text-ink-700 ring-1 ring-amber-100">
-          <div>
-            <p className="font-semibold text-ink-900">School</p>
-            <Input aria-label="School name" className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
-            <p className="mt-1 text-ink-500">{[found.school.school_type, found.school.board, found.school.medium].filter((x) => x && x !== 'Not stated').join(' · ') || 'Type, board and medium are not in the file; you can fill them in later.'} · Classes {found.school.grade_from} to {found.school.grade_to}</p>
-          </div>
-          <div>
-            <p className="font-semibold text-ink-900">Teachers found in the file</p>
-            {found.teachers.length === 0 ? <p className="mt-1 text-ink-500">No teacher names were found.</p> : (
-              <ul className="mt-1 space-y-1">{found.teachers.map((t) => (
-                <li key={t}><label className="flex items-center gap-2"><input type="checkbox" checked={picked.includes(t)} onChange={() => toggle(t)} />{t}</label></li>))}</ul>)}
-          </div>
-          <div>
-            <p className="font-semibold text-ink-900">Data found</p>
-            <ul className="mt-1 list-disc ps-4">
-              <li>Kind of file: {SECTION_NAME[d.section ?? 'other'] ?? 'Something else'}</li>
-              <li>Date: {d.record_date ?? 'not found in the file'}</li>
-              {d.table_rows ? <li>{d.table_rows} rows in its tables</li> : null}
-            </ul>
-            {it.preview && <p dir="auto" className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap rounded-xl bg-brand-50/60 p-2 text-ink-500">{it.preview.slice(0, 600)}</p>}
-          </div>
+        <div className="mt-3 rounded-2xl bg-surface p-3 text-xs text-ink-700 ring-1 ring-amber-100">
+          <p className="font-semibold text-ink-900">School name</p>
+          <Input aria-label="School name" className="mt-1" value={name} onChange={(e) => setName(e.target.value)} />
+          <p className="mt-1 text-ink-500">{[...known, `Classes ${found.school.grade_from} to ${found.school.grade_to}`].join(' · ')}</p>
+
+          <p className="mt-3 font-semibold text-ink-900">Teachers</p>
+          {found.teachers.length === 0 ? <p className="mt-1 text-ink-500">None named in this file.</p> : (
+            <ul className="mt-1 space-y-1">{found.teachers.map((t) => (
+              <li key={t}><label className="flex items-center gap-2"><input type="checkbox" checked={picked.includes(t)} onChange={() => toggle(t)} /><span dir="auto">{t}</span></label></li>))}</ul>)}
+
+          <p className="mt-3 font-semibold text-ink-900">What we found in this file</p>
+          <p className="mt-1 text-ink-500">{SECTION_NAME[d.section ?? 'other'] ?? 'Something else'} · {reading ? 'reading the file…' : date ? `dated ${date}` : 'no date in the file (today is used)'}
+            {total > 0 && ` · ${[c?.observations && `${c.observations} ${c.observations === 1 ? 'note' : 'notes'}`, c?.actions && `${c.actions} ${c.actions === 1 ? 'action' : 'actions'}`, c?.results && `${c.results} test ${c.results === 1 ? 'result' : 'results'}`, c?.facts && `${c.facts} ${c.facts === 1 ? 'number' : 'numbers'}`].filter(Boolean).join(', ')}`}</p>
+          {reading && <div className="mt-2"><Spinner label="Reading the file. This can take a minute…" /></div>}
+          {f?.summary && <p dir="auto" className="mt-1">{f.summary}</p>}
+          <Group title="Notes" rows={(f?.observations ?? []).map((o) => [o.level && `${o.level}:`, o.text, o.where && `(${o.where})`].filter(Boolean).join(' '))} />
+          <Group title="Actions" rows={(f?.actions ?? []).map((a) => (a.due ? `${a.text} (by ${a.due})` : a.text))} />
+          <Group title="Test results" rows={f?.results ?? []} />
+          <Group title="School numbers" rows={f?.facts ?? []} />
+          {total === 0 && <Group title="From the file" rows={f?.notes ?? []} />}
+          {!reading && total === 0 && (f?.notes ?? []).length === 0 && <p className="mt-2 text-ink-500">Nothing readable was found in this file.</p>}
+          <p className="mt-3"><ExtLink href={api.connect.uploadedFileUrl(it.id)} className="font-semibold text-brand-700 underline">Open the file</ExtLink></p>
         </div>
       )}
     </div>

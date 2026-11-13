@@ -78,6 +78,14 @@ def add_school(item_id: str, req: AddSchool):
         raise HTTPException(400, str(e))
 
 
+@router.get('/items/{item_id}/found')
+def item_found(item_id: str):
+    """View details on a New school file: what is inside the file (read once, then kept)."""
+    d = pipeline.read_found(item_id)
+    if d is None: raise HTTPException(404, 'file not found')
+    return d
+
+
 @router.post('/{batch_id}/import')
 def start_import(batch_id: str):
     n = pipeline.start_import(batch_id)

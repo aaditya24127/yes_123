@@ -59,7 +59,7 @@ def create_batch(files, origin='crp', created_by=None, hint_school_id=None, hint
                 reasons = g['reasons'] + ([f"Already uploaded before as {prev['original_filename']}"] if prev else [])
                 detected = None
                 if not g['school_id'] and not prev:                 # no known school: say what we found (a new school, or no school at all)
-                    try: detected = newschool.detect(name, rr, g['section'], g['record_date'], schools, teachers)
+                    try: detected = newschool.detect(name, rr, g['section'], g['record_date'], schools, teachers, data)
                     except Exception: detected = None
                 if detected: row['detected'] = json.dumps(detected)
                 row.update(school_id=g['school_id'], teacher_id=g['teacher_id'], section=g['section'], record_date=g['record_date'], doc_kind=g['doc_kind'],
@@ -70,6 +70,8 @@ def create_batch(files, origin='crp', created_by=None, hint_school_id=None, hint
             conn.execute(f"insert into upload_items ({', '.join(cols)}) values ({', '.join(['%s'] * len(cols))})", [row[c] for c in cols])
         conn.execute("update upload_batches set status = 'ready' where id = %s", (bid,))
         conn.commit()
+        later = [r['id'] for r in conn.execute("select id from upload_items where batch_id = %s and detected->>'kind' = 'new_school'", (bid,)).fetchall()]
+    if later: threading.Thread(target=lambda: [read_found(str(i)) for i in later], daemon=True).start()      # read them while the CRP looks at the list
     return str(bid)
 
 
@@ -227,3 +229,28 @@ def add_detected_school(item_id, school=None, teacher_names=None, crp_code=None)
         conn.execute("update upload_items set school_id = %s, status = %s, detected = null, sorted_by = 'crp', confidence = 1 where id = %s", (sid, status, item_id))
         conn.commit()
     return dict(school_id=str(sid), school_name=sch['name'], teachers_added=added, status=status)
+
+
+_reading: dict[str, threading.Lock] = {}
+
+
+def read_found(item_id):
+    """Reads what is inside a New school file (notes, actions, test results, teachers) the way Import will, and keeps it with the item.
+    Runs in the background after upload and again, if needed, when the CRP opens View details; one read per file."""
+    from . import newschool
+    lock = _reading.setdefault(item_id, threading.Lock())
+    with lock:
+        with get_conn() as conn:
+            u = conn.execute('select * from upload_items where id = %s', (item_id,)).fetchone()
+            if not u or not u['detected'] or u['detected'].get('kind') != 'new_school': return u['detected'] if u else None
+            d = u['detected']
+            if (d.get('data') or {}).get('found'): return d
+            teachers = conn.execute('select * from teachers where is_active').fetchall()
+        st = get_storage()
+        data = st.get(u['temp_path']) if st.exists(u['temp_path']) else b''
+        rr = readers.read(data, u['original_filename']) if data else None
+        found = newschool.read_data(rr, data, u['original_filename'], u['section'], u['record_date'], d['school']['name'], teachers) if rr else dict(by='rules', notes=[])
+        d = {**d, 'teachers': newschool.merge_teachers(d.get('teachers') or [], found.pop('teachers', [])), 'data': {**(d.get('data') or {}), 'found': found}}
+        with get_conn() as conn:
+            conn.execute('update upload_items set detected = %s where id = %s and detected is not null', (json.dumps(d), item_id)); conn.commit()
+        return d

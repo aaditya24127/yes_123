@@ -1,5 +1,6 @@
 """Directory lists for pickers, "Ask the copilot" over the latest data, and AI settings / usage."""
 import datetime as dt
+import os
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -84,5 +85,8 @@ def ai_usage(days: int = 30):
         by = conn.execute("""select task, provider, model, count(*) as calls, sum(input_tokens) as input_tokens, sum(output_tokens) as output_tokens, sum(cost_usd) as cost,
                              count(*) filter (where not ok) as failed from llm_calls where created_at > now() - make_interval(days => %s) group by 1,2,3 order by cost desc, calls desc""", (days,)).fetchall()
     f = lambda x: float(x or 0)
-    return dict(days=days, cost_usd=f(tot['cost']), calls=tot['calls'], failed=tot['failed'], all_time_cost_usd=f(alltime['cost']), all_time_calls=alltime['calls'],
+    cap = (os.environ.get('AI_BUDGET_USD') or '').strip()
+    try: budget = float(cap) if cap else None
+    except ValueError: budget = None
+    return dict(days=days, cost_usd=f(tot['cost']), calls=tot['calls'], failed=tot['failed'], all_time_cost_usd=f(alltime['cost']), all_time_calls=alltime['calls'], budget_usd=budget,
                 by_task=[dict(r, cost=f(r['cost'])) for r in by])
