@@ -42,7 +42,7 @@ function VisitPage() {
   const reload = () => session && api.visits.get(session.id).then(setSession).catch(() => {});
   const pendingTranscripts = !!session?.media.some((m) => m.file_id && !m.transcript && !m.transcript_by && (m.kind === 'lesson_audio' || m.kind === 'student_answer'));
   const evaluating = !!session && session.job?.status !== undefined && ['queued', 'processing'].includes(session.job.status);
-  usePoll(pendingTranscripts || evaluating, () => { reload(); });
+  usePoll(pendingTranscripts || evaluating, () => { reload(); }, pendingTranscripts ? 1500 : undefined);
 
   const run = async (label: string, fn: () => Promise<void>) => { setBusy(label); setError(''); try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(''); } };
   // The briefing appears at once (plain summary from the records); the sharper version follows a few seconds later and replaces it.
@@ -120,7 +120,7 @@ function VisitPage() {
       {session && step === 1 && (
         <div className="grid gap-5 lg:grid-cols-2">
           <Card tour="v-record" title="Record the lesson" subtitle="Record on this phone, or add a recording. It is turned into text for you.">
-            <AudioRecorder onDone={addAudio('lesson_audio')!} label="Record lesson" />
+            <AudioRecorder checkSound onDone={addAudio('lesson_audio')!} label="Record lesson" />
             <MediaList items={session.media.filter((m) => m.kind === 'lesson_audio')} waiting={waiting('lesson_audio')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
           <Card tour="v-notes" title="Your notes">
@@ -150,7 +150,7 @@ function VisitPage() {
                       <p className="mt-2 font-semibold text-ink-900">{i + 1}. {q.question}</p>
                       <p className="mt-1 text-sm text-ink-500"><b>A good answer:</b> {q.good_answer}</p>
                       <p className="text-sm text-ink-500"><b>Listen for:</b> {q.watch_for}</p>
-                      <div className="mt-3"><AudioRecorder small label={`Record Student ${label}`}
+                      <div className="mt-3"><AudioRecorder small checkSound label={`Record Student ${label}`}
                         onDone={addAudio('student_answer', { question_index: i, student_label: `Student ${label}` })!} /></div>
                       <MediaList items={answers} waiting={waiting('student_answer', i)} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
                     </li>
@@ -338,21 +338,27 @@ function MediaList({ items, waiting = [], onRemove }: { items: Session['media'];
   if (!items.length && !waiting.length) return null;
   return (
     <ul className="mt-3 space-y-2">
-      {items.map((m) => (
-        <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            {m.kind === 'crp_notes_file' ? <FileText size={15} className="shrink-0 text-brand-600" /> : <FileAudio size={15} className="shrink-0 text-brand-600" />}
-            <span className="min-w-0 flex-1 truncate font-semibold">{m.student_label ?? m.name}</span>
-            {m.kind === 'crp_notes_file' && m.file_id && <ExtLink href={api.rawUrl(m.file_id)} className="shrink-0 text-xs font-semibold text-brand-700 underline">Open</ExtLink>}
-            {m.duration ? <span className="text-xs text-ink-400">{Math.round(m.duration)} s</span> : null}
-            {m.file_id && m.kind !== 'crp_notes_file' && <audio controls preload="none" src={api.rawUrl(m.file_id)} className="order-last h-8 w-full sm:order-none sm:w-auto sm:max-w-[180px]" />}
-            <button onClick={() => onRemove(m.id)} className="rounded-full p-1 text-ink-400 hover:text-red-600" aria-label="Remove"><Trash2 size={14} /></button>
-          </div>
-          {m.transcript ? <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-ink-700">{m.transcript}</p>
-            : m.transcript_by ? <p className="mt-2 text-xs text-amber-700">We could not turn this recording into text. Your notes can still be used.</p>
-            : m.kind !== 'crp_notes_file' ? <p className="mt-2 flex items-center gap-1 text-xs text-ink-400"><Loader2 size={12} className="animate-spin" />Turning speech into text…</p> : null}
-        </li>
-      ))}
+      {items.map((m) => {
+        const student = m.kind === 'student_answer';
+        const heard = !!m.transcript; const failed = !heard && !!m.transcript_by;
+        const said = (m.transcript ?? '').replace(/^\[\d\d:\d\d\]\s*/gm, '').replace(/\n+/g, ' ').trim();
+        return (
+          <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              {m.kind === 'crp_notes_file' ? <FileText size={15} className="shrink-0 text-brand-600" /> : <FileAudio size={15} className="shrink-0 text-brand-600" />}
+              <span className="min-w-0 flex-1 truncate font-semibold">{m.student_label ?? m.name}</span>
+              {student && (heard ? <Badge tone="good">Heard</Badge> : failed ? <Badge tone="warn">Not heard</Badge> : <Badge tone="brand">Listening…</Badge>)}
+              {m.kind === 'crp_notes_file' && m.file_id && <ExtLink href={api.rawUrl(m.file_id)} className="shrink-0 text-xs font-semibold text-brand-700 underline">Open</ExtLink>}
+              {m.duration ? <span className="text-xs text-ink-400">{Math.round(m.duration)} s</span> : null}
+              {m.file_id && m.kind !== 'crp_notes_file' && <audio controls preload="none" src={api.rawUrl(m.file_id)} className="order-last h-8 w-full sm:order-none sm:w-auto sm:max-w-[180px]" />}
+              <button onClick={() => onRemove(m.id)} className="rounded-full p-1 text-ink-400 hover:text-red-600" aria-label={`Remove ${m.student_label ?? 'recording'}`}><Trash2 size={14} /></button>
+            </div>
+            {heard ? (student ? <p dir="auto" className="mt-2 text-sm text-ink-700">&ldquo;{said}&rdquo;</p> : <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-ink-700">{m.transcript}</p>)
+              : failed ? <p className="mt-2 text-xs text-amber-700">{student ? 'We could not hear this answer. Please record it again (closer to the microphone), then remove this one.' : 'We could not turn this recording into text. Your notes can still be used.'}</p>
+              : m.kind !== 'crp_notes_file' ? <p className="mt-2 flex items-center gap-1 text-xs text-ink-400"><Loader2 size={12} className="animate-spin" />Turning speech into text…</p> : null}
+          </li>
+        );
+      })}
       {waiting.map((m) => (
         <li key={m.id} className="rounded-2xl bg-brand-50/50 p-3 text-sm">
           <div className="flex flex-wrap items-center gap-2">

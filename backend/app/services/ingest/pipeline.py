@@ -195,13 +195,24 @@ def import_item(u, st=None, session_section=None):
     return sf, res, transcript
 
 
+NOT_SPEECH = {'you', 'thank you', 'thanks', 'thanks for watching', 'thank you for watching', 'bye', 'okay', 'ok', 'uh', 'um', 'hmm', 'the', 'so', 'subtitles by the amaraorg community'}
+
+
+def looks_like_silence(text, nbytes=0):
+    """Speech readers invent a word or two ("you", "Thank you") over silence or noise."""
+    said = re.sub(r'[^\w\s]', '', (text or '').lower()).strip()
+    return not said or said in NOT_SPEECH or (len(said.split()) <= 2 and nbytes > 60000)
+
+
 def transcribe(data, filename):
     """(transcript dict with 'by', None) or (None, reason). Which speech-to-text runs is decided in config/ai.json."""
     try:
         r = ai.run('transcribe', {}, [ai.Attachment(filename, readers.MIME.get(readers.format_of(filename) or '', 'audio/mpeg'), data)])
-        return dict(r.data, by=r.model or r.provider), None
     except ai.AIUnavailable:
         return None, 'Not transcribed: no speech-to-text available'
+    tr = dict(r.data, by=r.model or r.provider)
+    if looks_like_silence(tr.get('text'), len(data)): return None, 'No clear speech was heard in this recording'
+    return tr, None
 
 
 def add_detected_school(item_id, school=None, teacher_names=None, crp_code=None):
