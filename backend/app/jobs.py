@@ -4,7 +4,7 @@ downloads) goes here so the website stays fast.
 Scaling: start more workers, on this or other machines, all pointing at the same database:
     backend\\.venv\\Scripts\\python -m app.jobs            (from the backend folder)
 Each job is taken by exactly one worker ("for update skip locked"). The API also runs WORKERS_IN_API worker threads
-itself (default 1) so a single computer needs nothing extra.
+itself (default 4) so a single computer needs nothing extra.
 """
 import json, os, socket, threading, time, traceback
 import datetime as dt
@@ -82,7 +82,7 @@ def run_forever(worker=None, idle=1.5, stop=None):
 
 def start_in_api():
     from . import job_handlers   # noqa: F401  (registers handlers)
-    n = int(os.environ.get('WORKERS_IN_API', '1'))
+    n = int(os.environ.get('WORKERS_IN_API', '4'))
     for k in range(n):
         threading.Thread(target=run_forever, kwargs=dict(worker=f'api-{os.getpid()}-{k}'), daemon=True).start()
 

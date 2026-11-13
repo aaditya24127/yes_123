@@ -211,6 +211,7 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
   teachers: { id: string; name: string }[]; onPickTeacher: (id: string) => void; loading: boolean;
 }) {
   const point = (items: string[] | undefined, n = 3) => (items ?? []).filter(Boolean).slice(0, n);
+  const [tab, setTab] = useState<'summary' | 'history' | 'results' | 'books'>('summary');
   const summary = sentences(b.brief?.summary, 4);
   const columns: [string, string[], string][] = [
     ['Look at', point(b.brief?.focus_points), 'bg-sky-50/70'], ['Ask the teacher', point(b.brief?.ask_teacher), 'bg-amber-50/70'], ['Watch in class', point(b.brief?.check_in_class), 'bg-emerald-50/70'],
@@ -259,19 +260,25 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
         </Card>
       )}
 
-      {summary.length > 0 && <Card title="In short"><List items={summary} /></Card>}
+      <div role="tablist" aria-label="About this visit" className="flex flex-wrap gap-2">
+        {([['summary', 'Summary'], ['history', 'History'], ['results', 'Test results'], ['books', 'Textbook']] as const).map(([k, label]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${tab === k ? 'bg-brand-600 text-white ring-brand-600' : 'bg-surface text-brand-700 ring-brand-100 hover:bg-brand-50'}`}>{label}</button>))}
+      </div>
 
-      <div data-tour="v-brief" className="grid gap-4 md:grid-cols-3">
+      {tab === 'summary' && summary.length > 0 && <Card title="In short"><List items={summary} /></Card>}
+
+      {tab === 'summary' && <div data-tour="v-brief" className="grid gap-4 md:grid-cols-3">
         {columns.map(([title, items, tint]) => (
           <div key={title} className={`rounded-3xl p-5 ring-1 ring-brand-100 ${tint}`}>
             <h3 className="mb-2 font-serif text-lg font-semibold text-ink-900">{title}</h3>
             <List items={items} empty="Nothing special." />
           </div>
         ))}
-      </div>
+      </div>}
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card tour="v-history" title={scope ? `Earlier records: ${scope}` : 'From earlier visits'} subtitle={scope ? `Only what is on record for ${forWho} in this subject.` : undefined}>
+      <div className="grid gap-5">
+        {tab === 'history' && <Card tour="v-history" title={scope ? `Earlier records: ${scope}` : 'From earlier visits'} subtitle={scope ? `Only what is on record for ${forWho} in this subject.` : undefined}>
           {scope && !hasForSubject && (
             <div className="mb-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <b>Nothing on record for {forWho} in {scope}.</b> Records about other subjects are hidden.
@@ -290,8 +297,8 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
                 <List items={earlier.last.flatMap((p) => sentences(p.overall, 2).map((x) => `${fmtDay(p.date)}: ${x}`))} /></div>}
             </div>
           )}
-        </Card>
-        <Card title={scope ? `Latest test results: ${scope}` : 'Latest test results'} subtitle="Students who need extra help">
+        </Card>}
+        {tab === 'results' && <Card title={scope ? `Latest test results: ${scope}` : 'Latest test results'} subtitle="Students who need extra help">
           {!results.length ? <p className="text-sm text-ink-400">{scope ? `No test results on record for ${scope}.` : 'No results on record.'}</p> : (
             <ul className="space-y-2.5 text-sm">{results.slice(0, 6).map((r, i) => (
               <li key={i}>
@@ -301,10 +308,10 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
             </ul>
           )}
           {b.pending_requests.length > 0 && <div className="mt-4"><p className={head}>Waiting from the teacher</p><List items={b.pending_requests.map((r) => r.title)} /></div>}
-        </Card>
+        </Card>}
       </div>
 
-      {(b.school_history ?? []).length > 0 && (
+      {tab === 'history' && (b.school_history ?? []).length > 0 && (
         <Card title="Visits to this school" subtitle="Kept for the school, whoever visits next.">
           <ul className="divide-y divide-brand-50 text-sm">{(b.school_history ?? []).slice(0, 6).map((h, i) => (
             <li key={i} className="py-2">
@@ -316,10 +323,10 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
         </Card>
       )}
 
-      <details className="rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100">
+      {tab === 'books' && <details open className="rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100">
         <summary className="cursor-pointer font-serif text-lg font-semibold text-ink-900">Textbook for this class (optional)</summary>
         <div className="mt-3"><TextbookPanel teacherId={b.teacher?.id} schoolId={b.school.id} defaults={{ class_no: pick.class_no ? Number(pick.class_no) : b.teacher?.classes[0], subject: pick.subject || b.teacher?.subjects[0], board: b.school.board, language: b.school.medium }} /></div>
-      </details>
+      </details>}
       {dir === null && <Spinner />}
     </div>
   );

@@ -1,5 +1,6 @@
 """Bulk upload: receive -> sort -> (CRP confirms) -> import. Used by the Upload page, the visit flow and the teacher link."""
 import datetime as dt, hashlib, io, json, re, threading, traceback, zipfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import PurePosixPath
 from . import readers, sorter, importer, newschool
 from ... import ai
@@ -39,6 +40,7 @@ def create_batch(files, origin='crp', created_by=None, hint_school_id=None, hint
         teachers = conn.execute('select * from teachers where is_active').fetchall()
         bid = conn.execute('insert into upload_batches (origin, created_by, note) values (%s,%s,%s) returning id', (origin, created_by, note)).fetchone()['id']
         seen = {}
+        todo = []                                                   # files that need sorting: sorted side by side below (each may ask the AI)
         for i, (path, data) in enumerate(_expand(files)):
             name = PurePosixPath(path.replace('\\', '/')).name
             fmt = readers.format_of(name)
@@ -46,26 +48,37 @@ def create_batch(files, origin='crp', created_by=None, hint_school_id=None, hint
             key = f'uploads/{bid}/{i:03d}_{_slug(name.rsplit(".", 1)[0])}.{name.rsplit(".", 1)[-1].lower() if "." in name else "bin"}'
             st.put(key, data, readers.MIME.get(fmt or ''))
             row = dict(batch_id=bid, original_filename=name, temp_path=key, size_bytes=len(data), sha256=sha, file_format=fmt or 'other')
+            job = None
             if fmt is None:
                 row.update(status='skipped', reasons=json.dumps(['This file type is not supported']), confidence=0)
             elif sha in seen:
                 row.update(status='duplicate', reasons=json.dumps([f'Same file as {seen[sha]} in this upload']), confidence=1)
             else:
                 prev = conn.execute('select id, original_filename from source_files where sha256 = %s limit 1', (sha,)).fetchone()
-                rr = readers.read(data, name)
-                g = sorter.sort_file(path, rr, schools, teachers, hint_school_id, hint_teacher_id, data=data)
+                job = dict(path=path, name=name, data=data, rr=readers.read(data, name), prev=prev)
+            seen.setdefault(sha, name)
+            todo.append((row, job))
+
+        def sort_one(job):
+            return sorter.sort_file(job['path'], job['rr'], schools, teachers, hint_school_id, hint_teacher_id, data=job['data'])
+        jobs_ = [j for _, j in todo if j]
+        with ThreadPoolExecutor(max_workers=min(6, max(1, len(jobs_)))) as pool:
+            sorted_ = list(pool.map(sort_one, jobs_))
+        it = iter(sorted_)
+        for row, job in todo:
+            if job:
+                g = next(it); rr, prev, name = job['rr'], job['prev'], job['name']
                 if hint_section: g['section'] = hint_section
                 status = 'duplicate' if prev else ('sorted' if g['school_id'] and g['confidence'] >= 0.6 and g['section'] != 'other' else 'needs_attention')
                 reasons = g['reasons'] + ([f"Already uploaded before as {prev['original_filename']}"] if prev else [])
                 detected = None
                 if not g['school_id'] and not prev:                 # no known school: say what we found (a new school, or no school at all)
-                    try: detected = newschool.detect(name, rr, g['section'], g['record_date'], schools, teachers, data)
+                    try: detected = newschool.detect(name, rr, g['section'], g['record_date'], schools, teachers, job['data'])
                     except Exception: detected = None
                 if detected: row['detected'] = json.dumps(detected)
                 row.update(school_id=g['school_id'], teacher_id=g['teacher_id'], section=g['section'], record_date=g['record_date'], doc_kind=g['doc_kind'],
                            confidence=g['confidence'], sorted_by=g['sorted_by'], reasons=json.dumps(reasons), text_preview=(rr.text or rr.note)[:1200],
                            status=status, duplicate_of=prev['id'] if prev else None)
-            seen.setdefault(sha, name)
             cols = list(row)
             conn.execute(f"insert into upload_items ({', '.join(cols)}) values ({', '.join(['%s'] * len(cols))})", [row[c] for c in cols])
         conn.execute("update upload_batches set status = 'ready' where id = %s", (bid,))

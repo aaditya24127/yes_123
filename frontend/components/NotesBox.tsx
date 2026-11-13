@@ -49,7 +49,7 @@ export default function NotesBox({ value, onSave, setError }: { value: string; o
       </Field>
 
       <div className="mt-2 flex flex-wrap items-center gap-2" data-tour="v-notes-tools">
-        <AudioRecorder small label="Speak your notes" busy={busy === 'voice'} onDone={onVoice} />
+        <AudioRecorder small checkSound label="Speak your notes" busy={busy === 'voice'} onDone={onVoice} />
         <label className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 ring-1 ring-brand-100 transition hover:bg-brand-100 ${busy ? 'pointer-events-none opacity-50' : ''}`}>
           <Camera size={15} />Photo of notes
           <input type="file" accept="image/*" className="hidden" disabled={!!busy} onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = ''; }} />

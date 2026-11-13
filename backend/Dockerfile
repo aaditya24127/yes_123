@@ -23,7 +23,7 @@ COPY database/seed_data database/seed_data
 COPY database/cli.py database/cli.py
 
 # Files are stored in Supabase Storage in the cloud (STORAGE_BACKEND=supabase); LOCAL_STORAGE_ROOT is only a fallback.
-ENV LOCAL_STORAGE_ROOT=/srv/storage WORKERS_IN_API=1
+ENV LOCAL_STORAGE_ROOT=/srv/storage WORKERS_IN_API=4
 EXPOSE 8000
 # Bring the database up to date, then serve. Extra workers: run the same image with  python -m app.jobs  (working dir backend).
 CMD ["sh", "-c", "python database/cli.py migrate && cd backend && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

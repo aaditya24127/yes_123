@@ -78,10 +78,13 @@ function UploadPage() {
     };
   }, [batch]);
 
+  const plural = (n: number) => `${n} file${n === 1 ? '' : 's'}`;
+  const next = groups.working.length ? 'Adding your files…' : groups.attention.length ? `Next: check ${plural(groups.attention.length)} marked "Please check", then press Import.`
+    : groups.ready.length ? `All set. Press Import to add ${plural(groups.ready.length)}.` : groups.done.length ? 'Done. Your files are in your records.' : '';
   return (
-    <PageShell title="Add files" subtitle="Add your school files here. We sort them for you. You check them, then press Import.">
+    <PageShell title="Add files" subtitle="Add files. We sort them. You check, then press Import.">
       <ErrorNote error={error} onClose={() => setError('')} />
-      <Card tour="u-what" title="What can you add?" subtitle="Add anything you have. If you are not sure, add it anyway: we find the right place and ask you to check.">
+      {!batch && <Card tour="u-what" title="What can you add?" subtitle="Add any file. We sort it and you check it.">
         <ul className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
           {KINDS.map(({ icon: Icon, title, text }) => (
             <li key={title} className="flex gap-2 rounded-2xl bg-brand-50/60 p-2.5 sm:gap-3 sm:p-3">
@@ -94,12 +97,12 @@ function UploadPage() {
           {['Add your files', 'Check what we found', 'Press Import'].map((t, i) => (
             <li key={t} className="flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 ring-1 ring-brand-100"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[11px] text-white">{i + 1}</span>{t}</li>))}
         </ol>
-      </Card>
+      </Card>}
       <Card tour="u-drop">
         <FileDrop onFiles={send} title={busy ? 'Reading your files…' : 'Drop files here, or tap to choose'}
-          hint="You can add many files at once, or one zip. Nothing changes your priorities until you press Import." />
+          hint="Many files, or one zip. Nothing changes until you press Import." />
         <details className="mt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-brand-700">Are all these files about one school or teacher? (optional)</summary>
+          <summary className="cursor-pointer text-sm font-semibold text-brand-700">All for one school? (optional)</summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <Field label="School"><Select value={hint.school_id} onChange={(e) => setHint({ ...hint, school_id: e.target.value, teacher_id: '' })}>
               <option value="">We will find it</option>{dir?.schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
@@ -117,18 +120,19 @@ function UploadPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Badge tone="good">{groups.ready.length} ready</Badge><Badge tone="warn">{groups.attention.length} to check</Badge>
             <Badge tone="neutral">{groups.other.length} skipped</Badge><Badge tone="brand">{groups.done.length} added</Badge>
-            <Button className="ms-auto" onClick={doImport} busy={busy || groups.working.length > 0} disabled={!groups.ready.length}>
+            <Button className="ms-auto" onClick={doImport} busy={busy || groups.working.length > 0} disabled={!groups.ready.length} title={groups.ready.length ? undefined : 'Nothing is ready yet'}>
               {groups.working.length ? `Adding ${groups.working.length}…` : `Import ${groups.ready.length} file${groups.ready.length === 1 ? '' : 's'}`}
             </Button>
           </div>
+          {next && <p className="text-sm font-semibold text-ink-700" aria-live="polite">{next}</p>}
           {groups.attention.length > 0 && (
-            <Card title="Please check these" subtitle="Pick the school, teacher and kind for each file. It then moves to Ready.">
+            <Card title="Please check these" subtitle="Choose a school for each. It then moves to Ready.">
               <Rows items={groups.attention} onEdit={edit} onAdd={addSchool} dir={dir} />
             </Card>
           )}
           {(groups.ready.length > 0 || groups.working.length > 0) && <Card title="Ready to import"><Rows items={[...groups.working, ...groups.ready]} onEdit={edit} onAdd={addSchool} dir={dir} /></Card>}
           {groups.done.length > 0 && <Card title="Added to your records"><Rows items={groups.done} onEdit={edit} onAdd={addSchool} dir={dir} done /></Card>}
-          {groups.other.length > 0 && <Card title="Not added" subtitle="Files you added before are skipped, so nothing is counted twice."><Rows items={groups.other} onEdit={edit} onAdd={addSchool} dir={dir} /></Card>}
+          {groups.other.length > 0 && <Card title="Not added" subtitle="Skipped, or added before. Nothing is counted twice."><Rows items={groups.other} onEdit={edit} onAdd={addSchool} dir={dir} /></Card>}
         </>
       )}
 
@@ -204,13 +208,9 @@ function DetectedPanel({ it, found: first, onAdd, onRemove }: { it: UploadItem; 
   const add = async () => { setBusy(true); try { await onAdd(it, name, picked); } finally { setBusy(false); } };
   if (!isNew) {
     return (
-      <div className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
-        <p className="flex items-center gap-2 font-semibold"><AlertTriangle size={16} className="shrink-0" />No school found in this file</p>
-        <p className="mt-1 text-xs">Choose a school above to add this file to it, or don&apos;t upload it.</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={() => { const el = document.getElementById(`school-${it.id}`); el?.scrollIntoView({ block: 'center', behavior: 'smooth' }); (el as HTMLElement | null)?.focus(); }}>Choose a school</Button>
-          <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={onRemove}>Don&apos;t upload</Button>
-        </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
+        <p className="flex min-w-0 flex-1 items-start gap-2"><AlertTriangle size={16} className="mt-0.5 shrink-0" /><span><b className="block">No school found</b><span className="text-xs">Choose one above, or don&apos;t upload.</span></span></p>
+        <Button variant="ghost" className="px-3 py-1 text-xs" onClick={onRemove}>Don&apos;t upload</Button>
       </div>
     );
   }
@@ -223,7 +223,6 @@ function DetectedPanel({ it, found: first, onAdd, onRemove }: { it: UploadItem; 
   return (
     <div className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-tour="u-detected">
       <p className="flex items-start gap-2 font-semibold"><School size={16} className="mt-0.5 shrink-0" /><span className="min-w-0 break-words">New school: <span dir="auto">{found.school.name}</span></span></p>
-      <p className="mt-1 text-xs">It is not on your list. Add it with this file, or choose another school above.</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Button variant="soft" className="px-3 py-1.5 text-xs" onClick={open} aria-expanded={view}>{view ? 'Hide details' : 'View details'}</Button>
         <Button className="px-3 py-1.5 text-xs" busy={busy} disabled={name.trim().length < 3} onClick={add}>Add school and data</Button>
@@ -258,14 +257,20 @@ function DetectedPanel({ it, found: first, onAdd, onRemove }: { it: UploadItem; 
   );
 }
 
+const fmtDate = (d: string) => { const x = new Date(d); return Number.isNaN(x.getTime()) ? d : x.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
+
 function Rows({ items, onEdit, onAdd, dir, done }: { items: UploadItem[]; onEdit: (it: UploadItem, ch: Record<string, string | null>) => void; onAdd: (it: UploadItem, name: string, teachers: string[]) => Promise<void>; dir: ReturnType<typeof useDirectory>; done?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const [alloc, setAlloc] = useState<Set<string>>(new Set());
+  const [more, setMore] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState<Set<string>>(new Set());
+  const flipNotes = (id: string) => setNotes((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const flipMore = (id: string) => setMore((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const flip = (id: string) => setAlloc((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   return (
     <ul className="divide-y divide-brand-50">
       {items.map((it) => {
-        const st = STATUS[it.status]; const locked = it.status === 'imported' || it.status === 'importing';
+        const st = STATUS[it.status]; const canEdit = it.status === 'sorted' || it.status === 'needs_attention';
         const counts = Object.entries(it.result?.counts ?? {}).filter(([k, v]) => typeof v === 'number' && COUNT_LABEL[k] && !k.includes('_valid'));
         return (
           <li key={it.id} className="py-3">
@@ -277,24 +282,50 @@ function Rows({ items, onEdit, onAdd, dir, done }: { items: UploadItem[]; onEdit
               <Badge tone={st.tone}>{st.label}</Badge>
               <button onClick={() => setOpen(open === it.id ? null : it.id)} className="rounded-full p-1 text-ink-400 hover:bg-brand-50" aria-label="Why we put it here"><ChevronDown size={16} /></button>
             </div>
-            <div className="mt-2 grid gap-2 sm:grid-cols-4">
-              <Select id={`school-${it.id}`} disabled={locked} value={it.school_id ?? ''} onChange={(e) => onEdit(it, { school_id: e.target.value || null, teacher_id: null })}>
-                <option value="">Which school?</option>{dir?.schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
-              <Select disabled={locked || !it.school_id} value={it.teacher_id ?? ''} onChange={(e) => onEdit(it, { teacher_id: e.target.value || null })}>
-                <option value="">The whole school</option>{dir?.teachers.filter((t) => t.school_id === it.school_id).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
-              <Select disabled={locked} value={it.section ?? 'other'} onChange={(e) => onEdit(it, { section: e.target.value })}>
-                {SECTIONS.map((s) => <option key={s} value={s}>{SECTION_NAME[s]}</option>)}</Select>
-              <div className="flex gap-2">
-                <Input disabled={locked} type="date" value={it.record_date ?? ''} onChange={(e) => onEdit(it, { record_date: e.target.value })} />
-                {!locked && it.status !== 'skipped' && <Button variant="ghost" className="px-2" onClick={() => onEdit(it, { status: 'skipped' })}>Skip</Button>}
+            <p className="mt-0.5 ps-6 text-xs text-ink-500">
+              {[it.school_name ?? (it.status === 'needs_attention' || it.status === 'sorted' ? 'No school yet' : null), it.teacher_name, SECTION_NAME[it.section ?? 'other'], it.record_date && fmtDate(it.record_date)].filter(Boolean).join(' · ')}
+            </p>
+            {canEdit && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(it.status === 'needs_attention' || more.has(it.id)) && (
+                  <Select id={`school-${it.id}`} className="w-full sm:w-72" value={it.school_id ?? ''} onChange={(e) => onEdit(it, { school_id: e.target.value || null, teacher_id: null })}>
+                    <option value="">Which school?</option>{dir?.schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>)}
+                <button type="button" onClick={() => flipMore(it.id)} aria-expanded={more.has(it.id)} className="text-xs font-semibold text-brand-700 underline">{more.has(it.id) ? 'Fewer options' : 'Edit details'}</button>
               </div>
-            </div>
+            )}
+            {canEdit && more.has(it.id) && (
+              <div className="mt-2 grid gap-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_auto]">
+                <Select disabled={!it.school_id} value={it.teacher_id ?? ''} onChange={(e) => onEdit(it, { teacher_id: e.target.value || null })}>
+                  <option value="">The whole school</option>{dir?.teachers.filter((t) => t.school_id === it.school_id).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select>
+                <Select value={it.section ?? 'other'} onChange={(e) => onEdit(it, { section: e.target.value })}>
+                  {SECTIONS.map((s) => <option key={s} value={s}>{SECTION_NAME[s]}</option>)}</Select>
+                <Input type="date" value={it.record_date ?? ''} onChange={(e) => onEdit(it, { record_date: e.target.value })} />
+                <Button variant="ghost" className="px-3" onClick={() => onEdit(it, { status: 'skipped' })}>Skip</Button>
+              </div>
+            )}
             {it.status === 'needs_attention' && !it.school_id && it.detected && <DetectedPanel it={it} found={it.detected} onAdd={onAdd} onRemove={() => onEdit(it, { status: 'skipped' })} />}
             {done && (
-              <div className="mt-2 text-sm text-ink-700">
+              <div className="mt-2 ps-6 text-sm text-ink-700">
                 {counts.length > 0 ? <span>Found {counts.map(([k, v]) => `${v} ${COUNT_LABEL[k]}`).join(', ')}.</span> : <span className="text-ink-500">Saved with your files.</span>}
-                {typeof it.result?.counts?.summary === 'string' && <p className="mt-1 text-ink-500">{it.result.counts.summary}</p>}
-                {it.result?.warnings?.map((w, i) => <p key={i} className="mt-1 text-amber-700">⚠ {w}</p>)}
+                {(() => {
+                  const sum = typeof it.result?.counts?.summary === 'string' ? it.result.counts.summary : '';
+                  const warns = it.result?.warnings ?? [];
+                  const first = sum ? (sum.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? sum) : '';
+                  const short = first.length > 130 ? `${first.slice(0, 127).trimEnd()}…` : first;
+                  const extra = (sum && sum !== short) || warns.length > 0;
+                  return (
+                    <>
+                      {short && <p dir="auto" className="mt-1 text-xs text-ink-500">{short}</p>}
+                      {extra && <button type="button" onClick={() => flipNotes(it.id)} aria-expanded={notes.has(it.id)} className="mt-1 text-xs font-semibold text-brand-700 underline">{notes.has(it.id) ? 'Hide notes' : 'More notes'}</button>}
+                      {extra && notes.has(it.id) && (
+                        <div dir="auto" className="mt-1 rounded-xl bg-brand-50/60 p-2 text-xs text-ink-600">
+                          {sum && sum !== short && <p>{sum}</p>}
+                          {warns.map((w, i) => <p key={i} className="mt-1 text-amber-700">⚠ {w}</p>)}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 {it.error && <p className="mt-1 text-red-700">{it.error}</p>}
               </div>
             )}
