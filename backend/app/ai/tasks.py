@@ -89,7 +89,7 @@ EXTRACT_SYSTEM = (
     'a short exact quote as evidence_text. Severity comes from the wording or a "concern level" column (critical = urgent or severe, significant = clear '
     'problem, minor = small). A strength or good practice is need_code GOOD_PRACTICE with severity none. confidence is 0-1 (below 0.7 when handwriting '
     'is unclear or the meaning is ambiguous). Students below benchmark = scoring under 40% of maximum marks. Dates as YYYY-MM-DD. '
-    'facts.fact_key must be one of the known fact keys given. Need codes: ' + '; '.join(f'{k} = {v}' for k, v in NEED_LABEL.items()))
+    'facts.fact_key must be one of the known fact keys given. summary = ONE short sentence (under 25 words) saying what the document is; never list or explain rows you left out. Need codes: ' + '; '.join(f'{k} = {v}' for k, v in NEED_LABEL.items()))
 
 
 def _extract_user(i):

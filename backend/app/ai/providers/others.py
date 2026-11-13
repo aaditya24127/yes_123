@@ -121,6 +121,28 @@ class HttpModelProvider(Provider):
         return r.json(), dict(model=self.cfg.get('model', self.name), cost_usd=self.cfg.get('cost_per_call', 0))
 
 
+GROQ_MAX_BYTES = 24 * 1024 * 1024        # the speech service refuses bigger files
+
+
+def _shrink_audio(data: bytes, name: str) -> bytes:
+    """Long or high-quality phone recordings can be bigger than the speech service accepts. Speech needs very little quality, so it is
+    re-packed as a small mono file (a 2 hour recording is then about 29 MB). Needs ffmpeg (bundled with imageio-ffmpeg, or on the computer)."""
+    import shutil, subprocess, tempfile
+    exe = shutil.which('ffmpeg')
+    if not exe:
+        try:
+            import imageio_ffmpeg
+            exe = imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            raise AIError('This recording is too big to read and the audio converter is not installed. Please record in shorter parts.')
+    with tempfile.TemporaryDirectory() as d:
+        src = os.path.join(d, 'in' + (os.path.splitext(name)[1] or '.bin')); out = os.path.join(d, 'out.mp3')
+        open(src, 'wb').write(data)
+        r = subprocess.run([exe, '-y', '-loglevel', 'error', '-i', src, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k', out], capture_output=True, timeout=600)
+        if r.returncode != 0 or not os.path.exists(out): raise AIError('This recording could not be converted for reading.')
+        return open(out, 'rb').read()
+
+
 class GroqWhisperProvider(Provider):
     def ping(self):
         r = httpx.get('https://api.groq.com/openai/v1/models', headers={'Authorization': f"Bearer {os.environ[self.cfg.get('needs_env', 'GROQ_API_KEY')]}"}, timeout=20)
@@ -131,12 +153,20 @@ class GroqWhisperProvider(Provider):
     def run(self, task, input, attachments):
         if task.name != 'transcribe' or not attachments: raise Unsupported('speech-to-text only')
         a = attachments[0]
+        if len(a.data) > GROQ_MAX_BYTES:
+            small = _shrink_audio(a.data, a.name)
+            if len(small) > GROQ_MAX_BYTES: raise AIError('This recording is too long to read in one go. Please record in parts of up to about 2 hours.')
+            a = type(a)(os.path.splitext(a.name)[0] + '.mp3', 'audio/mpeg', small)
         r = httpx.post('https://api.groq.com/openai/v1/audio/transcriptions', headers={'Authorization': f"Bearer {os.environ[self.cfg.get('needs_env', 'GROQ_API_KEY')]}"},
                        files={'file': (a.name, a.data)}, data={'model': self.cfg.get('model', 'whisper-large-v3'), 'response_format': 'verbose_json'},
                        timeout=self.cfg.get('timeout', 600))
         if r.status_code != 200: raise AIError(f'Groq error {r.status_code}')
         j = r.json()
-        segs = [dict(start=float(s['start']), end=float(s['end']), text=s['text'].strip()) for s in j.get('segments', [])]
+        # Whisper invents words ("you", "Thank you") over silence or noise. It also says how sure it is that a stretch has no speech: drop those.
+        real = [s for s in j.get('segments', []) if not (s.get('no_speech_prob', 0) > 0.6 and s.get('avg_logprob', 0) < -0.6) and s.get('compression_ratio', 0) < 2.4]
+        segs = [dict(start=float(s['start']), end=float(s['end']), text=s['text'].strip()) for s in real if s['text'].strip()]
+        if j.get('segments') is not None:
+            return dict(text=' '.join(x['text'] for x in segs).strip(), language=j.get('language'), segments=segs), dict(model=self.cfg.get('model'), cost_usd=0)
         return dict(text=j.get('text', '').strip(), language=j.get('language'), segments=segs), dict(model=self.cfg.get('model'), cost_usd=0)
 
 

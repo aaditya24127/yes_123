@@ -48,7 +48,7 @@ Teaching research the AI must follow before judging a lesson: `backend/app/knowl
 ## Scaling
 
 - Slow work (importing files, speech-to-text, lesson evaluation, textbook downloads) runs as **background jobs** in the database table `processing_jobs`.
-- The API runs `WORKERS_IN_API` workers itself (default 1). For more capacity, start extra workers on any machine pointing at the same database: `backend\.venv\Scripts\python -m app.jobs` (from the `backend` folder). Each job is taken by exactly one worker; failed jobs retry 3 times.
+- The API runs `WORKERS_IN_API` workers itself (default 4). For more capacity, start extra workers on any machine pointing at the same database: `backend\.venv\Scripts\python -m app.jobs` (from the `backend` folder). Each job is taken by exactly one worker; failed jobs retry 3 times.
 - The API itself keeps no state, so several copies can run behind a load balancer. Files go through the storage layer (local folder or Supabase Storage).
 
 ## Running it

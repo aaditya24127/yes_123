@@ -11,16 +11,21 @@ NAME_TOKEN = r"[A-Z][\w.'’&-]*"
 PHRASE = re.compile(rf"((?:{NAME_TOKEN}[ \t]+){{0,5}}{SCHOOL_WORD}(?:,?[ \t]+(?!(?:Class|Std|Standard|Visit|Notes|Report|Teacher|Mrs?|Ms|Dr|The|Mathematics|Maths|English|Marathi|Hindi|Science|EVS)\b){NAME_TOKEN}){{0,3}})")
 LABEL = re.compile(r"(?im)^[ \t]*(?:name[ \t]+of[ \t]+(?:the[ \t]+)?school|school[ \t]+name|school[ \t]+visited|visited[ \t]+school|school)[ \t]*[:\-–][ \t]*(.{3,90}?)[ \t]*$")
 LEAD = re.compile(r"^(?:visit(?:ed)?\s+(?:(?:to|at)\s+)?|at\s+|the\s+|to\s+|from\s+|of\s+|in\s+)+", re.I)
-GENERIC = STOP | {'class', 'classes', 'std', 'visit', 'notes', 'report', 'junior', 'college', 'convent', 'academy', 'mandir', 'shala', 'vidyalay', 'vidyamandir', 'mahavidyalaya', 'international'}
+GENERIC = STOP | {'profile', 'report', 'reports', 'learning', 'gap', 'gaps', 'readme', 'summary', 'data', 'sheet', 'list', 'marks', 'mark', 'result', 'results', 'test', 'tests', 'attendance', 'roster', 'teacher', 'teachers', 'student', 'students', 'note', 'visits', 'sample', 'demo', 'file', 'document', 'form', 'template', 'copy', 'final', 'school', 'class', 'classes', 'std', 'visit', 'notes', 'report', 'junior', 'college', 'convent', 'academy', 'mandir', 'shala', 'vidyalay', 'vidyamandir', 'mahavidyalaya', 'international'}
 TITLE_NAME = re.compile(r"\b(Mr|Mrs|Ms|Miss|Dr|Smt|Shri)\.?[ \t]+([A-Z][a-z]{1,}(?:[ \t]+[A-Z][a-z]{1,}){0,2})")
 NOT_NAME = {'The', 'Class', 'Teacher', 'Madam', 'Sir', 'School', 'Mathematics', 'Maths', 'English', 'Marathi', 'Hindi', 'Science', 'Evs', 'Std', 'Standard', 'Will', 'Visit', 'Notes', 'Said', 'Was', 'Has', 'Used', 'Did'}
+
+
+DOC_WORDS = {'profile', 'report', 'reports', 'notes', 'note', 'messy', 'sample', 'visit', 'data', 'file', 'list', 'marks', 'summary', 'copy', 'final', 'pdf', 'docx', 'txt', 'png', 'jpg', 'xlsx', 'csv'}
 
 
 def _clean(name: str) -> str:
     name = re.sub(r'\s+', ' ', name).strip(' ,.;:-–()[]"\'')
     name = LEAD.sub('', name).strip(' ,.;:-–')
     name = re.sub(r"\s+(?:on|dated|for|during|visit|notes?|report)\b.*$", '', name, flags=re.I).strip(' ,.;:-–')
-    return name
+    words = name.split()
+    while len(words) > 1 and words[-1].lower().strip('.,') in DOC_WORDS: words.pop()      # "... School Messy" -> "... School"
+    return ' '.join(words)
 
 
 def _good(name: str) -> bool:
@@ -34,7 +39,9 @@ def find_school_name(text: str, filename: str = '') -> str | None:
     for m in LABEL.finditer(body):
         n = _clean(m.group(1))
         if _good(n): return n
-    hay = body + '\n' + filename.replace('_', ' ')
+    stem = re.sub(r'\.[A-Za-z0-9]{2,5}$', '', filename)                      # not the extension
+    stem = re.sub(r'^[\d\s_.-]+', '', stem)                                # not the numbering ("01_")
+    hay = body + '\n' + stem.replace('_', ' ')
     seen = Counter(); order = []
     for m in PHRASE.finditer(hay):
         n = _clean(m.group(1))

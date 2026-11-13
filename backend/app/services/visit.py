@@ -96,6 +96,13 @@ def _uuid(x):
 
 
 # ---------------------------------------------------------------- step 3 and 4 inputs
+def _fit(text: str, limit: int = 80000) -> str:
+    """A very long lesson keeps its beginning and its end (the middle is shortened), instead of losing the end."""
+    if len(text) <= limit: return text
+    k = limit // 2
+    return text[:k] + '\n\n[... the middle of the recording is left out here because it is very long ...]\n\n' + text[-k:]
+
+
 def session_input(s, media):
     lesson = [m for m in media if m['kind'] == 'lesson_audio' and m['transcript']]
     answers = []
@@ -109,7 +116,7 @@ def session_input(s, media):
     book = next((b for b in brief_.get('textbooks', []) if (not s['class_no'] or b.get('cls') in (None, s['class_no']))), None)
     return dict(school=brief_.get('school'), teacher=brief_.get('teacher'), class_no=s['class_no'], subject=s['subject'], topic=s['topic'],
                 language=(brief_.get('school') or {}).get('medium'), crp_notes=s['crp_notes'] or '', changes_since_last=s['changes_since_last'] or '',
-                lesson_transcript='\n\n'.join(m['transcript'] for m in lesson)[:40000], student_answers=answers,
+                lesson_transcript=_fit('\n\n'.join(m['transcript'] for m in lesson)), student_answers=answers,
                 open_issues=brief_.get('open_issues', []), open_actions=brief_.get('open_actions', []), previous_sessions=brief_.get('previous_sessions', []),
                 latest_results=brief_.get('latest_results', []), textbook=book)
 

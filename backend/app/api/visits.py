@@ -1,6 +1,6 @@
 """The 4-step visit (brief -> class -> students -> results) and textbook search / linking."""
 import datetime as dt
-import hashlib, json
+import hashlib, json, re
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel
@@ -93,6 +93,7 @@ def list_sessions(teacher_id: str | None = None, school_id: str | None = None, l
 
 # ---------------------------------------------------------------- visit notes by voice, photo or in another language
 # Nothing here is stored: the recording or photo is read, the text goes back to the screen, and the file is dropped.
+NOT_SPEECH = {'you', 'thank you', 'thanks', 'thanks for watching', 'thank you for watching', 'bye', 'okay', 'ok', 'uh', 'um', 'hmm', 'the', 'so', 'subtitles by the amaraorg community'}
 MAX_NOTE_AUDIO = 24 * 1024 * 1024
 MAX_NOTE_PHOTO = 12 * 1024 * 1024
 
@@ -106,7 +107,9 @@ def notes_voice(file: UploadFile = File(...)):
     tr, _ = transcribe(data, file.filename or 'note.webm')
     if not tr: raise HTTPException(503, 'We could not turn the recording into text right now. Please type the note, or try again in a minute.')
     text = (tr.get('text') or '').strip() or ' '.join((x.get('text') or '').strip() for x in tr.get('segments', [])).strip()
-    if not text: raise HTTPException(422, 'We could not hear any speech in this recording.')
+    said = re.sub(r'[^\w\s]', '', text.lower()).strip()
+    if not said or said in NOT_SPEECH or (len(said.split()) <= 2 and len(data) > 60000):       # silence or noise that was read as a word or two
+        raise HTTPException(422, 'We could not hear clear speech. Check that the microphone is on, speak close to it, and try again.')
     return dict(text=text, language=tr.get('language'))
 
 
