@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, CheckCircle2, Download, Eye, FileAudio, FileText, Loader2, Mic, Send, Sparkles, Trash2 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
+import NotesBox from '@/components/NotesBox';
 import TextbookPanel from '@/components/TextbookPanel';
 import AudioRecorder from '@/components/ui/AudioRecorder';
 import ExtLink from '@/components/ui/ExtLink';
@@ -123,12 +124,9 @@ function VisitPage() {
             <MediaList items={session.media.filter((m) => m.kind === 'lesson_audio')} waiting={waiting('lesson_audio')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
           <Card tour="v-notes" title="Your notes">
-            <Field label="What did you see?"><TextArea defaultValue={session.crp_notes ?? ''} onBlur={(e) => save({ crp_notes: e.target.value })} rows={6}
-              placeholder="Who answered, how the teacher checked understanding, use of materials, time on task…" /></Field>
+            <NotesBox key={session.id} value={session.crp_notes ?? ''} onSave={(t) => save({ crp_notes: t })} setError={setError} />
             <Field label="What is different since the last visit?" className="mt-3"><TextArea defaultValue={session.changes_since_last ?? ''} onBlur={(e) => save({ changes_since_last: e.target.value })}
               placeholder="For example: reading corner now in use; group work started" /></Field>
-            <div className="mt-3"><label className="cursor-pointer text-sm font-semibold text-brand-700 underline">Add a photo of written notes
-              <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) addAudio('crp_notes_file')!(f, f.name); e.target.value = ''; }} /></label></div>
             <MediaList items={session.media.filter((m) => m.kind === 'crp_notes_file')} waiting={waiting('crp_notes_file')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
           <div className="lg:col-span-2 flex justify-end"><Button data-tour="v-next-students" onClick={() => { save({ stage: Math.max(3, session.stage) }); setStep(2); }}>Next: students</Button></div>
@@ -175,7 +173,7 @@ function VisitPage() {
               {recent.data.map((v) => (
                 <li key={v.id}><button className="flex w-full items-center gap-3 py-2.5 text-start text-sm hover:text-brand-700" onClick={() => router.replace(`/visit?session=${v.id}`)}>
                   <span className="w-28 shrink-0 text-ink-500">{fmtDay(v.started_at)}</span>
-                  <span className="flex-1 truncate">{v.teacher_name ?? v.school_name}{v.class_no ? ` · Class ${v.class_no}` : ''}{v.subject ? ` ${v.subject}` : ''}{v.topic ? ` · ${v.topic}` : ''}</span>
+                  <span className="flex-1 truncate">{v.teacher_name ?? v.school_name}{v.class_no ? ` · Class ${v.class_no}` : ''}{v.subject ? ` ${v.subject}` : ''}{v.topic ? ` · ${v.topic}` : ''}{v.mentor_name ? <span className="text-xs text-ink-400"> · {v.mentor_name}</span> : null}</span>
                   <Badge tone={v.status === 'saved' ? 'good' : v.status === 'evaluated' ? 'brand' : 'neutral'}>{v.status === 'saved' ? 'Saved' : v.status === 'evaluated' ? 'Results ready' : `Step ${v.stage}`}</Badge>
                 </button></li>
               ))}
@@ -306,6 +304,18 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
         </Card>
       </div>
 
+      {(b.school_history ?? []).length > 0 && (
+        <Card title="Visits to this school" subtitle="Kept for the school, whoever visits next.">
+          <ul className="divide-y divide-brand-50 text-sm">{(b.school_history ?? []).slice(0, 6).map((h, i) => (
+            <li key={i} className="py-2">
+              <p className="flex flex-wrap items-baseline gap-x-2"><b className="text-ink-900">{fmtDay(h.date)}</b>
+                <span className="text-ink-700">{h.mentor ? `Visited by ${h.mentor}` : 'Visit on record'}</span>
+                <span className="text-xs text-ink-500">{[h.teacher, h.cls ? `Class ${h.cls}` : null, h.subject].filter(Boolean).join(' · ')}</span></p>
+              {h.overall && <p dir="auto" className="mt-0.5 text-xs text-ink-500">{sentences(h.overall, 1)[0]}</p>}
+            </li>))}</ul>
+        </Card>
+      )}
+
       <details className="rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100">
         <summary className="cursor-pointer font-serif text-lg font-semibold text-ink-900">Textbook for this class (optional)</summary>
         <div className="mt-3"><TextbookPanel teacherId={b.teacher?.id} schoolId={b.school.id} defaults={{ class_no: pick.class_no ? Number(pick.class_no) : b.teacher?.classes[0], subject: pick.subject || b.teacher?.subjects[0], board: b.school.board, language: b.school.medium }} /></div>
@@ -347,6 +357,40 @@ function MediaList({ items, waiting = [], onRemove }: { items: Session['media'];
         </li>
       ))}
     </ul>
+  );
+}
+
+/** One student answer: what the AI said, and the mentor's own check. The mentor's word counts; the AI's verdict stays on record. */
+const MENTOR_CHOICES: { v: 'agree' | 'correct' | 'partly' | 'wrong'; label: string; on: string }[] = [
+  { v: 'agree', label: 'Agree', on: 'bg-brand-600 text-white ring-brand-600' }, { v: 'correct', label: 'Correct', on: 'bg-emerald-600 text-white ring-emerald-600' },
+  { v: 'partly', label: 'Partly', on: 'bg-amber-500 text-white ring-amber-500' }, { v: 'wrong', label: 'Not correct', on: 'bg-red-600 text-white ring-red-600' },
+];
+function AnswerCheck({ q, index, sid, onChanged, setError }: { q: NonNullable<Evaluation['students']>['per_question'][number]; index: number; sid: string; onChanged: () => void; setError: (e: string) => void }) {
+  const m = q.mentor;
+  const [busy, setBusy] = useState(false);
+  const [reason, setReason] = useState(m?.reason ?? '');
+  useEffect(() => { setReason(m?.reason ?? ''); }, [m?.reason, m?.verdict]);
+  const send = async (verdict: 'agree' | 'correct' | 'partly' | 'wrong' | null, why?: string) => {
+    setBusy(true);
+    try { await api.visits.reviewAnswer(sid, index, { verdict, reason: verdict && verdict !== 'agree' ? (why ?? reason) || null : null }); onChanged(); }
+    catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  };
+  return (
+    <li className="rounded-2xl bg-brand-50/50 p-2.5">
+      <p className="font-semibold text-ink-900">{q.question}</p>
+      <p className="text-ink-700"><span className="text-xs font-semibold text-ink-500">AI said: </span>{q.verdict}{q.note ? <span className="text-xs text-ink-500"> · {sentences(q.note, 1)[0]}</span> : null}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Your check of this answer">
+        <span className="me-1 text-xs font-semibold text-ink-500">Your check:</span>
+        {MENTOR_CHOICES.map((c) => (
+          <button key={c.v} type="button" disabled={busy} aria-pressed={m?.verdict === c.v} onClick={() => send(c.v)}
+            className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 transition disabled:opacity-50 ${m?.verdict === c.v ? c.on : 'bg-surface text-brand-700 ring-brand-100 hover:bg-brand-50'}`}>{c.label}</button>))}
+        {m && <button type="button" disabled={busy} onClick={() => send(null)} className="px-2 py-1 text-xs font-semibold text-ink-500 underline">Use the AI&apos;s</button>}
+      </div>
+      {m && m.verdict !== 'agree' && (
+        <Input aria-label="Why do you think so? (optional)" className="mt-2" placeholder="Why? (optional)" value={reason} maxLength={300} disabled={busy}
+          onChange={(e) => setReason(e.target.value)} onBlur={() => { if (reason.trim() !== (m.reason ?? '')) send(m.verdict, reason); }} />)}
+      {m && <p className="mt-1.5 text-xs text-ink-500">{m.verdict === 'agree' ? 'Checked' : 'Changed'} by {m.by ?? 'the mentor'}{m.verdict === 'agree' ? '' : ` to "${MENTOR_CHOICES.find((c) => c.v === m.verdict)?.label}"`}. The AI&apos;s answer is kept on record.</p>}
+    </li>
   );
 }
 
@@ -412,9 +456,13 @@ function Results({ s, evaluating, onEvaluate, onSaved, onPatch, setError }: {
         </Card>
         <Card title="How the students did">
           <List items={sentences(r.students?.summary, 3)} empty="No student answers were recorded." />
+          {(r.students?.per_question ?? []).length > 0 && (() => {
+            const all = r.students?.per_question ?? []; const done = all.filter((q) => q.mentor).length; const changed = all.filter((q) => q.mentor && q.mentor.verdict !== 'agree').length;
+            return <p className="mt-3 text-xs text-ink-500">You can check each answer below. Your check counts, and the AI&apos;s answer is kept. {done > 0 ? `You checked ${done} of ${all.length}${changed ? `, changed ${changed}` : ''}.` : ''}</p>;
+          })()}
           {(r.students?.per_question ?? []).length > 0 && (
             <ul className="mt-3 space-y-2 text-sm">{(r.students?.per_question ?? []).map((q, i) => (
-              <li key={i} className="rounded-2xl bg-brand-50/50 p-2.5"><p className="font-semibold text-ink-900">{q.question}</p><p className="text-ink-700">{q.verdict}{q.note ? <span className="text-xs text-ink-500"> · {sentences(q.note, 1)[0]}</span> : null}</p></li>))}</ul>
+              <AnswerCheck key={i} q={q} index={i} sid={s.id} onChanged={onSaved} setError={setError} />))}</ul>
           )}
           {(r.students?.misconceptions ?? []).length > 0 && <div className="mt-3"><p className={head}>Ideas students mixed up</p><List items={r.students!.misconceptions} /></div>}
         </Card>

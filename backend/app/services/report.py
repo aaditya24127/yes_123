@@ -87,7 +87,10 @@ def build_html(s) -> str:
     st = r.get('students') or {}
     stu = [_e(x) for x in sentences(st.get('summary'), 4)]
     for q in st.get('per_question', []):
-        stu.append(f"<b>{_e(q.get('question'))}</b> &ndash; {_e(q.get('verdict'))}" + (f". <span class='small'>{_e(q.get('note'))}</span>" if q.get('note') else ''))
+        m = q.get('mentor') or {}
+        label = {'correct': 'Correct', 'partly': 'Partly correct', 'wrong': 'Not correct'}.get(m.get('verdict')) if m.get('verdict') in ('correct', 'partly', 'wrong') else None
+        stu.append(f"<b>{_e(q.get('question'))}</b> &ndash; {_e(label or q.get('verdict'))}" + (" <span class='small'>(checked by the CRP)</span>" if label else '')
+                   + (f". <span class='small'>{_e(m.get('reason') or q.get('note'))}</span>" if (m.get('reason') or q.get('note')) else ''))
     h.append('<h2>4. How your students did</h2>' + _ul(stu))
     if st.get('misconceptions'): h.append('<h3>Ideas students mixed up</h3>' + _ul([_e(x) for x in st['misconceptions']]))
 
