@@ -149,6 +149,10 @@ export const api = {
     evaluate: (id: string) => post<Session>(`/api/sessions/${id}/evaluate`),
     reportUrl: (id: string, download = false) => apiUrl(`/api/sessions/${id}/report.pdf${download ? '?download=true' : ''}`),
     sendReport: (id: string, email?: string) => post<{ app: boolean; email: 'sent' | 'not_set_up' | 'failed' | 'skipped'; message: string; to: string }>(`/api/sessions/${id}/report/send`, { email: email || null }),
+    notesVoice: (blob: Blob, name: string) => form<{ text: string; language: string | null }>('/api/notes/voice', {}, [blob], 'file', name),
+    notesPhoto: (file: File) => form<{ text: string; language: string | null }>('/api/notes/photo', {}, [file], 'file', file.name),
+    notesTranslate: (text: string) => post<{ english: string; language: string | null; already_english: boolean }>('/api/notes/translate', { text }, true),
+    reviewAnswer: (id: string, index: number, body: { verdict: 'agree' | 'correct' | 'partly' | 'wrong' | null; reason?: string | null }) => send<Session>('PATCH', `/api/sessions/${id}/answers/${index}`, body),
     save: (id: string, body: { growth?: number[]; next_steps?: number[] }) => post<{ visit_id: string; observations: number; resolved: number; actions: number }>(`/api/sessions/${id}/save`, body),
   },
 

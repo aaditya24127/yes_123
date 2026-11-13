@@ -48,7 +48,8 @@ export interface Brief {
   scores: { score: number | null; band: Band | null; rank: number | null; flags: string[]; categories: { label: string; score: number | null; contribution: number | null; explanation: string }[] } | null;
   alerts: string[]; open_issues: { ref: string; label?: string; severity?: string; subject?: string | null; class_label?: string | null; issue: string; since: string; last_seen: string }[]; strengths_seen: { point: string; date: string; subject?: string | null; class_label?: string | null }[];
   open_actions: { action: string; due: string; overdue_days: number }[]; latest_results: { cls: number; subject: string; skill: string | null; below_pct: number; date: string }[];
-  last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; subject?: string | null; cls?: number | null; overall: string | null; next_steps: string[] }[];
+  last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; subject?: string | null; cls?: number | null; overall: string | null; next_steps: string[] , mentor?: string | null}[];
+  school_history?: { date: string; kind: string; cls: number | null; subject: string | null; mentor: string | null; topic: string | null; teacher: string | null; overall: string | null }[];
   textbooks: { title: string; cls: number | null; subject: string | null; url: string | null }[]; pending_requests: { title: string; kind: string; status: string; due: string | null }[];
   brief: { summary: string; focus_points: string[]; ask_teacher: string[]; check_in_class: string[] } | null; brief_by: string | null;
 }
@@ -60,18 +61,20 @@ export interface Media {
 export interface Evaluation {
   overall: string; rubric: { element: string; score: number | null; evidence: string }[]; strengths: { point: string; evidence: string }[];
   growth: { area: string; evidence: string; why: string; try_this: string; source: string; need_code: string; severity: string }[];
-  students: { summary: string; per_question: { question: string; verdict: string; note: string }[]; misconceptions: string[] };
+  students: { summary: string; per_question: { question: string; verdict: string; note: string; mentor?: MentorCheck }[]; misconceptions: string[] };
   compared_with_before: { issue: string; change: 'improved' | 'same' | 'worse' | 'not_seen'; evidence: string }[];
   next_steps: { action: string; who: string; due_in_days: number }[]; confidence: 'high' | 'medium' | 'low'; confidence_reason: string; safety_flag: string | null;
   evaluated_by?: string; error?: string;
 }
+/** The mentor's check of the AI's verdict on one student answer (the AI's own verdict is kept beside it). */
+export interface MentorCheck { verdict: 'agree' | 'correct' | 'partly' | 'wrong'; reason: string | null; by: string | null; at: string }
 export interface Session {
   id: string; school_id: string; teacher_id: string | null; class_no: number | null; subject: string | null; topic: string | null; stage: number; status: string;
   brief: Brief; crp_notes: string | null; changes_since_last: string | null; questions: Question[]; result: Partial<Evaluation>; media: Media[];
   started_at: string; job: { status: string; error: string | null; provider: string | null } | null; visit_id: string | null; question_tips?: string[]; questions_by?: string;
-  followup_days: number; report_sent_at: string | null; report_sent_to: string | null;
+  followup_days: number; report_sent_at: string | null; report_sent_to: string | null; mentor_name?: string | null;
 }
-export interface SessionSummary { id: string; started_at: string; status: string; stage: number; class_no: number | null; subject: string | null; topic: string | null; school_name: string; teacher_name: string | null }
+export interface SessionSummary { mentor_name?: string | null; id: string; started_at: string; status: string; stage: number; class_no: number | null; subject: string | null; topic: string | null; school_name: string; teacher_name: string | null }
 export interface TextbookHit { title: string; url: string; publisher: string; is_pdf: boolean; class_no: number | null; subject: string | null; language: string | null }
 export interface Resource {
   id: string; title: string; source_url: string | null; publisher: string | null; class_no: number | null; subject: string | null; status: string; pages: number | null;

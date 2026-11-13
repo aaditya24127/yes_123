@@ -42,6 +42,8 @@
     "student_questions":     ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"],
     "evaluate_lesson":       ["claude_mid", "claude_smart", "gemini_free", "ollama_local", "my_model", "rules"],
     "find_textbooks":        ["claude_search", "web_free", "rules"],
-    "ask_copilot":           ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"]
+    "ask_copilot":           ["claude_quick", "claude_fast", "gemini_free", "ollama_local", "rules"],
+    "read_note_photo":       ["claude_mid", "claude_quick", "gemini_free", "ollama_local"],
+    "notes_to_english":      ["claude_quick", "claude_fast", "gemini_free", "ollama_local"]
   }
 }

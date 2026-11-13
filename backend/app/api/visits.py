@@ -1,15 +1,16 @@
 """The 4-step visit (brief -> class -> students -> results) and textbook search / linking."""
+import datetime as dt
 import hashlib, json
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel
 
 from .. import ai
 from ..core.storage import get_storage
 from ..jobs import enqueue, job_status
-from ..services import mailer, push, report, textbooks, visit
+from ..services import crp_auth, mailer, push, report, textbooks, visit
 from ..services.ingest import readers
-from ..services.ingest.pipeline import _school_folder
+from ..services.ingest.pipeline import _school_folder, transcribe
 from ..services.prioritization.data import get_conn
 
 router = APIRouter(prefix='/api', tags=['visits'])
@@ -35,16 +36,27 @@ class SessionReq(BaseModel):
     brief_by: str | None = None
 
 
+def _who_is_signed_in(conn, request: Request):
+    """Name (and cluster) of the signed-in mentor, kept with each visit so the school's history says who was there."""
+    try:
+        a = crp_auth.get_account(conn, getattr(request.state, 'crp_account_id', None))
+    except Exception:
+        a = None
+    if not a: return dict(name=None, crp_id=None)
+    return dict(name=f"{a['title'] or ''} {a['full_name']}".strip(), crp_id=a['crp_id'])
+
+
 @router.post('/sessions')
-def start_session(req: SessionReq):
+def start_session(req: SessionReq, request: Request):
     if req.brief_text:
         b = visit.brief(req.teacher_id, req.school_id, fast=True)
         b['brief'], b['brief_by'] = req.brief_text, req.brief_by
     else:
         b = visit.brief(req.teacher_id, req.school_id)
     with get_conn() as conn:
-        sid = conn.execute("""insert into visit_sessions (school_id, teacher_id, class_no, subject, topic, stage, brief) values (%s,%s,%s,%s,%s,2,%s) returning id""",
-                           (b['school']['id'], req.teacher_id, req.class_no, req.subject, req.topic, json.dumps(b, default=str))).fetchone()['id']
+        me = _who_is_signed_in(conn, request)
+        sid = conn.execute("""insert into visit_sessions (school_id, teacher_id, class_no, subject, topic, stage, brief, mentor_name, crp_id) values (%s,%s,%s,%s,%s,2,%s,%s,%s) returning id""",
+                           (b['school']['id'], req.teacher_id, req.class_no, req.subject, req.topic, json.dumps(b, default=str), me['name'], me['crp_id'])).fetchone()['id']
         conn.commit()
     return get_session(str(sid))
 
@@ -65,18 +77,94 @@ def get_session(sid: str):
     return dict(id=str(s['id']), school_id=str(s['school_id']), teacher_id=str(s['teacher_id']) if s['teacher_id'] else None, class_no=s['class_no'], subject=s['subject'],
                 topic=s['topic'], stage=s['stage'], status=s['status'], brief=s['brief'], followup_days=s.get('followup_days') or 14,
                 report_sent_at=s['report_sent_at'].isoformat() if s.get('report_sent_at') else None, report_sent_to=s.get('report_sent_to'), crp_notes=s['crp_notes'], changes_since_last=s['changes_since_last'],
-                questions=s['questions'], result=s['result'], media=[_media_view(m) for m in media], started_at=s['started_at'].isoformat(),
+                questions=s['questions'], result=s['result'], media=[_media_view(m) for m in media], started_at=s['started_at'].isoformat(), mentor_name=s.get('mentor_name'),
                 job=None if not job else dict(status=job['status'], error=job['error'], provider=job['provider']), visit_id=str(s['visit_id']) if s['visit_id'] else None)
 
 
 @router.get('/sessions')
 def list_sessions(teacher_id: str | None = None, school_id: str | None = None, limit: int = 20):
     with get_conn() as conn:
-        rows = conn.execute("""select v.id, v.started_at, v.status, v.stage, v.class_no, v.subject, v.topic, s.name as school_name, t.full_name as teacher_name
+        rows = conn.execute("""select v.id, v.started_at, v.status, v.stage, v.class_no, v.subject, v.topic, s.name as school_name, t.full_name as teacher_name, v.mentor_name
                                from visit_sessions v join schools s on s.id = v.school_id left join teachers t on t.id = v.teacher_id
                                where (%s::uuid is null or v.teacher_id = %s) and (%s::uuid is null or v.school_id = %s) and v.status <> 'cancelled'
                                order by v.started_at desc limit %s""", (teacher_id, teacher_id, school_id, school_id, limit)).fetchall()
     return [dict(r, id=str(r['id']), started_at=r['started_at'].isoformat()) for r in rows]
+
+
+# ---------------------------------------------------------------- visit notes by voice, photo or in another language
+# Nothing here is stored: the recording or photo is read, the text goes back to the screen, and the file is dropped.
+MAX_NOTE_AUDIO = 24 * 1024 * 1024
+MAX_NOTE_PHOTO = 12 * 1024 * 1024
+
+
+@router.post('/notes/voice')
+def notes_voice(file: UploadFile = File(...)):
+    """Speech to text for the notes box (any language, also mixed). The recording is not kept."""
+    data = file.file.read(MAX_NOTE_AUDIO + 1)
+    if len(data) > MAX_NOTE_AUDIO: raise HTTPException(413, 'This recording is too long. Please record in parts of up to about 20 minutes.')
+    if not data: raise HTTPException(400, 'The recording is empty.')
+    tr, _ = transcribe(data, file.filename or 'note.webm')
+    if not tr: raise HTTPException(503, 'We could not turn the recording into text right now. Please type the note, or try again in a minute.')
+    text = (tr.get('text') or '').strip() or ' '.join((x.get('text') or '').strip() for x in tr.get('segments', [])).strip()
+    if not text: raise HTTPException(422, 'We could not hear any speech in this recording.')
+    return dict(text=text, language=tr.get('language'))
+
+
+@router.post('/notes/photo')
+def notes_photo(file: UploadFile = File(...)):
+    """Handwritten or printed notes in a photo -> text for the notes box. The photo is not kept."""
+    data = file.file.read(MAX_NOTE_PHOTO + 1)
+    name = file.filename or 'notes.jpg'
+    fmt = readers.format_of(name)
+    if fmt not in readers.IMAGE: raise HTTPException(400, 'Please add a photo (JPG, PNG or WEBP).')
+    if len(data) > MAX_NOTE_PHOTO: raise HTTPException(413, 'This photo is too big. Please take it again at a lower quality.')
+    try:
+        r = ai.run('read_note_photo', {}, [ai.Attachment(name, readers.MIME[fmt], data)])
+    except ai.AIUnavailable:
+        raise HTTPException(503, 'We could not read the photo right now. Please type the note, or try again in a minute.')
+    text = (r.data.get('text') or '').strip()
+    if not text: raise HTTPException(422, 'We could not find any writing in this photo. Try a clearer, closer photo.')
+    return dict(text=text, language=r.data.get('language'))
+
+
+class NoteText(BaseModel):
+    text: str
+
+
+@router.post('/notes/translate')
+def notes_translate(req: NoteText):
+    """Notes in any language (or a mix) -> English. The original stays on the screen so the mentor can switch back."""
+    text = req.text.strip()
+    if not text: raise HTTPException(400, 'There is nothing to translate yet.')
+    try:
+        r = ai.run('notes_to_english', dict(text=text))
+    except ai.AIUnavailable:
+        raise HTTPException(503, 'Translation is not available right now. Please try again in a minute.')
+    return dict(english=(r.data.get('english') or '').strip() or text, language=r.data.get('language'), already_english=bool(r.data.get('already_english')))
+
+
+class AnswerReview(BaseModel):
+    verdict: str | None = None          # 'agree' | 'correct' | 'partly' | 'wrong'; None puts the AI's verdict back
+    reason: str | None = None
+
+
+@router.patch('/sessions/{sid}/answers/{index}')
+def review_answer(sid: str, index: int, req: AnswerReview, request: Request):
+    """The mentor checks the AI's verdict on one student answer. Both stay on record; the mentor's counts as final."""
+    if req.verdict not in (None, 'agree', 'correct', 'partly', 'wrong'): raise HTTPException(400, 'bad verdict')
+    reason = (req.reason or '').strip()[:300] or None
+    with get_conn() as conn:
+        s = conn.execute('select result, status from visit_sessions where id = %s', (sid,)).fetchone()
+        if not s: raise HTTPException(404, 'visit not found')
+        res = s['result'] or {}
+        pq = (res.get('students') or {}).get('per_question') or []
+        if not 0 <= index < len(pq): raise HTTPException(404, 'answer not found')
+        if req.verdict is None: pq[index].pop('mentor', None)
+        else:
+            me = _who_is_signed_in(conn, request)
+            pq[index]['mentor'] = dict(verdict=req.verdict, reason=reason, by=me['name'], at=dt.datetime.now().isoformat(timespec='seconds'))
+        conn.execute('update visit_sessions set result = %s where id = %s', (json.dumps(res), sid)); conn.commit()
+    return get_session(sid)
 
 
 class SessionPatch(BaseModel):

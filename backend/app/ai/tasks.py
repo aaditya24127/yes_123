@@ -205,4 +205,23 @@ ASK = Task(
     lambda i: f"Question: {i['question']}\n\nRecords:\n{i['records']}", max_tokens=3000)
 
 
-TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK]}
+# ------------------------------------------------------------------ 8. visit notes: a photo of handwriting -> text, and any language -> English
+READ_PHOTO = Task(
+    'read_note_photo', 'Copy the handwritten or printed notes in a photo into text, in the language they are written in.',
+    _obj({'text': S, 'language': SN}),
+    lambda: ('You copy a Cluster Resource Person\'s handwritten or printed visit notes from a photo into plain text. Write exactly what is written, line by line, '
+             'in the language it is written in (Marathi, Hindi, English or a mix). Do not translate, summarise, correct or add anything. Keep bullet points as lines '
+             'starting with "- ". If a word cannot be read, write [unclear]. If the photo has no writing, return an empty text. language = the main language you saw.'),
+    lambda i: 'Copy the notes in the attached photo.', tier='smart', max_tokens=4000)
+
+NOTES_TO_ENGLISH = Task(
+    'notes_to_english', 'Turn visit notes spoken or written in any Indian language (or a mix) into plain English.',
+    _obj({'english': S, 'language': SN, 'already_english': {'type': 'boolean'}}),
+    lambda: ('You translate a Cluster Resource Person\'s visit notes into clear, simple English. The notes may be Marathi, Hindi, any other Indian language, '
+             'English, or a mix of them (also Indian words written in English letters). Keep the meaning and every detail, keep names and numbers exactly, keep the line '
+             'breaks and bullet points, and do not add or leave out anything. If the notes are already fully in English, return them unchanged and set already_english to true. '
+             'language = the main language of the notes.'),
+    lambda i: i['text'][:20000], max_tokens=6000)
+
+
+TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH]}

@@ -43,10 +43,11 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         results = [dict(cls=a['class_no'], subject=a['subject'], skill=a['skill'], below_pct=round(100 * a['students_below'] / a['students_assessed']),
                         date=str(a['assessment_date']), exam=a['exam_type']) for a in latest.values()]
         visits = sorted(ctx.visits, key=lambda v: v['visit_date'])
-        sess = conn.execute("""select id, started_at, class_no, subject, topic, result from visit_sessions where status in ('evaluated', 'saved') and
-                               (teacher_id = %s or (%s::uuid is null and school_id = %s)) order by started_at desc limit 8""",
-                            (t['id'] if t else None, t['id'] if t else None, s['id'])).fetchall()
-        prev = [dict(date=str(x['started_at'].date()), cls=x['class_no'], subject=x['subject'], topic=x['topic'], overall=(x['result'] or {}).get('overall'),
+        # Records belong to the school: a chosen teacher's visits, plus the visits of the whole school, whoever made them.
+        sess = conn.execute("""select id, started_at, class_no, subject, topic, result, mentor_name from visit_sessions where status in ('evaluated', 'saved') and school_id = %s and
+                               (%s::uuid is null or teacher_id = %s or teacher_id is null) order by started_at desc limit 8""",
+                            (s['id'], t['id'] if t else None, t['id'] if t else None)).fetchall()
+        prev = [dict(date=str(x['started_at'].date()), cls=x['class_no'], subject=x['subject'], topic=x['topic'], mentor=x['mentor_name'], overall=(x['result'] or {}).get('overall'),
                      next_steps=[n['action'] for n in (x['result'] or {}).get('next_steps', [])]) for x in sess]
         books = conn.execute("select title, class_no, subject, source_url, contents from teaching_resources where school_id = %s and (teacher_id = %s or teacher_id is null) order by created_at desc",
                              (s['id'], t['id'] if t else None)).fetchall()
@@ -54,6 +55,9 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         email = acc['email'] if acc else None
         reqs = conn.execute("select title, kind, status, due_date from teacher_requests where school_id = %s and (teacher_id = %s or %s::uuid is null) and status in ('open','submitted') order by created_at desc",
                             (s['id'], t['id'] if t else None, t['id'] if t else None)).fetchall()
+        history = conn.execute("""select v.visit_date, v.visit_type, v.class_no, v.subject, v.mentor_name, t.title, t.full_name as teacher_name, vs.result->>'overall' as overall, vs.topic
+                                   from visits v left join teachers t on t.id = v.teacher_id left join visit_sessions vs on vs.visit_id = v.id
+                                   where v.school_id = %s order by v.visit_date desc, v.id desc limit 12""", (s['id'],)).fetchall()
     return dict(
         who=_who(t, s), entity=entity, school=dict(id=str(s['id']), code=s['code'], name=s['name'], type=s['school_type'], board=s['board'], medium=s['medium'],
                                                     grades=f"{s['grade_from']}-{s['grade_to']}", village=s['village'] or ''),
@@ -64,6 +68,8 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         alerts=[a['message'] for a in (item or {}).get('alerts', [])], open_issues=issues, strengths_seen=good, open_actions=actions,
         overdue=[a for a in actions if a['overdue_days'] > 0], latest_results=results[:30],
         last_visit=str(visits[-1]['visit_date']) if visits else None, visit_count=len(visits), previous_sessions=prev,
+        school_history=[dict(date=str(h['visit_date']), kind=h['visit_type'], cls=h['class_no'], subject=h['subject'], mentor=h['mentor_name'], topic=h['topic'],
+                             teacher=(f"{h['title'] or ''} {h['teacher_name']}".strip() if h['teacher_name'] else None), overall=h['overall']) for h in history],
         textbooks=[dict(title=b['title'], cls=b['class_no'], subject=b['subject'], url=b['source_url'], chapters=(b['contents'] or [])[:30]) for b in books],
         pending_requests=[dict(title=r['title'], kind=r['kind'], status=r['status'], due=str(r['due_date']) if r['due_date'] else None) for r in reqs])
 
@@ -154,10 +160,10 @@ def save_to_records(sid, approved_growth=None, approved_steps=None):
         if not res: raise ValueError('evaluate the visit first')
         today = dt.date.today()
         lesson_file = next((m['source_file_id'] for m in media if m['kind'] == 'lesson_audio' and m['source_file_id']), None)
-        vid = conn.execute("""insert into visits (school_id, teacher_id, crp_id, visit_date, visit_type, class_no, subject, source_file_id)
-                              values (%s,%s,%s,%s,%s,%s,%s,%s) returning id""",
+        vid = conn.execute("""insert into visits (school_id, teacher_id, crp_id, visit_date, visit_type, class_no, subject, source_file_id, mentor_name)
+                              values (%s,%s,%s,%s,%s,%s,%s,%s,%s) returning id""",
                            (s['school_id'], s['teacher_id'], s['crp_id'], today, 'classroom_observation' if s['teacher_id'] else 'school_visit', s['class_no'], s['subject'],
-                            lesson_file)).fetchone()['id']
+                            lesson_file, s['mentor_name'])).fetchone()['id']
         growth = res.get('growth', [])
         keep = set(approved_growth) if approved_growth is not None else set(range(len(growth)))
         n_obs = 0
