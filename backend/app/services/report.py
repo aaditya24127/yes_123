@@ -364,9 +364,18 @@ def make_pdf(s) -> bytes:
     return buf.getvalue()
 
 
+_cache: dict[str, tuple[str, bytes]] = {}          # the last few finished reports, so a second download or send does not draw everything again
+
+
 def build(sid: str):
     """(file name, pdf bytes) for a visit session."""
     with get_conn() as conn:
         s, _ = visit.load_session(conn, sid)
     if not (s['result'] or {}).get('overall'): raise ValueError('Evaluate the visit first, then make the report.')
-    return filename(s), make_pdf(s)
+    key = hashlib.sha1(repr((str(sid), s['result'], s.get('followup_days'), s.get('mentor_name'), s['topic'], s['class_no'], s['subject'], s['questions'])).encode()).hexdigest()
+    hit = _cache.get(key)
+    if hit: return hit
+    out = (filename(s), make_pdf(s))
+    if len(_cache) >= 12: _cache.pop(next(iter(_cache)))
+    _cache[key] = out
+    return out
