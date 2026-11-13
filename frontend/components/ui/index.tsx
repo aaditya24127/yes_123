@@ -20,9 +20,9 @@ export function Button({ variant = 'primary', busy, icon, children, className = 
   );
 }
 
-export function Card({ children, className = '', title, action, subtitle }: { children: ReactNode; className?: string; title?: ReactNode; subtitle?: ReactNode; action?: ReactNode }) {
+export function Card({ children, className = '', title, action, subtitle, tour }: { children: ReactNode; className?: string; title?: ReactNode; subtitle?: ReactNode; action?: ReactNode; tour?: string }) {
   return (
-    <section className={`rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100 ${className}`}>
+    <section data-tour={tour} className={`rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100 ${className}`}>
       {(title || action) && (
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>{title && <h2 className="font-serif text-lg font-semibold text-ink-900">{title}</h2>}{subtitle && <p className="mt-0.5 text-sm text-ink-500">{subtitle}</p>}</div>
@@ -92,7 +92,7 @@ export function Stepper({ steps, current, onPick, maxReached }: { steps: string[
   // On a phone the bar scrolls sideways: keep the current step in view.
   useEffect(() => { box.current?.querySelector('[aria-current="step"]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }, [current]);
   return (
-    <ol ref={box} className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+    <ol ref={box} data-tour="stepper" className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {steps.map((s, i) => {
         const done = i < current, here = i === current, can = onPick && i <= (maxReached ?? current);
         return (

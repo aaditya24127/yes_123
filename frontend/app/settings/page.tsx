@@ -5,7 +5,9 @@ import { ArrowLeftRight, ArrowUpDown, Check, LayoutGrid, LogOut } from 'lucide-r
 import PageShell from '@/components/shell/PageShell';
 import { Button, Card } from '@/components/ui';
 import { LANGS, useLang } from '@/lib/i18n';
-import { LANDING_URL } from '@/lib/platform';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { session, useUser } from '@/lib/auth';
 import { DEFAULT_THEME, THEMES, loadTheme, saveTheme } from '@/lib/theme';
 
 type Layout = 'grid' | 'vertical' | 'horizontal';
@@ -20,6 +22,10 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState(DEFAULT_THEME);
   const [layout, setLayout] = useState<Layout>('grid');
   const [leaving, setLeaving] = useState(false);
+  const router = useRouter();
+  const user = useUser();
+  // Signing out forgets the sign-in on this device (and the cookie used for opening files), then shows the sign-in page.
+  const logOut = async () => { try { await api.auth.logout(); } catch { /* signing out here is enough */ } session.clear(); router.replace('/login'); };
   useEffect(() => {
     setTheme(loadTheme());
     try { const u = localStorage.getItem('crp-ui'); if (u === 'vertical' || u === 'horizontal') setLayout(u); } catch { /* ignore */ }
@@ -29,7 +35,7 @@ export default function SettingsPage() {
 
   return (
     <PageShell title="Settings" subtitle="Choose how the app looks and which language it speaks.">
-      <Card title="Colours" subtitle="Pick the colours you like. The change is saved on this device.">
+      <Card tour="s-colours" title="Colours" subtitle="Pick the colours you like. The change is saved on this device.">
         <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
           {THEMES.map((t, i) => (
             <button key={t.name} onClick={() => pickTheme(i)} aria-pressed={theme === i}
@@ -54,7 +60,7 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card title="Language" subtitle="Menus and buttons change to your language. Names and records stay as they are.">
+      <Card tour="s-language" title="Language" subtitle="Menus and buttons change to your language. Names and records stay as they are.">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {LANGS.map((l) => (
             <button key={l.code} onClick={() => setLang(l.code)} lang={l.code} aria-pressed={lang === l.code}
@@ -67,11 +73,15 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card title="Account">
+      <Card tour="s-account" title="Account">
+        {user && (
+          <p className="mb-3 text-sm text-ink-700">Signed in as <b className="text-ink-900">{user.title ? `${user.title} ` : ''}{user.name}</b> <span className="text-ink-500">({user.email})</span>
+            {user.is_demo && <span className="ms-2 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-100">Demo account</span>}</p>
+        )}
         {!leaving ? <Button variant="danger" icon={<LogOut size={16} />} onClick={() => setLeaving(true)}>Log out</Button> : (
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-ink-700">Leave the app and go back to the start page?</span>
-            <Button variant="danger" icon={<LogOut size={16} />} onClick={() => { window.location.href = LANDING_URL; }}>Yes, log out</Button>
+            <span className="text-sm text-ink-700">Sign out of the app on this device?</span>
+            <Button variant="danger" icon={<LogOut size={16} />} onClick={logOut}>Yes, log out</Button>
             <Button variant="ghost" onClick={() => setLeaving(false)}>Stay</Button>
           </div>
         )}

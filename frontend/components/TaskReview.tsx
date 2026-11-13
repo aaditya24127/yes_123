@@ -114,7 +114,7 @@ export default function TaskReview({ requests, onChange, onError }: { requests: 
   const opts = useLoad(() => api.connect.taskOptions(), []);
   const waiting = (requests ?? []).reduce((n, r) => n + r.items.filter((i) => i.status === 'submitted').length, 0);
   return (
-    <Card title={<span className="flex items-center gap-2">Tasks and answers {waiting > 0 && <Badge tone="brand">{waiting} to review</Badge>}</span>}>
+    <Card tour="t-review" title={<span className="flex items-center gap-2">Tasks and answers {waiting > 0 && <Badge tone="brand">{waiting} to review</Badge>}</span>}>
       {!requests?.length ? <Empty>No tasks yet.</Empty> : (
         <ul className="grid gap-5">
           {requests.map((r) => (

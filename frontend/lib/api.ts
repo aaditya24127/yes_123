@@ -4,6 +4,7 @@ import type {
   FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
 } from './types';
 import { apiUrl } from './platform';
+import { session, type CrpUser } from './auth';
 
 const WAKING = 'The server is waking up. Please wait a few seconds and try again.';
 const BUSY = 'The system is busy right now. Please wait a minute and try again.';
@@ -11,11 +12,18 @@ const BUSY = 'The system is busy right now. Please wait a minute and try again.'
 const isBusyPage = (res: Response) => (res.headers.get('content-type') || '').includes('text/html') || res.status === 429;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Looking things up can safely be tried again when the server is still waking up (it sleeps when nobody has used it for a while). */
+/** Every call carries the signed-in person's token. */
+function signed(init: RequestInit | undefined): RequestInit | undefined {
+  const t = session.token();
+  if (!t) return init;
+  const headers = new Headers(init?.headers); headers.set('Authorization', `Bearer ${t}`);
+  return { ...init, headers };
+}
 async function run(url: string, init: RequestInit | undefined, safe: boolean): Promise<Response> {
   const tries = safe ? 5 : 1;
   for (let i = 0; i < tries; i++) {
     let res: Response;
-    try { res = await fetch(url, init); } catch {
+    try { res = await fetch(url, signed(init)); } catch {
       if (i < tries - 1) { await sleep(2500 * (i + 1)); continue; }
       throw new Error('Could not reach the server. Check your internet connection and try again.');
     }
@@ -31,6 +39,8 @@ async function j<T>(res: Response): Promise<T> {
     if ([502, 503, 504].includes(res.status) || /ROUTER_EXTERNAL_TARGET_ERROR|FUNCTION_INVOCATION|NOT_FOUND.*bom1/.test(txt)) throw new Error(WAKING);
     let msg = txt || res.statusText;
     try { const d = JSON.parse(txt); msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail ?? d); } catch { /* plain text */ }
+    // Signed out (or the sign-in ran out): forget it here, and the app shows the sign-in page.
+    if (res.status === 401 && !/\/api\/auth\/(login|signup|password)/.test(res.url)) { session.clear(); throw new Error('Please sign in again.'); }
     throw new Error(msg);
   }
   return res.json() as Promise<T>;
@@ -49,6 +59,15 @@ const qs = (o: Record<string, string | number | boolean | null | undefined>) =>
   '?' + Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
 
 export const api = {
+  // signing in
+  auth: {
+    demo: () => get<{ enabled: boolean; email?: string; password?: string }>('/api/auth/demo'),
+    login: (email: string, password: string) => post<{ token: string; user: CrpUser }>('/api/auth/login', { email, password }),
+    signup: (body: { email: string; password: string; full_name: string; title: string | null }) => post<{ token: string; user: CrpUser }>('/api/auth/signup', body),
+    me: () => get<CrpUser>('/api/auth/me'),
+    logout: () => post<{ ok: boolean }>('/api/auth/logout'),
+  },
+
   // ranking (original screens)
   config: () => get<Config>('/api/config'),
   ranking: (entity: Entity, weights?: Record<string, number>) => post<Ranking>('/api/ranking', { entity, weights }, true),

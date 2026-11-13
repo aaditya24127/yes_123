@@ -12,6 +12,8 @@ import DetailModal, { DetailBody } from '@/components/DetailModal';
 import Carousel from '@/components/Carousel';
 import { LANGS, useLang, type Key } from '@/lib/i18n';
 import NavLinks from '@/components/shell/NavLinks';
+import TutorialToggle from '@/components/tutorial/TutorialToggle';
+import { useTutorial } from '@/lib/tutorial/store';
 
 type Filter = 'all' | Band | 'insufficient';
 type UI = 'grid' | 'vertical' | 'horizontal';
@@ -43,7 +45,8 @@ export default function Home() {
   const [vw, setVw] = useState(1280);
   const [hdr, setHdr] = useState(170);
   const headerRef = useRef<HTMLElement>(null);
-  const focus = ui !== 'grid' && vw >= 768;      // the one-by-one and sideways layouts need a wide screen; phones always get the card list
+  const guided = useTutorial().on;                // the tutorial explains the card list, so it is shown while the tutorial is on
+  const focus = ui !== 'grid' && vw >= 768 && !guided;      // the one-by-one and sideways layouts need a wide screen; phones always get the card list
   useEffect(() => { try { const u = localStorage.getItem('crp-ui'); if (u === 'vertical' || u === 'horizontal') setUi(u); } catch { /* ignore */ } }, []);
   const pickUi = (u: UI) => {
     setUi(u); setUiMenu(false); setSide(null); setPanel(false); setSelected(null); setFocusIdx(0);
@@ -78,7 +81,8 @@ export default function Home() {
       api.ranking(entity, dirty ? weights : undefined).then((r) => { if (id === seq.current) { setRanking(r); setError(''); } }).catch((e) => { if (id === seq.current) { lastAsk.current = ''; setError(String(e.message || e)); } });
     }, dirty ? 120 : 0);
   }, [entity, weights, dirty, reload]);
-  useEffect(() => () => clearTimeout(askTimer.current), []);
+  // Leaving the page cancels a waiting request; forgetting what was asked lets the page ask again if it is shown again.
+  useEffect(() => () => { clearTimeout(askTimer.current); lastAsk.current = ''; }, []);
   const reloadConfig = useCallback(() => api.config().then((c) => { setReload((n) => n + 1); setConfig(c); setSaved(c.weights); setWeights((w) => ({ ...c.weights, ...Object.fromEntries(Object.entries(w).filter(([k, v]) => v > 0 && !(k in c.weights))) })); }), []);
 
   // Reset = the 5 main priorities we started with (their starting weights); everything else is switched off. Saved only when the CRP presses Save.
@@ -158,7 +162,7 @@ export default function Home() {
             </AnimatePresence>
           </div>
           <div className="relative shrink-0">
-            <button onClick={() => { setLangMenu((v) => !v); setUiMenu(false); }} aria-label={t('language')} title={t('language')}
+            <button onClick={() => { setLangMenu((v) => !v); setUiMenu(false); }} aria-label={t('language')} title={t('language')} data-tour="lang-button"
               className={`flex h-12 w-12 items-center justify-center rounded-full shadow-float ring-1 ring-brand-100 transition ${langMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}><Languages size={21} /></button>
             <AnimatePresence>
               {langMenu && (
@@ -182,12 +186,13 @@ export default function Home() {
               )}
             </AnimatePresence>
           </div>
+          <TutorialToggle />
           <div className="relative order-last flex h-12 min-w-0 flex-[1_1_100%] items-center sm:order-none sm:ms-auto sm:h-14 sm:flex-1 sm:max-w-3xl sm:items-center rounded-full bg-surface ps-5 pe-2 shadow-float ring-1 ring-brand-100 transition focus-within:ring-2 focus-within:ring-brand-500">
             <Search size={20} className="shrink-0 text-brand-500" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={entity === 'school' ? t('searchSchools') : t('searchTeachers')}
               className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-ink-900 outline-none placeholder:text-ink-400" />
             {query && <button onClick={() => setQuery('')} aria-label={t('clear')} className="me-1 rounded-full p-1.5 text-ink-400 hover:bg-brand-50 hover:text-brand-700"><X size={16} /></button>}
-            <button onClick={() => { if (focus) setSide((v) => (v === 'priority' ? null : 'priority')); else { setSelected(null); setPanel((p) => !p); } }} aria-label={t('priorities')} title={t('priorities')}
+            <button onClick={() => { if (focus) setSide((v) => (v === 'priority' ? null : 'priority')); else { setSelected(null); setPanel((p) => !p); } }} aria-label={t('priorities')} title={t('priorities')} data-tour="prio-button"
               className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold shadow-float transition ${(focus ? side === 'priority' : panel) ? 'bg-brand-800 text-white' : 'bg-brand-600 text-white hover:bg-brand-700'}`}>
               P
               {dirty && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-400" />}
@@ -196,7 +201,7 @@ export default function Home() {
         </div>
 
         <div className="no-bar -mx-4 mt-3 flex items-center gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-4 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-          <div className="relative flex shrink-0 rounded-full bg-surface p-1 shadow-float ring-1 ring-brand-100">
+          <div data-tour="entity-switch" className="relative flex shrink-0 rounded-full bg-surface p-1 shadow-float ring-1 ring-brand-100">
             {(['school', 'teacher'] as Entity[]).map((e) => (
               <button key={e} onClick={() => { setEntity(e); setFilter('all'); setFocusIdx(0); }} className={`relative z-10 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${entity === e ? 'text-white' : 'text-ink-500 hover:text-brand-700'}`}>
                 {entity === e && <motion.span layoutId="seg" className="absolute inset-0 -z-10 rounded-full bg-brand-600" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
@@ -204,7 +209,7 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <div className="flex gap-2 sm:flex-wrap">
+          <div data-tour="band-filters" className="flex gap-2 sm:flex-wrap">
             {chips.map((c) => (
               <button key={c.key} onClick={() => { setFilter(c.key); setFocusIdx(0); }}
                 className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition ${filter === c.key ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : 'bg-surface text-ink-700 ring-brand-100 hover:ring-brand-300'}`}>

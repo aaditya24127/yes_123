@@ -57,3 +57,13 @@ html:not([lang='en']) :is(.tracking-wide, .tracking-wider, .tracking-tight) { le
 html:not([lang='en']) :is(.uppercase) { text-transform: none; }
 html:not([lang='en']) body { line-height: 1.55; }
 html:not([lang='en']) :is(.leading-snug, .leading-none) { line-height: 1.5; }
+
+/* ---- Tutorial: the glowing ring around the thing being explained, and the tapping hand ---- */
+@keyframes tut-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgb(255 255 255 / 0.95), 0 0 0 6px rgb(var(--b500)), 0 0 22px 8px rgb(var(--b400) / 0.55); }
+  50% { box-shadow: 0 0 0 3px rgb(255 255 255 / 0.95), 0 0 0 6px rgb(var(--b500)), 0 0 34px 14px rgb(var(--b400) / 0.75); }
+}
+.tut-ring { animation: tut-pulse 1.5s ease-in-out infinite; transition: left 0.2s, top 0.2s, width 0.2s, height 0.2s; }
+@keyframes tut-tap { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.tut-hand { animation: tut-tap 0.9s ease-in-out infinite; filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.4)); }
+@media (prefers-reduced-motion: reduce) { .tut-ring, .tut-hand { animation: none; } }

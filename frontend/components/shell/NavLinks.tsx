@@ -14,7 +14,7 @@ export default function NavLinks({ compact }: { compact?: boolean }) {
       {items.map(({ href, label, icon: Icon }) => {
         const on = href === '/' ? path === '/' : path.startsWith(href);
         return (
-          <Link key={href} href={href} title={t(label)}
+          <Link key={href} href={href} title={t(label)} data-tour={`nav-${href === '/' ? 'home' : href.slice(1)}`}
             className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ${on ? 'bg-brand-600 text-white' : 'text-ink-500 hover:text-brand-700'}`}>
             <Icon size={16} /><span className={compact ? 'hidden lg:inline' : 'hidden sm:inline'}>{t(label)}</span>
           </Link>

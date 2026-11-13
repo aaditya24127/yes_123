@@ -5,6 +5,10 @@ from pathlib import Path
 import httpx
 
 API = 'http://127.0.0.1:8000/api'
+# The API needs a signed-in CRP: use the demo account (DEMO_CRP_EMAIL / DEMO_CRP_PASSWORD).
+_demo = httpx.get(f'{API}/auth/demo').json()
+_token = httpx.post(f'{API}/auth/login', json={'email': _demo['email'], 'password': _demo['password']}).json()['token']
+httpx = httpx.Client(headers={'Authorization': f'Bearer {_token}'}, timeout=120)
 S = Path(__file__).resolve().parent / 'samples'
 files = [('files', (p.name, p.read_bytes())) for p in sorted(S.iterdir())]
 before = {i['school_code']: i for i in httpx.post(f'{API}/ranking', json={'entity': 'school'}).json()['items']}

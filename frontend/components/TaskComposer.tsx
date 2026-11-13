@@ -44,7 +44,7 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
   };
 
   return (
-    <Card title="Give tasks" subtitle="Write what you need, one task at a time. The teacher sees each task on their phone and sends it back. You then accept it or ask for changes.">
+    <Card tour="t-tasks" title="Give tasks" subtitle="Write what you need, one task at a time. The teacher sees each task on their phone and sends it back. You then accept it or ask for changes.">
       <div className="mb-4 flex gap-2">
         <Pill active={mode === 'tasks'} onClick={() => setMode('tasks')}>Tasks</Pill>
         <Pill active={mode === 'visit'} onClick={() => setMode('visit')}>Visit notice</Pill>

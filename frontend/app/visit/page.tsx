@@ -95,7 +95,7 @@ function VisitPage() {
     <PageShell title="School visit" subtitle="Four steps: get ready, watch the class, ask the students, then see the results.">
       <ErrorNote error={error} onClose={() => setError('')} />
       {!session && !brief && (
-        <Card title="Who are you visiting?">
+        <Card tour="v-who" title="Who are you visiting?">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="School"><Select value={pick.school_id} onChange={(e) => setPick({ ...pick, school_id: e.target.value, teacher_id: '' })}>
               <option value="">Choose a school…</option>{dir?.schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
@@ -118,11 +118,11 @@ function VisitPage() {
 
       {session && step === 1 && (
         <div className="grid gap-5 lg:grid-cols-2">
-          <Card title="Record the lesson" subtitle="Record on this phone, or add a recording. It is turned into text for you.">
+          <Card tour="v-record" title="Record the lesson" subtitle="Record on this phone, or add a recording. It is turned into text for you.">
             <AudioRecorder onDone={addAudio('lesson_audio')!} label="Record lesson" />
             <MediaList items={session.media.filter((m) => m.kind === 'lesson_audio')} waiting={waiting('lesson_audio')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
-          <Card title="Your notes">
+          <Card tour="v-notes" title="Your notes">
             <Field label="What did you see?"><TextArea defaultValue={session.crp_notes ?? ''} onBlur={(e) => save({ crp_notes: e.target.value })} rows={6}
               placeholder="Who answered, how the teacher checked understanding, use of materials, time on task…" /></Field>
             <Field label="What is different since the last visit?" className="mt-3"><TextArea defaultValue={session.changes_since_last ?? ''} onBlur={(e) => save({ changes_since_last: e.target.value })}
@@ -131,14 +131,14 @@ function VisitPage() {
               <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) addAudio('crp_notes_file')!(f, f.name); e.target.value = ''; }} /></label></div>
             <MediaList items={session.media.filter((m) => m.kind === 'crp_notes_file')} waiting={waiting('crp_notes_file')} onRemove={(id) => run('rm', async () => setSession(await api.visits.removeMedia(session.id, id)))} />
           </Card>
-          <div className="lg:col-span-2 flex justify-end"><Button onClick={() => { save({ stage: Math.max(3, session.stage) }); setStep(2); }}>Next: students</Button></div>
+          <div className="lg:col-span-2 flex justify-end"><Button data-tour="v-next-students" onClick={() => { save({ stage: Math.max(3, session.stage) }); setStep(2); }}>Next: students</Button></div>
         </div>
       )}
 
       {session && step === 2 && (
         <>
-          <Card title="Questions for students" subtitle="Ask 4 or 5 students: front, middle and back rows, girls and boys. Record each answer. Names are not saved."
-            action={<Button variant="soft" icon={<Sparkles size={16} />} busy={busy === 'q'} onClick={() => run('q', async () => setSession(await api.visits.questions(session.id)))}>
+          <Card tour="v-questions" title="Questions for students" subtitle="Ask 4 or 5 students: front, middle and back rows, girls and boys. Record each answer. Names are not saved."
+            action={<Button data-tour="v-get-questions" variant="soft" icon={<Sparkles size={16} />} busy={busy === 'q'} onClick={() => run('q', async () => setSession(await api.visits.questions(session.id)))}>
               {session.questions.length ? 'New questions' : 'Get questions'}</Button>}>
             {session.question_tips?.length ? <div className="mb-4 rounded-2xl bg-brand-50/70 p-3"><p className={head}>Tips</p><List items={session.question_tips.filter(Boolean)} /></div> : null}
             {!session.questions.length ? <Empty>Press “Get questions”. They match today&apos;s topic, the lesson recording and the textbook.</Empty> : (
@@ -147,7 +147,7 @@ function VisitPage() {
                   const answers = session.media.filter((m) => m.kind === 'student_answer' && m.question_index === i);
                   const label = String.fromCharCode(65 + answers.length + waiting('student_answer', i).length);
                   return (
-                    <li key={i} className="rounded-2xl border border-brand-100 p-4">
+                    <li key={i} data-tour="v-question-item" className="rounded-2xl border border-brand-100 p-4">
                       <div className="flex flex-wrap items-center gap-2"><Badge tone="brand">{LEVEL[q.level] ?? q.level}</Badge><span className="text-xs text-ink-400">Ask: {q.ask_who}</span></div>
                       <p className="mt-2 font-semibold text-ink-900">{i + 1}. {q.question}</p>
                       <p className="mt-1 text-sm text-ink-500"><b>A good answer:</b> {q.good_answer}</p>
@@ -161,7 +161,7 @@ function VisitPage() {
               </ol>
             )}
           </Card>
-          <div className="flex justify-end"><Button onClick={() => { setStep(3); if (!session.result?.overall && !evaluating) run('eval', async () => setSession(await api.visits.evaluate(session.id))); }}>Next: results</Button></div>
+          <div className="flex justify-end"><Button data-tour="v-next-results" onClick={() => { setStep(3); if (!session.result?.overall && !evaluating) run('eval', async () => setSession(await api.visits.evaluate(session.id))); }}>Next: results</Button></div>
         </>
       )}
 
@@ -169,7 +169,7 @@ function VisitPage() {
         onSaved={() => { reload(); recent.reload(); }} onPatch={save} setError={setError} />}
 
       {!session && !brief && (
-        <Card title="Recent visits">
+        <Card tour="v-recent" title="Recent visits">
           {!recent.data?.length ? <Empty>No visits yet.</Empty> : (
             <ul className="divide-y divide-brand-50">
               {recent.data.map((v) => (
@@ -194,7 +194,7 @@ function VisitHeader({ brief, session, pick, onStartOver }: { brief: Brief; sess
   const subject = session?.subject ?? pick.subject; const topic = session?.topic ?? pick.topic;
   const chips = [cls ? `Class ${cls}` : null, subject || null, topic || null, session ? fmtDay(session.started_at) : null].filter(Boolean) as string[];
   return (
-    <div className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+    <div data-tour="v-header" className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
       <div className="min-w-0 sm:flex-1">
         <h2 className="font-serif text-xl font-semibold text-ink-900 sm:text-2xl">{brief.teacher?.name ?? brief.school.name}</h2>
         <p className="text-sm text-ink-500">{brief.teacher ? `${brief.teacher.designation} · ${brief.school.name}` : `${brief.school.board} · ${brief.school.medium} medium · Classes ${brief.school.grades}`}</p>
@@ -247,9 +247,9 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
       )}
 
       {onStart && (
-        <Card title="Today's class" action={loading ? <Spinner label="Loading…" /> : undefined}>
+        <Card tour="v-today" title="Today's class" action={loading ? <Spinner label="Loading…" /> : undefined}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Teacher"><Select value={pick.teacher_id} onChange={(e) => onPickTeacher(e.target.value)}>
+            <Field label="Teacher"><Select data-tour="v-teacher" value={pick.teacher_id} onChange={(e) => onPickTeacher(e.target.value)}>
               <option value="">The whole school</option>{teachers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select></Field>
             <Field label="Class"><Select value={pick.class_no} onChange={(e) => setPick({ ...pick, class_no: e.target.value })}>
               <option value="">Not sure</option>{classes.map((c) => <option key={c} value={c}>Class {c}</option>)}</Select></Field>
@@ -257,13 +257,13 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
               <option value="">Not sure</option>{subjects.map((s) => <option key={s}>{s}</option>)}</Select></Field>
             <Field label="Topic being taught today"><Input value={pick.topic} onChange={(e) => setPick({ ...pick, topic: e.target.value })} placeholder="For example: place value" /></Field>
           </div>
-          <div className="mt-4"><Button onClick={onStart} busy={busy} icon={<Mic size={16} />}>Start the visit</Button></div>
+          <div className="mt-4"><Button data-tour="v-start" onClick={onStart} busy={busy} icon={<Mic size={16} />}>Start the visit</Button></div>
         </Card>
       )}
 
       {summary.length > 0 && <Card title="In short"><List items={summary} /></Card>}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div data-tour="v-brief" className="grid gap-4 md:grid-cols-3">
         {columns.map(([title, items, tint]) => (
           <div key={title} className={`rounded-3xl p-5 ring-1 ring-brand-100 ${tint}`}>
             <h3 className="mb-2 font-serif text-lg font-semibold text-ink-900">{title}</h3>
@@ -273,7 +273,7 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title={scope ? `Earlier records: ${scope}` : 'From earlier visits'} subtitle={scope ? `Only what is on record for ${forWho} in this subject.` : undefined}>
+        <Card tour="v-history" title={scope ? `Earlier records: ${scope}` : 'From earlier visits'} subtitle={scope ? `Only what is on record for ${forWho} in this subject.` : undefined}>
           {scope && !hasForSubject && (
             <div className="mb-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <b>Nothing on record for {forWho} in {scope}.</b> Records about other subjects are hidden.
@@ -364,9 +364,9 @@ function Results({ s, evaluating, onEvaluate, onSaved, onPatch, setError }: {
   const toggle = (set: Set<number>, i: number, fn: (x: Set<number>) => void) => { const n = new Set(set); n.has(i) ? n.delete(i) : n.add(i); fn(n); };
   const rubric = (r.rubric ?? []).filter((x) => x.score != null);
 
-  if (evaluating) return <Card><Spinner label="Working out the results (recordings are turned into text first). This can take a minute…" /></Card>;
+  if (evaluating) return <Card tour="res-wait"><Spinner label="Working out the results (recordings are turned into text first). This can take a minute…" /></Card>;
   if (r.error || s.job?.status === 'failed') return <Card><ErrorNote error="The results could not be made this time." /><div className="mt-3"><Button onClick={onEvaluate}>Try again</Button></div></Card>;
-  if (!r.overall) return <Card><Empty>No results yet.</Empty><div className="mt-3 flex justify-center"><Button onClick={onEvaluate}>Get the results</Button></div></Card>;
+  if (!r.overall) return <Card tour="res-empty"><Empty>No results yet.</Empty><div className="mt-3 flex justify-center"><Button onClick={onEvaluate}>Get the results</Button></div></Card>;
 
   const n = Math.round(Number(days));
   const daysOk = Number.isFinite(n) && n >= 1 && n <= 365;
@@ -382,20 +382,20 @@ function Results({ s, evaluating, onEvaluate, onSaved, onPatch, setError }: {
   return (
     <div className="space-y-5">
       {r.safety_flag && <ErrorNote error={`Please look at this first: ${r.safety_flag}`} />}
-      <Card title="In short" action={r.confidence === 'low' ? <Badge tone="warn">Based on little information</Badge> : undefined}>
+      <Card tour="res-short" title="In short" action={r.confidence === 'low' ? <Badge tone="warn">Based on little information</Badge> : undefined}>
         <List items={sentences(r.overall, 5)} />
         {r.confidence === 'low' && <p className="mt-3 text-xs text-ink-500">Add a lesson recording or your notes in the earlier steps to get a fuller picture.</p>}
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="What went well">
+        <Card tour="res-well" title="What went well">
           {!(r.strengths ?? []).length ? <p className="text-sm text-ink-400">Nothing recorded.</p> : (
             <ul className="space-y-2.5">{(r.strengths ?? []).map((x) => (
               <li key={x.point} className="flex gap-2 text-sm"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-600" />
                 <span><b className="text-ink-900">{x.point}</b>{x.evidence && <span className="block text-xs text-ink-500">Seen: {sentences(x.evidence, 1)[0]}</span>}</span></li>))}</ul>
           )}
         </Card>
-        <Card title="What to improve" subtitle={locked ? undefined : 'Tick the ones to keep track of.'}>
+        <Card tour="res-improve" title="What to improve" subtitle={locked ? undefined : 'Tick the ones to keep track of.'}>
           {!(r.growth ?? []).length ? <p className="text-sm text-ink-400">Nothing big. Keep it up.</p> : (
             <ul className="space-y-4">{(r.growth ?? []).map((g, i) => (
               <li key={i} className="flex gap-3">
@@ -436,12 +436,12 @@ function Results({ s, evaluating, onEvaluate, onSaved, onPatch, setError }: {
         </Card>
       )}
 
-      <Card title="Agreed next steps" subtitle={locked ? undefined : 'Tick the steps you agreed with the teacher.'}>
+      <Card tour="res-steps" title="Agreed next steps" subtitle={locked ? undefined : 'Tick the steps you agreed with the teacher.'}>
         <ul className="space-y-2">{(r.next_steps ?? []).map((st, i) => (
           <li key={i} className="flex items-start gap-3 text-sm"><input type="checkbox" checked={steps.has(i)} disabled={locked} onChange={() => toggle(steps, i, setSteps)} className="mt-1 h-4 w-4 accent-[rgb(var(--b600))]" aria-label={st.action} />
             <span className="flex-1">{st.action}{st.who ? <span className="text-ink-500"> ({st.who})</span> : null}</span></li>))}</ul>
 
-        <div className="mt-5 rounded-2xl bg-brand-50/60 p-4">
+        <div data-tour="res-followup" className="mt-5 rounded-2xl bg-brand-50/60 p-4">
           <p className="text-sm font-semibold text-ink-900">When will you follow up with the teacher?</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {[7, 14, 21, 30].map((d) => (
@@ -452,7 +452,7 @@ function Results({ s, evaluating, onEvaluate, onSaved, onPatch, setError }: {
           <p className="mt-2 text-xs text-ink-500">{daysOk ? <>Follow up by <b className="text-ink-700">{fmtDay(due)}</b>. The usual choice is 14 days.</> : 'Enter a number of days from 1 to 365.'}</p>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div data-tour="res-save" className="mt-4 flex flex-wrap items-center gap-3">
           {locked ? <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} />Saved to your records</span>
             : <><Button onClick={doSave} busy={busy} disabled={!daysOk}>Save to records</Button><Button variant="soft" onClick={onEvaluate}>Redo the results</Button></>}
           {saved && <span className="text-sm text-ink-700">{saved}</span>}
@@ -481,7 +481,7 @@ function ReportCard({ s, setError, onSent }: { s: Session; setError: (e: string)
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   };
   return (
-    <Card title={<span className="flex items-center gap-2"><FileText size={18} className="text-brand-600" />Report for the teacher</span>}
+    <Card tour="res-report" title={<span className="flex items-center gap-2"><FileText size={18} className="text-brand-600" />Report for the teacher</span>}
       subtitle="A short PDF in simple points: what went well, where to improve, which questions to ask and how many, and what you agreed.">
       <div className="flex flex-wrap gap-2">
         <ExtLink href={api.visits.reportUrl(s.id)} className="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-float hover:bg-brand-700"><Eye size={16} />Generate report</ExtLink>

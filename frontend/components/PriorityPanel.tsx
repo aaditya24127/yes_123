@@ -48,10 +48,10 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
   const fromLibrary = new Set(library.map((c) => c.code));
 
   return (
-    <div dir={dir} className="flex h-full min-h-0 flex-col">
+    <div dir={dir} data-tour="prio-panel" className="flex h-full min-h-0 flex-col">
       <div className="flex items-start justify-between">
         <h2 className="font-serif text-2xl font-semibold text-ink-900">{t('configure')}</h2>
-        <button onClick={onClose} aria-label={t('close')} className="rounded-full p-2 text-ink-500 transition hover:bg-brand-50 hover:text-brand-700"><X size={20} /></button>
+        <button onClick={onClose} aria-label={t('close')} data-tour="prio-close" className="rounded-full p-2 text-ink-500 transition hover:bg-brand-50 hover:text-brand-700"><X size={20} /></button>
       </div>
 
       <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-brand-50">
@@ -60,7 +60,7 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
         ))}
       </div>
 
-      <div className="thin-scroll -me-2 mt-4 flex-1 space-y-6 overflow-y-auto pe-2">
+      <div data-tour="prio-sliders" className="thin-scroll -me-2 mt-4 flex-1 space-y-6 overflow-y-auto pe-2">
         {shown.map((c, i) => {
           const v = weights[c.code] ?? 0;
           return (
@@ -123,7 +123,7 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
         )}
       </div>
 
-      <div className="mt-5 flex items-center gap-3 border-t border-brand-100 pt-4">
+      <div data-tour="prio-actions" className="mt-5 flex items-center gap-3 border-t border-brand-100 pt-4">
         <button onClick={onReset} title="Go back to the 5 main priorities we started with" className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
           <RotateCcw size={16} /> {t('reset')}
         </button>

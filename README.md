@@ -78,6 +78,7 @@ that run on Vercel use the host's environment settings instead.
 | `GROQ_API_KEY` | optional | faster speech-to-text. Without it Whisper runs on the server |
 | `TEACHER_AUTH_SECRET` | **set a long random value** | signs teacher login tokens and report links |
 | `DEMO_TEACHER_PASSWORD` | demo only | password of the fictional teacher accounts. Change it, or remove demo accounts, before real use |
+| `DEMO_CRP_LOGIN`, `DEMO_CRP_EMAIL`, `DEMO_CRP_PASSWORD` | demo only | the demo CRP account for the CRP app sign-in page (default `crp1@gmail.com`; password set here, `pass123` if empty). `DEMO_CRP_LOGIN=0` hides the fill-in button |
 | `ALLOWED_ORIGINS` | production | websites allowed to call the API (add your real domains) |
 | `WORKERS_IN_API` | optional | `1` runs background jobs inside the API; run `python -m app.jobs` for more capacity |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | optional | phone / browser alerts (Web Push). Empty = alerts off |

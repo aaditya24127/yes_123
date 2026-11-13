@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { APP } from '@/lib/app.config';
 import { LANDING_URL } from '@/lib/platform';
 import NavLinks from './NavLinks';
+import TutorialToggle from '@/components/tutorial/TutorialToggle';
 
 export default function PageShell({ title, subtitle, actions, children, wide }: { title: string; subtitle?: ReactNode; actions?: ReactNode; children: ReactNode; wide?: boolean }) {
   return (
@@ -13,7 +14,7 @@ export default function PageShell({ title, subtitle, actions, children, wide }: 
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">{APP.short}</div>
           <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 md:block">{APP.name}</span>
         </a>
-        <div className="ms-auto"><NavLinks /></div>
+        <div className="ms-auto flex items-center gap-3"><NavLinks /><TutorialToggle label /></div>
       </header>
       <div className="mb-5 mt-2 flex flex-wrap items-end justify-between gap-3">
         <div>

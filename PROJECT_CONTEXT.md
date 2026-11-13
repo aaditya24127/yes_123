@@ -34,6 +34,16 @@ What it does:
 4. **Teachers**: requests (send marks, plans, student work...; teachers cannot send or record audio), visit notices, messages, and a private teacher page.
 5. **Textbooks**: search official sites and link a book to a teacher; the PDF is downloaded and remembered.
 6. **Ask the copilot**: questions answered from the latest data.
+7. **Sign in** (`/login`): every CRP signs in with email + password. A demo account (`DEMO_CRP_EMAIL`, default `crp1@gmail.com`) is made
+   when the API starts and the sign-in page can fill it in; people can also make their own account. Demo and own accounts use the
+   same table (`crp_accounts`), hashing, tokens and checks (`backend/app/services/crp_auth.py`, `backend/app/api/auth.py`). All
+   accounts work on the one demo cluster today.
+8. **Tutorial mode** (the graduation-cap button at the top): a guide walks through the whole app like a game: a strip of text, a glowing
+   ring around the thing it talks about, a tapping hand when the person must tap, and a recorded voice. 51 steps, 11 languages
+   (text for all; voice for 10, Odia has no voice file yet). Steps: `frontend/lib/tutorial/steps.ts`; words: `frontend/lib/tutorial/lang/*.json`
+   (`t` = shown, `v` = spoken); voice files: `frontend/public/tutorial/voice/<lang>/<step>.mp3`, made by `tools/make_tutorial_voice.py`;
+   screen: `frontend/components/tutorial/`. Things the guide points at carry a `data-tour="..."` marker. It greets "sir" / "ma'am" from the
+   account's title.
 
 Demo data: a fictional Pune-district cluster, 10 schools (S01-S10), 52 teachers, 48 files with planted problems
 (duplicates, conflicts, invalid rows, missing data). See `docs/DATASET.md`. `evaluation/ground_truth` holds the answer
@@ -86,11 +96,11 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `backend/app/core/storage.py` | local folder or Supabase Storage, same keys |
 | `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (not yet test-built) |
 | `config/ai.json` | who does each AI task |
-| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0017; `*.supabase.sql` = row-level security, Supabase only) |
+| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0019; `*.supabase.sql` = row-level security, Supabase only) |
 | `backend/app/core/settings.py` | `TARGET=local|supabase` picks the database (`DATABASE_URL` / `SUPABASE_DATABASE_URL`) and storage |
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
-| `frontend/app/` | pages: `/` priorities, `/upload` (add files), `/visit`, `/connect` (teachers), `/ask`, `/settings` (colours, layout, language, log out; nothing technical) |
+| `frontend/app/` | pages: `/login` (sign in / new account), `/` priorities, `/upload` (add files), `/visit`, `/connect` (teachers), `/ask`, `/settings` (colours, layout, language, log out; nothing technical) |
 | `teacher-app/` | the teachers' browser app (Next.js 15, same Evergreen look, port 3001): `cd teacher-app && npm install --legacy-peer-deps && npm run dev`. Sign in, tasks from the CRP, upload answers, send concerns, own visits. Backend: `backend/app/api/teacher_app.py`, `services/teacher_auth.py` |
 | `landing/` | public landing page (separate Vite + React 19 + Tailwind 4 site): `cd landing && npm install && npm run dev` (port 5173). Every "Open the app" button goes to the app (`VITE_APP_URL`, default localhost:3000), and the app's logo goes back here (`NEXT_PUBLIC_LANDING_URL`, default localhost:5173) |
 | `frontend/components/` | page parts; `ui/` shared kit; `shell/` menu and page frame |
@@ -162,8 +172,10 @@ Not yet checked: real AI answers with a Claude key (no key was set while buildin
 fonts).
 
 ### Security (highest priority before any real use)
-- **No login yet: anyone who can open the API sees everything.** Add authentication (recommended: Supabase Auth or
-  JWT bearer tokens, which work in the mobile app; avoid cookie-only sessions). Roles: CRP, teacher, admin, viewer
+- **CRP login exists** (bearer token on every call; a read-only cookie only so the browser can open recordings / PDFs by itself; everything
+  under `/api` except health, auth, the teacher app and the signed report link needs it: `require_crp` in `backend/app/main.py`).
+  **Still missing:** data is not yet limited per CRP (every account sees the one cluster), no email check or password reset, anyone can
+  make an account. Next: Supabase Auth or the same tokens with per-cluster checks. Roles: CRP, teacher, admin, viewer
   (`app_users.role` exists). Every API route must check the user and limit data to their cluster / schools
   (`school_assignments`). Supabase row-level security draft: `database/migrations/0005_rls.supabase.sql`.
 - Teacher app logins: demo accounts are `firstname.lastname@crp.com` with the shared demo password (`DEMO_TEACHER_PASSWORD`, default `pass123`). Before real use: set a strong `TEACHER_AUTH_SECRET`, give each teacher their own password (they can change it in the app), and move to Supabase Auth if wanted. Teacher tokens last 30 days; wrong-password attempts are rate limited per email (in memory only).
@@ -207,4 +219,5 @@ Visits: `GET brief`, `POST sessions`, `GET|PATCH sessions/{id}`, `POST sessions/
 Textbooks: `GET textbooks/search`, `POST|GET resources`, `DELETE resources/{id}`.
 Connect (CRP side): `GET connect/overview`, `GET task-options`, `POST|GET requests` (a request holds numbered tasks = `task_items`), `PATCH requests/{id}`, `POST task-items/{id}/review` (accept, optionally adding the files to the records, or reject with remarks), `GET uploads/items/{id}/raw` (open a teacher's file), `GET|POST teachers/{id}/messages`, `GET notifications`, `POST notifications/read`.
 Teacher app (`/api/teacher/...`, bearer token): `POST login`, `GET home`, `POST submit` (per `item_id`), `POST messages` (concern), `GET visits`, `POST password`, `POST notifications/read`, `GET push/key`, `POST push/subscribe|unsubscribe|test`.
+Sign in: `GET auth/demo`, `POST auth/login|signup|logout|password`, `GET auth/me`.
 AI: `GET ai/status`, `POST ai/test`, `GET ai/usage`, `POST ask`. Full interactive list: `http://localhost:8000/docs`.

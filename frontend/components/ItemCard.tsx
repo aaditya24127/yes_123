@@ -36,7 +36,7 @@ export default function ItemCard({ item, onOpen, plain = false }: { item: Item; 
   const facts = item.categories.filter((c) => c.score != null && c.score > 0).sort((a, b) => (b.contribution ?? 0) - (a.contribution ?? 0)).slice(0, 3);
 
   return (
-    <motion.div {...anim} role="button" dir={dir} tabIndex={0} onClick={() => onOpen(item)} onKeyDown={(e) => e.key === 'Enter' && onOpen(item)}
+    <motion.div {...anim} data-tour="card" role="button" dir={dir} tabIndex={0} onClick={() => onOpen(item)} onKeyDown={(e) => e.key === 'Enter' && onOpen(item)}
       className={`group relative flex h-full w-full cursor-pointer flex-col rounded-3xl p-5 text-start transition-shadow focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-200
         ${item.insufficient ? 'border border-dashed border-brand-200 bg-surface/70 shadow-float' : 'bg-surface shadow-float hover:shadow-lift'}`}>
       <div className="flex items-start gap-3">
@@ -50,10 +50,10 @@ export default function ItemCard({ item, onOpen, plain = false }: { item: Item; 
             {band ? tx('band', item.band!, band.label) : t('unranked')}
           </p>
         </div>
-        <ScoreRing value={item.score} color={band?.ring ?? '#94A3B8'} size={60} />
+        <div data-tour="card-score" className="shrink-0"><ScoreRing value={item.score} color={band?.ring ?? '#94A3B8'} size={60} /></div>
       </div>
 
-      <ul className="mt-4 space-y-2">
+      <ul data-tour="card-facts" className="mt-4 space-y-2">
         {facts.map((c, i) => {
           const Icon = ICON[c.code] ?? ClipboardList;
           return (
@@ -90,8 +90,8 @@ export default function ItemCard({ item, onOpen, plain = false }: { item: Item; 
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center text-sm font-semibold text-brand-600">{t('details')} <ChevronRight size={16} className="rtl:rotate-180" /></span>
-          <button onClick={(e) => { e.stopPropagation(); router.push(visitHref(item)); }} onKeyDown={(e) => e.stopPropagation()}
+          <span data-tour="card-details" className="flex items-center text-sm font-semibold text-brand-600">{t('details')} <ChevronRight size={16} className="rtl:rotate-180" /></span>
+          <button onClick={(e) => { e.stopPropagation(); router.push(visitHref(item)); }} onKeyDown={(e) => e.stopPropagation()} data-tour="card-visit"
             className="flex items-center gap-1.5 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-float transition hover:bg-brand-700">
             <ClipboardCheck size={16} />{t('visit')}
           </button>
