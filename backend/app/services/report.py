@@ -9,6 +9,7 @@ import datetime as dt, hashlib, hmac, html, io, os, re
 
 from .prioritization.data import get_conn
 from . import report_charts as ch, report_ideas as ideas, visit
+from .pdf_fonts import Paragraph          # Indian-script names and chapters need their own fonts
 
 GREEN, TEAL, SAND, AMBER, CORAL, INK, MUTED = '#235347', '#2f8f7a', '#f4f1e8', '#e3a73b', '#d8674f', '#1f2a27', '#5d6b66'
 
@@ -117,7 +118,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import BaseDocTemplate, CondPageBreak, Frame, HRFlowable, Image, KeepTogether, PageBreak, PageTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import BaseDocTemplate, CondPageBreak, Frame, HRFlowable, Image, KeepTogether, PageBreak, PageTemplate, Spacer, Table, TableStyle
 
 import matplotlib
 

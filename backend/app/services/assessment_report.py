@@ -9,9 +9,10 @@ import datetime as dt, io
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import BaseDocTemplate, Frame, Image, KeepTogether, PageBreak, PageTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import BaseDocTemplate, Frame, Image, KeepTogether, PageBreak, PageTemplate, Spacer, Table, TableStyle
 
 from . import report_charts as ch
+from .pdf_fonts import Paragraph          # Indian-script names and chapters need their own fonts
 from .prioritization.data import get_conn
 from .report import (AMBER, BODY, BUL, C, CARDB, CARDT, CELL, CELLC, CORAL, GREEN, H3, INK, MUTED, SAND, SMALL, TAG, TEAL, W, bullets, card, down, grid, h2, mid, pic, same, up)
 

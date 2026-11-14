@@ -20,8 +20,8 @@ VOICES = {'en': ('en-IN-PrabhatNeural', 'en-IN-NeerjaNeural'), 'hi': ('hi-IN-Mad
           'ur': ('ur-IN-SalmanNeural', 'ur-IN-GulNeural')}
 VOICE_FALLBACK = {'or': 'hi'}                   # no Odia voice exists
 # about 70 seconds of speech: agglutinative languages need fewer, longer words
-WORDS = {'en': 180, 'hi': 190, 'bn': 185, 'mr': 200, 'te': 170, 'ta': 170, 'gu': 190, 'ur': 190, 'kn': 170, 'or': 185, 'ml': 150}
-MAX_SECONDS = 85
+WORDS = {'en': 165, 'hi': 175, 'bn': 170, 'mr': 175, 'te': 155, 'ta': 155, 'gu': 175, 'ur': 175, 'kn': 155, 'or': 170, 'ml': 135}
+MAX_SECONDS = 76                 # the message should last 1 to 1:15 minutes: longer ones are read a little faster
 
 
 def voice_language(lang: str) -> str:
@@ -108,7 +108,7 @@ def synth(text: str, language: str, gender: str) -> tuple[bytes, float, str, str
     """(mp3 bytes, seconds, voice name, rate). Reads a little faster if the message would run longer than about a minute and a half."""
     vl = voice_language(language); voice = VOICES[vl][0 if gender == 'male' else 1]
     last = None
-    for rate in ('+0%', '+10%', '+18%'):
+    for rate in ('+0%', '+8%', '+16%', '+24%'):
         for attempt in range(3):
             try:
                 audio = asyncio.run(_speak(text, voice, rate)); break
