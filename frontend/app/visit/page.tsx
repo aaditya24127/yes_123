@@ -6,6 +6,7 @@ import PageShell from '@/components/shell/PageShell';
 import AssessmentPanel from '@/components/AssessmentPanel';
 import ChapterSelect from '@/components/ChapterSelect';
 import NotesBox from '@/components/NotesBox';
+import { useVoicePage } from '@/lib/voice/bus';
 import TextbookPanel from '@/components/TextbookPanel';
 import TeacherReportCard from '@/components/TeacherReportCard';
 import AudioRecorder from '@/components/ui/AudioRecorder';
@@ -97,6 +98,51 @@ function VisitPage() {
   };
   const waiting = (kind: string, qi?: number) => pending.filter((x) => x.kind === kind && (qi === undefined || x.question_index === qi));
   const startOver = () => { setSession(null); setBrief(null); setStep(0); auto.current = ''; router.replace('/visit'); };
+
+  // ---- Voice control (lib/voice): fill who / class / subject / chapter, start the visit, move between steps, add notes. The state tells the assistant what is on the screen.
+  const liveV = useRef({ dir, session, brief, step, pick });
+  liveV.current = { dir, session, brief, step, pick };
+  const waitFor = async (ok: () => boolean, ms = 8000) => { const end = Date.now() + ms; while (!ok() && Date.now() < end) await new Promise((r) => setTimeout(r, 100)); return ok(); };
+  useVoicePage('visit', {
+    fill: async (p: { school_id?: string; teacher_id?: string; class_no?: number; subject?: string; topic?: string }) => {
+      if (!(await waitFor(() => !!liveV.current.dir))) throw new Error('The list of schools has not loaded yet.');
+      if (liveV.current.session) startOver();
+      const d = liveV.current.dir!; const t = p.teacher_id ? d.teachers.find((x) => x.id === p.teacher_id) : undefined;
+      const school_id = p.school_id || t?.school_id; if (!school_id) throw new Error('Which school?');
+      auto.current = `${school_id}:${p.teacher_id ?? ''}`;                   // the page's own "arriving from a card" step must not run over what was said
+      setPick({ school_id, teacher_id: p.teacher_id ?? '', class_no: p.class_no ? String(p.class_no) : (t?.classes_taught[0] ? String(t.classes_taught[0]) : ''),
+        subject: p.subject ?? t?.subjects_taught[0] ?? '', topic: p.topic ?? '' });
+      await loadBrief(p.teacher_id ? { teacher_id: p.teacher_id } : { school_id });
+    },
+    start: async () => {
+      if (!liveV.current.brief || liveV.current.session) throw new Error(liveV.current.session ? 'The visit has already started.' : 'Fill in who you are visiting first.');
+      await start();
+    },
+    step: async (p: { step: string }) => {
+      const s = liveV.current.session; if (!s) throw new Error('Start the visit first.');
+      const cur = liveV.current.step; const n = p.step === 'next' ? cur + 1 : p.step === 'back' ? cur - 1 : Number(p.step) - 1;
+      if (!Number.isFinite(n)) throw new Error('Which step?');
+      setStep(Math.max(0, Math.min(3, n)));
+    },
+    note: async (p: { text: string }) => {
+      if (!liveV.current.session) throw new Error('Start the visit first, then I can add notes.');
+      setStep(1);
+      if (!(await waitFor(() => !!document.querySelector('[data-tour=v-notes] textarea')))) throw new Error('The notes box is not open.');
+      window.dispatchEvent(new CustomEvent('crp-add-note', { detail: p.text }));
+      await new Promise((r) => setTimeout(r, 400));
+    },
+  }, () => {
+    const { brief: b, session: se, pick: pk } = liveV.current; const dd = liveV.current.dir;
+    const r = se?.result as { overall?: string; strengths?: { point: string }[]; growth?: { area: string }[] } | undefined;
+    return {
+      page: 'visit', phase: se ? ['before class', 'in class', 'students', 'results'][liveV.current.step] : b ? 'briefing (before starting)' : 'choosing who to visit',
+      school: dd?.schools.find((x) => x.id === (pk.school_id || b?.school.id))?.name ?? null, teacher: dd?.teachers.find((x) => x.id === pk.teacher_id)?.name ?? null,
+      class: pk.class_no || null, subject: pk.subject || null, chapter: pk.topic || null, visitStarted: !!se, canStart: !!b && !se,
+      notes: se?.crp_notes ? se.crp_notes.slice(-300) : null,
+      results: r?.overall ? { overall: r.overall, wentWell: (r.strengths ?? []).slice(0, 4).map((x) => x.point), toImprove: (r.growth ?? []).slice(0, 4).map((x) => x.area) } : null,
+      briefing: b?.brief ? String(b.brief).slice(0, 600) : null,
+    };
+  });
 
   return (
     <PageShell title={tr('School visit')} subtitle={tr('Four steps: get ready, watch the class, ask the students, then see the results.')}>
@@ -257,8 +303,9 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
   const me = useUser()?.name ?? '';        // so the CRP's own earlier visits say "you"
   const scope = subj ? `${subj}${clsNo ? `, Class ${clsNo}` : ''}` : '';
   const nothingBefore = !earlier.open.length && !earlier.actions.length && !earlier.good.length && !earlier.last.length;
-  const classes = teacher?.classes_taught.length ? teacher.classes_taught : Array.from({ length: 10 }, (_, i) => i + 1);
-  const subjects = teacher?.subjects_taught.length ? teacher.subjects_taught : ['Marathi', 'English', 'Hindi', 'Mathematics', 'EVS', 'Science', tr('Social Science')];
+  // A class or subject asked for by voice (or typed in the link) that is not among the teacher's usual ones is still offered, so what was said stays selected.
+  const classes = [...new Set([...(teacher?.classes_taught.length ? teacher.classes_taught : Array.from({ length: 10 }, (_, i) => i + 1)), ...(pick.class_no ? [Number(pick.class_no)] : [])])].sort((a, b) => a - b);
+  const subjects = [...new Set([...(teacher?.subjects_taught.length ? teacher.subjects_taught : ['Marathi', 'English', 'Hindi', 'Mathematics', 'EVS', 'Science', tr('Social Science')]), ...(pick.subject ? [pick.subject] : [])])];
   return (
     <div className="space-y-5">
       {b.alerts.length > 0 && (

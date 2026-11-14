@@ -19,7 +19,7 @@ for (const sub of ['app', 'components', 'lib']) {
     const src = fs.readFileSync(f, 'utf8'); const sf = ts.createSourceFile(f, src, ts.ScriptTarget.Latest, true, f.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
     const walk = (node) => {
       if (ts.isImportDeclaration(node) || ts.isTypeNode(node) || ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) return;
-      if (ts.isCallExpression(node) && node.expression.getText(sf) === 'tr' && node.arguments[0] && (ts.isStringLiteral(node.arguments[0]) || ts.isNoSubstitutionTemplateLiteral(node.arguments[0]))) { keys.add(node.arguments[0].text); return ts.forEachChild(node, walk); }
+      if (ts.isCallExpression(node) && /(^|\.)tr$/.test(node.expression.getText(sf)) && node.arguments[0] && (ts.isStringLiteral(node.arguments[0]) || ts.isNoSubstitutionTemplateLiteral(node.arguments[0]))) { keys.add(node.arguments[0].text); return ts.forEachChild(node, walk); }
       if (ts.isJsxAttribute(node) && /^(className|href|src|type|key|id|name|htmlFor|style|data-tour)$/.test(node.name.getText(sf))) return;
       if (ts.isCallExpression(node) && ['fetch', 'require', 'tx', 'fill', 't'].includes(node.expression.getText(sf))) return;
       if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) { if (looksLabel(node.text)) keys.add(node.text); return; }

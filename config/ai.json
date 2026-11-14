@@ -254,6 +254,12 @@
       "gemini_free",
       "rules"
     ],
+    "voice_turn": [
+      "claude_quick",
+      "claude_mid",
+      "groq_big",
+      "rules"
+    ],
     "teacher_voice": [
       "claude_quick",
       "groq_big",
