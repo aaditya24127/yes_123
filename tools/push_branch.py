@@ -46,6 +46,8 @@ def listing():
 
 
 def main():
+    try: sys.stdout.reconfigure(encoding='utf-8', errors='replace')           # Windows consoles cannot print the robot sign
+    except Exception: pass
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     dry = '--dry-run' in sys.argv
     if not args: sys.exit(__doc__)
