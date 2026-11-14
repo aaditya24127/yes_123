@@ -27,6 +27,16 @@ def _png(fig, dpi=150) -> bytes:
     return buf.getvalue()
 
 
+def _trim(png, pad=14):
+    """Cut the empty white border off a picture (3D axes leave a lot of it)."""
+    from PIL import Image as _I
+    im = _I.open(io.BytesIO(png)).convert('RGB'); a = np.asarray(im).astype(int)
+    ys, xs = np.where((a < 248).any(axis=2))
+    if not len(xs): return png
+    box = (max(0, xs.min() - pad), max(0, ys.min() - pad), min(im.width, xs.max() + pad), min(im.height, ys.max() + pad))
+    out = io.BytesIO(); im.crop(box).save(out, format='PNG'); return out.getvalue()
+
+
 def _shade(hex_color, k):
     c = np.array(matplotlib.colors.to_rgb(hex_color)); return tuple(np.clip(c * k, 0, 1))
 
@@ -129,3 +139,95 @@ def score_ring(value, top=5, label='out of 5'):
     ax.text(0, 0.07, f'{value:.1f}', ha='center', va='center', fontsize=34, fontweight='bold', color=INK)
     ax.text(0, -0.33, label, ha='center', va='center', fontsize=10.5, color=MUTED); ax.set_xlim(-1.1, 1.1); ax.set_ylim(-1.1, 1.1)
     return _png(fig, 150)
+
+
+# ---------------------------------------------------------------------------------------------- pictures for the teacher assessment report
+@_safe
+def radar(labels, values, top=100, size=(4.6, 4.2)):
+    """A flat radar chart: one spoke per label, filled up to the value (0 to `top`)."""
+    if len(labels) < 3: return None
+    n = len(labels); ang = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    fig = plt.figure(figsize=size); ax = fig.add_subplot(111, polar=True)
+    v = [max(0, min(top, x)) for x in values]
+    ax.plot(np.r_[ang, ang[:1]], np.r_[v, v[:1]], color=BRAND, lw=2.2); ax.fill(np.r_[ang, ang[:1]], np.r_[v, v[:1]], color=TEAL, alpha=0.28)
+    ax.scatter(ang, v, s=36, color=BRAND, zorder=5)
+    ax.set_xticks(ang); ax.set_xticklabels(['\n'.join(textwrap.wrap(l, 13)) for l in labels], fontsize=9.5, color=INK)
+    ax.set_ylim(0, top); ax.set_yticks([25, 50, 75, 100]); ax.set_yticklabels(['25', '50', '75', '100'], fontsize=7.5, color=MUTED)
+    ax.grid(color='#d9d3c0', lw=0.8); ax.spines['polar'].set_color('#d9d3c0'); ax.set_facecolor('#fbfaf5')
+    for a_, x in zip(ang, v): ax.text(a_, min(top, x) + 9, f'{x:g}', ha='center', va='center', fontsize=8.5, color=BRAND, fontweight='bold')
+    return _png(fig, 150)
+
+
+@_safe
+def bars_flat(labels, values, kinds, top=100):
+    """Flat horizontal bars, one per question: knowledge in teal, teaching in amber, the score written at the end of each bar."""
+    if not labels: return None
+    n = len(labels); fig, ax = plt.subplots(figsize=(4.9, 0.9 + 0.42 * n)); y = np.arange(n)[::-1]
+    cols = [TEAL if k == 'knowledge' else AMBER for k in kinds]
+    ax.barh(y, [top] * n, color='#efe9da', height=0.62, zorder=0); ax.barh(y, values, color=cols, height=0.62, edgecolor='none')
+    for yi, v in zip(y, values):
+        inside = v >= top - 12
+        ax.text(v - 3 if inside else v + 2, yi, f'{v:g}', va='center', ha='right' if inside else 'left', fontsize=9.5, fontweight='bold', color='white' if inside else INK)
+    ax.set_yticks(y); ax.set_yticklabels(labels, fontsize=9.5, color=INK); ax.set_xlim(0, top); ax.set_xticks([0, 25, 50, 75, 100]); ax.tick_params(axis='x', labelsize=8, colors=MUTED)
+    for sp in ('top', 'right', 'left'): ax.spines[sp].set_visible(False)
+    ax.spines['bottom'].set_color('#d9d3c0')
+    ax.legend(handles=[Patch(color=TEAL, label='Topic knowledge'), Patch(color=AMBER, label='Teaching method')], loc='lower right', fontsize=8.5, frameon=False, bbox_to_anchor=(1, 1.0), ncol=2)
+    return _png(fig, 150)
+
+
+@_safe
+def summary3d(items, top=100):
+    """A 3D bar chart of the headline scores (summary picture only): items = [(label, value, colour)]."""
+    items = [(l, v, c) for l, v, c in items if v is not None]
+    if not items: return None
+    from mpl_toolkits.mplot3d import proj3d
+    fig = plt.figure(figsize=(8.0, 3.5)); ax = fig.add_subplot(111, projection='3d'); fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    n = len(items); x = np.arange(n, dtype=float)
+    for xi, (l, v, c) in zip(x, items):
+        ax.bar3d(xi - 0.3, 0, 0, 0.6, 0.6, v, color=c, shade=True, edgecolor=_shade(c, 0.7), linewidth=0.4)
+    ax.set_xticks(x); ax.set_xticklabels(['\n'.join(textwrap.wrap(l, 12)) for l, _, _ in items], fontsize=9.5, color=INK, fontweight='bold'); ax.set_yticks([]); ax.set_zlim(0, top + 8); ax.set_zticks([0, 25, 50, 75, 100])
+    ax.tick_params(axis='z', labelsize=8.5, colors=MUTED); ax.set_ylim(0, 0.6)
+    for pane in (ax.xaxis, ax.yaxis, ax.zaxis): pane.pane.set_facecolor((0.96, 0.95, 0.91, 0.65)); pane.pane.set_edgecolor('#d9d3c0')
+    ax.grid(True, color='#d9d3c0', linewidth=0.5); ax.view_init(elev=20, azim=-88); ax.set_box_aspect((2.8, 0.6, 1.0), zoom=1.05)
+    fig.canvas.draw(); proj = ax.get_proj()                      # the numbers are drawn flat on top, so a bar can never hide them
+    for xi, (l, v, c) in zip(x, items):
+        px, py, _ = proj3d.proj_transform(xi, 0.3, v, proj)
+        ax.annotate(f'{v:g}', (px, py), xytext=(0, 9), textcoords='offset points', ha='center', va='bottom', fontsize=13, fontweight='bold', color=INK,
+                    bbox=dict(boxstyle='round,pad=0.18', fc='white', ec='none', alpha=0.9), zorder=20)
+    return _trim(_png(fig, 150))
+
+
+@_safe
+def logo(size=2.0):
+    """The app's mark: a rounded Evergreen square with a white C."""
+    fig, ax = plt.subplots(figsize=(size, size)); ax.set_xlim(0, 100); ax.set_ylim(0, 100); ax.axis('off')
+    g = np.linspace(0, 1, 256)[:, None] * np.ones((1, 256))
+    im = ax.imshow(g, extent=(4, 96, 4, 96), cmap=matplotlib.colors.LinearSegmentedColormap.from_list('g', ['#2f6a5a', '#163832']), origin='upper', zorder=1)
+    clip = FancyBboxPatch((4, 4), 92, 92, boxstyle='round,pad=0,rounding_size=22', transform=ax.transData, fc='none', ec='none'); ax.add_patch(clip); im.set_clip_path(clip)
+    ax.text(50, 47, 'C', ha='center', va='center', fontsize=size * 30, color='white', fontweight='bold', family='DejaVu Serif', zorder=3)
+    buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=200, transparent=True, bbox_inches='tight', pad_inches=0.02); plt.close(fig)
+    return buf.getvalue()
+
+
+@_safe
+def orb(size=2.2, dark='#0b2b26', mid='#3a7260', light='#bcdcc4'):
+    """The glowing circle (idle state) in the app's colours, for the report cover."""
+    n = 360; yy, xx = np.mgrid[1.35:-1.35:complex(n), -1.35:1.35:complex(n)]; r = np.sqrt(xx ** 2 + yy ** 2)     # y runs up the picture
+    c_dark, c_mid, c_light = (np.array(matplotlib.colors.to_rgb(h)) for h in (dark, mid, light))
+    img = np.ones((n, n, 4)); img[..., 3] = 0
+    glow = np.clip(1 - (r - 1.0) / 0.35, 0, 1) ** 2.2 * (r > 1.0)
+    for k in range(3): img[..., k] = np.where(r > 1.0, c_mid[k], img[..., k])
+    img[..., 3] = np.where(r > 1.0, glow * 0.55, img[..., 3])
+    inside = r <= 1.0
+    wave = -0.35 + 0.12 * np.sin(xx * 3.2) + 0.05 * np.sin(xx * 6.1 + 1.0)
+    liquid = (yy < wave) & inside; t = np.clip((wave - yy) / 1.0, 0, 1)
+    for k in range(3):
+        body = c_dark[k] + (c_mid[k] - c_dark[k]) * np.clip(1 - r, 0, 1) * 0.55
+        flow = c_mid[k] + (c_light[k] - c_mid[k]) * (1 - t) ** 3
+        img[..., k] = np.where(inside, np.where(liquid, flow, body), img[..., k])
+    rim = np.exp(-((r - 0.985) / 0.03) ** 2) * inside
+    img[..., :3] = np.clip(img[..., :3] + rim[..., None] * 0.25, 0, 1)
+    img[..., 3] = np.where(inside, 1.0, img[..., 3])
+    fig = plt.figure(figsize=(size, size)); ax = fig.add_axes([0, 0, 1, 1]); ax.imshow(img, interpolation='bilinear'); ax.axis('off')
+    buf = io.BytesIO(); fig.savefig(buf, format='png', dpi=150, transparent=True); plt.close(fig)
+    return buf.getvalue()

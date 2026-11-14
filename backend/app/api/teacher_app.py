@@ -1,9 +1,10 @@
 """Teacher app API: sign in, see tasks and notifications from the CRP, upload what was asked, send concerns, see own visits.
 Everything is limited to the signed-in teacher (the id comes from the token, never from the request)."""
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
-from ..services import push, report, tasks, teacher_auth
+from ..services import assessment, push, report, tasks, teacher_auth
 from ..services.ingest import pipeline, readers
 from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
@@ -201,3 +202,83 @@ def push_test(tid: str = Depends(teacher_auth.current_teacher)):
     if not n: raise HTTPException(400, 'Turn on alerts on this device first.')
     push.notify_teacher(tid, 'Test alert', 'If you can see this, alerts are working.', '/', wait=True)
     return dict(ok=True, devices=n)
+
+
+# ---------------------------------------------------------------- the before-visit assessment (spoken questions)
+def _my_assessment(conn, aid, tid):
+    a = conn.execute('select * from teacher_assessments where id = %s and teacher_id = %s and status <> %s', (aid, tid, 'cancelled')).fetchone()
+    if not a: raise HTTPException(404, 'That assessment was not found.')
+    return a
+
+
+def _assessment_out(a):
+    v = assessment.teacher_view(a)
+    v['pdf_url'] = f"/api/report/assessment/{v['id']}.pdf?sig={report.sig('a-' + v['id'])}" if a['status'] == 'reported' else None
+    return v
+
+
+@router.get('/assessments')
+def my_assessments(tid: str = Depends(teacher_auth.current_teacher)):
+    """The assessments the CRP asked this teacher for (waiting, in progress, or with a report)."""
+    with get_conn() as conn:
+        rows = conn.execute("select * from teacher_assessments where teacher_id = %s and status in ('ready', 'in_progress', 'submitted', 'reported') order by requested_at desc limit 8", (tid,)).fetchall()
+    return [_assessment_out(a) for a in rows]
+
+
+@router.get('/assessments/{aid}')
+def my_assessment(aid: str, tid: str = Depends(teacher_auth.current_teacher)):
+    with get_conn() as conn:
+        return _assessment_out(_my_assessment(conn, aid, tid))
+
+
+@router.post('/assessments/{aid}/start')
+def assessment_start(aid: str, tid: str = Depends(teacher_auth.current_teacher)):
+    with get_conn() as conn:
+        a = _my_assessment(conn, aid, tid)
+        if a['status'] not in ('ready', 'in_progress'): raise HTTPException(400, 'This assessment cannot be started now.')
+        conn.execute("update teacher_assessments set status = 'in_progress', started_at = coalesce(started_at, now()) where id = %s", (aid,))
+        conn.execute("insert into notifications (recipient_type, title, body, link) values ('crp', 'Assessment started', %s, '/visit')", (f"{a['subject']}: {a['chapter']}",))
+        conn.commit()
+        return _assessment_out(_my_assessment(conn, aid, tid))
+
+
+@router.post('/assessments/{aid}/answers/{n}')
+async def assessment_answer(aid: str, n: int, file: UploadFile | None = File(None), text: str | None = Form(None), tid: str = Depends(teacher_auth.current_teacher)):
+    """One answer, spoken (a recording that is read and then dropped) or typed. Only the words and the speaking data are kept."""
+    with get_conn() as conn:
+        _my_assessment(conn, aid, tid)
+    segs, seconds, source, said = None, None, 'typed', (text or '').strip()
+    if file is not None and file.filename:
+        data = await file.read()
+        if len(data) > 24 * 1024 * 1024: raise HTTPException(413, 'This recording is too long. Please answer in under 5 minutes.')
+        if not data: raise HTTPException(400, 'The recording is empty.')
+        tr, _ = await run_in_threadpool(pipeline.transcribe, data, file.filename)
+        if not tr: raise HTTPException(422, 'We could not hear your answer clearly. Please check the microphone, speak a little closer, and answer again.')
+        said = (tr.get('text') or '').strip() or ' '.join(x['text'] for x in tr.get('segments', []))
+        segs, source = tr.get('segments'), 'voice'
+    if not said: raise HTTPException(400, 'Please answer the question first.')
+    try:
+        row = assessment.add_answer(aid, tid, n, said, source, segs, seconds)
+    except LookupError as e:
+        raise HTTPException(404, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return dict(ok=True, words=row['words'], source=source)
+
+
+@router.post('/assessments/{aid}/finish')
+def assessment_finish(aid: str, tid: str = Depends(teacher_auth.current_teacher)):
+    """After the last answer: the report is written in the background (the app asks again until it is ready)."""
+    from ..jobs import enqueue
+    with get_conn() as conn:
+        a = _my_assessment(conn, aid, tid)
+        if a['status'] == 'reported': return _assessment_out(a)
+        if a['status'] not in ('in_progress', 'submitted'): raise HTTPException(400, 'This assessment is not open.')
+        done = sum(1 for x in a['answers'] if x['words'])
+        need = (len(a['questions']) + 1) // 2
+        if done < need: raise HTTPException(400, f'Please answer at least {need} questions first. You have answered {done}.')
+        if a['status'] == 'in_progress' or a.get('error'):
+            conn.execute("update teacher_assessments set status = 'submitted', submitted_at = coalesce(submitted_at, now()), error = null where id = %s", (aid,))
+            enqueue('assessment_report', {'assessment_id': aid}, conn=conn)
+        conn.commit()
+        return _assessment_out(_my_assessment(conn, aid, tid))

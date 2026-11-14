@@ -5,6 +5,7 @@ import { useHome, fmtAgo, fmtDate } from '@/lib/hooks';
 import type { Task } from '@/lib/api';
 import Shell from '@/components/Shell';
 import AlertsCard from '@/components/AlertsCard';
+import AssessmentCard from '@/components/AssessmentCard';
 import { Badge, Card, Empty } from '@/components/ui';
 
 // A task package is "to do" while any of its numbered tasks still needs the teacher (not yet sent, or sent back with remarks).
@@ -60,6 +61,7 @@ export default function Home() {
         </Card>
       )}
 
+      <AssessmentCard className="mb-4" />
       <AlertsCard className="mb-4" />
 
       {fresh.length > 0 && (

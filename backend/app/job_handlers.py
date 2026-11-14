@@ -1,7 +1,7 @@
 """Which function runs each kind of background job. Add a new job type here (and to the processing_jobs check constraint)."""
 from .jobs import handler
 from .services.ingest import pipeline
-from .services import textbooks, visit
+from .services import assessment, textbooks, visit
 from .services.prioritization.data import get_conn
 
 
@@ -43,3 +43,25 @@ def _transcribe(meta, job):
             c.execute('update session_media set transcript_by = %s where id = %s', (note, m['id']))
         c.commit()
     return tr['by'] if tr else None
+
+
+@handler('assessment_questions')
+def _assessment_questions(meta, job):
+    try:
+        return assessment.generate_questions(meta['assessment_id'])
+    except Exception as e:
+        with get_conn() as c:
+            c.execute("update teacher_assessments set error = %s, status = case when %s >= 3 then 'failed' else status end where id = %s and status = 'preparing'", (str(e)[:300], job['attempts'], meta['assessment_id']))
+            c.commit()
+        raise
+
+
+@handler('assessment_report')
+def _assessment_report(meta, job):
+    try:
+        return assessment.generate_report(meta['assessment_id'])
+    except Exception as e:
+        with get_conn() as c:
+            c.execute("update teacher_assessments set error = %s where id = %s and status <> 'reported'", (str(e)[:300], meta['assessment_id']))
+            c.commit()
+        raise

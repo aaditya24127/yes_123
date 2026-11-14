@@ -20,6 +20,18 @@ def directory():
                 teachers=[dict(t, id=str(t['id']), school_id=str(t['school_id']), name=f"{t['title'] or ''} {t['full_name']}".strip()) for t in teachers])
 
 
+@router.get('/curriculum')
+def curriculum_chapters(school_id: str | None = None, class_no: int | None = None, subject: str | None = None):
+    """Chapter lists for the school's board and medium, class and subject (the chapter dropdown). `note` says when the list is a nearest match."""
+    from ..services import curriculum
+    board = medium = None
+    if school_id:
+        with get_conn() as conn:
+            s = conn.execute('select board, medium from schools where id = %s', (school_id,)).fetchone()
+        if s: board, medium = s['board'], s['medium']
+    return curriculum.lookup(board, medium, class_no, subject)
+
+
 def records_text(school_id=None, teacher_id=None, limit=400):
     """The latest records as short lines (what the copilot reads). Includes everything imported so far."""
     w, p = [], []

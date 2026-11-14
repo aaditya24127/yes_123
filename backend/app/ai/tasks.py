@@ -139,7 +139,8 @@ VISIT_BRIEF = Task(
     lambda: ('You prepare a Cluster Resource Person (CRP) for a school visit in India. Using only the records given, write: summary (3-4 plain sentences: '
              'where things stand, what changed since last time); focus_points (2-4 things to look at, most important first, each pointing to a record); '
              'ask_teacher (2-4 respectful questions about earlier feedback and agreed actions); check_in_class (2-4 concrete things to watch for in the lesson). '
-             'Be specific and kind. Do not invent facts. Use simple everyday words and very short sentences (summary: at most 3 sentences; every point: at most 15 words, one idea). Do not quote score or rank numbers: say in words how urgent a visit is.'),
+             'Be specific and kind. Do not invent facts. Use simple everyday words and very short sentences (summary: at most 3 sentences; every point: at most 15 words, one idea). Do not quote score or rank numbers: say in words how urgent a visit is. '
+             'If the records hold an assessment (spoken questions the teacher answered before the visit), use its focus points and weak areas in focus_points and ask_teacher.'),
     lambda i: _j(i), max_tokens=3000)
 
 
@@ -225,4 +226,56 @@ NOTES_TO_ENGLISH = Task(
     lambda i: i['text'][:20000], max_tokens=6000)
 
 
-TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH]}
+# ------------------------------------------------------------------ 9. before-visit assessment of the teacher (spoken questions, then the report)
+FINAL_QUESTION = 'Walk us through your complete way of teaching this topic. How will you work on it step by step in the classroom?'
+FINAL_POINTS = ['Starts with a hook or a question that links to what students already know', 'Explains the idea in small steps with at least one clear example',
+                'Uses a real object, picture, activity or tool, not only the board', 'Checks understanding during the lesson, not only at the end',
+                'Gives students practice and support for those who find it hard', 'Ends with a recap, homework or a way to see what was learned']
+RATING = {'type': 'string', 'enum': ['strong', 'some', 'weak', 'not_mentioned']}
+
+ASSESS_QUESTIONS = Task(
+    'assessment_questions', "Write the spoken questions of a teacher's before-visit assessment (about 60% subject knowledge, 40% teaching method).",
+    _obj({'questions': {'type': 'array', 'items': _obj({'kind': {'type': 'string', 'enum': ['knowledge', 'teaching']}, 'question': S,
+                                                                                     'expected_points': ARR_S, 'common_mistakes': ARR_S})}}),
+    lambda: ('You prepare a spoken interview for a school teacher in India before the mentor (CRP) visits. The teacher hears each question read aloud and answers by speaking for '
+             'about 30 to 90 seconds, so every question must be short (under 30 words), clear, in simple English, and answerable without writing, drawing or opening a book. '
+             'Follow the given board, class, subject and chapter exactly and use the real ideas and words of that chapter. '
+             '"knowledge" questions check how well the teacher knows the topic: ask why, how, what is the difference, what happens if, or ask for a small worked example; the level is '
+             'what a teacher of that class needs to know: the chapter itself and at most one step deeper, NEVER ideas from a higher class (for example no cosine rule for class 7). "teaching" questions check how the teacher teaches this chapter: how to introduce it, which example, '
+             'object, activity or tool to use, how to check understanding, how to help weaker students, which student mistakes to expect. All questions must be different. '
+             'Do NOT ask the final question "Walk us through your complete way of teaching": the system adds it. Put all knowledge questions first, then the teaching ones, and give exactly '
+             'the number of each kind that is asked for. For each question give expected_points: 3 to 5 short points that a good answer contains (kept for the mentor only), and '
+             'common_mistakes: 0 to 3 mistakes teachers or students often make on it. No names and no personal questions.'),
+    lambda i: _j(i), max_tokens=3500)
+
+ASSESS_REPORT = Task(
+    'assessment_report', "Write the report of a teacher's before-visit assessment from what the teacher said.",
+    _obj({
+        'summary': S,
+        'questions': {'type': 'array', 'items': _obj({'n': {'type': 'integer'}, 'score': {'type': 'integer'}, 'said': S, 'covered': ARR_S, 'missing': ARR_S, 'comment': S})},
+        'strengths': ARR_S, 'changes': ARR_S,
+        'better_methods': {'type': 'array', 'items': _obj({'idea': S, 'why': S})},
+        'do': ARR_S, 'dont': ARR_S,
+        'misconceptions': {'type': 'array', 'items': _obj({'misconception': S, 'fix_given': S, 'fix_is': {'type': 'string', 'enum': ['correct', 'partly', 'incorrect', 'not_given']}, 'note': S})},
+        'tools': {'type': 'array', 'items': _obj({'name': S, 'kind': S, 'fits': {'type': 'string', 'enum': ['fits', 'partly', 'does_not_fit']}, 'note': S})},
+        'checking_understanding': _obj({'rating': RATING, 'note': S}),
+        'weaker_students': _obj({'rating': RATING, 'note': S}),
+        'board_class_fit': _obj({'rating': {'type': 'string', 'enum': ['good', 'partly', 'poor']}, 'note': S}),
+        'visit_focus': ARR_S,
+    }),
+    lambda: ('You write the report of a teacher\'s spoken assessment before a mentor visit (the mentor is called the CRP). The reader is the CRP and the teacher. Write in formal, plain English: '
+             'short sentences, simple words, no jargon, no talk about AI. Judge ONLY what the teacher said. If something was not said write "not mentioned"; never invent. '
+             'Answers may have speech-to-text mistakes: do not blame the teacher for a wrongly heard word. The answers can be in any language: write everything in English. '
+             'For every question give a score 0 to 100: for a knowledge question how accurate and complete the answer is compared with expected_points and the real subject content; for a '
+             'teaching question how clear, suitable for the class, and practical the method is. An empty answer scores 0. "said" = a fair short summary (max 35 words) or a short quote of what '
+             'the teacher said; covered / missing = which expected points were and were not covered. strengths and changes: 2 to 4 each, specific to the answers. better_methods: 2 to 4 better '
+             'tools or methods that fit this chapter, class and board (for example a real object, a free simulation such as PhET or GeoGebra, a DIKSHA lesson, an outdoor activity), each with a short why. '
+             'do and dont: 3 to 5 clear steps each for what the teacher should look at, learn and avoid before the visit. misconceptions: only student mistakes the TEACHER named; say whether the fix '
+             'described is correct, partly correct, incorrect, or not given (empty list if none were named). tools: only websites, apps, simulations or materials the TEACHER named, and whether '
+             'they fit this chapter and class (empty list if none). checking_understanding and weaker_students: how well the answers show it (strong, some, weak, not_mentioned) with one short '
+             'note. board_class_fit: do the content, depth and examples match the given board and class. visit_focus: 3 to 5 specific things the CRP should watch for during the visit. '
+             'Confidence is measured separately: do not score it. Return one entry in "questions" for every question number given.'),
+    lambda i: _j(i), tier='smart', max_tokens=6000)
+
+
+TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH, ASSESS_QUESTIONS, ASSESS_REPORT]}

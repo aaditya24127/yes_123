@@ -4,7 +4,7 @@ This file is the single starting point for anyone (person or AI assistant) worki
 before your own prompt. It explains what the product is, how the code is organised, how to run it, the rules every change
 must follow, and what is still to do in each area (security, frontend, backend, AI, mobile app, data).
 
-Last updated: 14 November 2026. For accounts, deployed links, the way we deliver changes, decisions and the change log see `HANDOVER.md`.
+Last updated: 14 November 2026 (teacher assessment, chapter dropdown, free Groq models). For accounts, deployed links, the way we deliver changes, decisions and the change log see `HANDOVER.md`.
 
 ---
 
@@ -44,7 +44,8 @@ What it does:
    **Speed between pages:** `frontend/lib/api.ts` keeps recent lookups for a few seconds (`keep()`; cleared by any save / upload / sign-in or
    sign-out; polled lists are never kept) and `api.warm()` fetches the next pages' data right after sign-in; `useLoad(..., lastKey)` shows the
    last list at once while a fresh one loads.
-8. **Tutorial mode** (the graduation-cap button at the top): a guide walks through the whole app like a game: a strip of text, a glowing
+8. **Teacher assessment** (Visit page, before the visit; see the section "Teacher assessment" below) and a **chapter dropdown** (`GET /api/curriculum`).
+9. **Tutorial mode** (the graduation-cap button at the top): a guide walks through the whole app like a game: a strip of text, a glowing
    ring around the thing it talks about, a tapping hand when the person must tap, and a recorded voice. 51 steps, 11 languages
    (text for all; voice for 10, Odia has no voice file yet). Steps: `frontend/lib/tutorial/steps.ts`; words: `frontend/lib/tutorial/lang/*.json`
    (`t` = shown, `v` = spoken); voice files: `frontend/public/tutorial/voice/<lang>/<step>.mp3`, made by `tools/make_tutorial_voice.py`;
@@ -98,11 +99,11 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `backend/app/main.py` | FastAPI app: ranking, config, files; includes routers from `backend/app/api/` |
 | `backend/app/api/` | `factors.py` (factors, facts, overrides), `uploads.py`, `visits.py` (visit steps + textbooks), `connect.py` (CRP <-> teacher), `assistant.py` (directory, ask, AI status / test / usage) |
 | `backend/app/services/` | `prioritization/` (engine), `ingest/` (upload pipeline), `visit.py`, `textbooks.py` |
-| `backend/app/ai/` | `tasks.py`, `registry.py`, `providers/` |
+| `backend/app/ai/` | `tasks.py`, `registry.py`, `providers/` (Claude, Gemini, **Groq chat models** (`GroqChatProvider`, key `GROQ_API_KEY`), Ollama, Whisper, `rules`) |
 | `backend/app/core/storage.py` | local folder or Supabase Storage, same keys |
 | `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (built and deployed on Render) |
 | `config/ai.json` | who does each AI task |
-| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0021; `*.supabase.sql` = row-level security, Supabase only) |
+| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0023; `*.supabase.sql` = row-level security, Supabase only) |
 | `backend/app/core/settings.py` | `TARGET=local|supabase` picks the database (`DATABASE_URL` / `SUPABASE_DATABASE_URL`) and storage |
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
@@ -110,6 +111,7 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `teacher-app/` | the teachers' browser app (Next.js 15, same Evergreen look, port 3001): `cd teacher-app && npm install --legacy-peer-deps && npm run dev`. Sign in, tasks from the CRP, upload answers, send concerns, own visits. Backend: `backend/app/api/teacher_app.py`, `services/teacher_auth.py` |
 | `landing/` | public landing page (separate Vite + React 19 + Tailwind 4 site): `cd landing && npm install && npm run dev` (port 5173). Every "Open the app" button goes to the app (`VITE_APP_URL`, default localhost:3000), and the app's logo goes back here (`NEXT_PUBLIC_LANDING_URL`, default localhost:5173) |
 | `frontend/components/` | page parts; `ui/` shared kit; `shell/` menu and page frame |
+| `tools/curriculum/` | scripts that collect chapter lists (NCERT, Shaalaa, e-Balbharati) and `build.py` -> `backend/app/knowledge/curriculum.json`; `tools/make_real_voices.py` makes the synthetic classroom test lessons in `real_voices/` |
 | `docs/` | `REAL_WORLD_V2.md` (features), `SETUP_KEYS.md`, `MOBILE_APP.md`, `DATABASE.md`, `DATASET.md`, `SUPABASE.md` |
 | `evaluation/` | tests and answer keys |
 | `generator/` | rebuilds the demo dataset |
@@ -224,7 +226,22 @@ Textbooks: `GET textbooks/search`, `POST|GET resources`, `DELETE resources/{id}`
 Connect (CRP side): `GET connect/overview`, `GET task-options`, `POST|GET requests` (a request holds numbered tasks = `task_items`), `PATCH requests/{id}`, `POST task-items/{id}/review` (accept, optionally adding the files to the records, or reject with remarks), `GET uploads/items/{id}/raw` (open a teacher's file), `GET|POST teachers/{id}/messages`, `GET notifications`, `POST notifications/read`.
 Teacher app (`/api/teacher/...`, bearer token): `POST login`, `GET home`, `POST submit` (per `item_id`), `POST messages` (concern), `GET visits`, `POST password`, `POST notifications/read`, `GET push/key`, `POST push/subscribe|unsubscribe|test`.
 Sign in: `GET auth/demo`, `POST auth/login|signup|logout|password`, `GET auth/me`.
+Assessments (CRP): `POST assessments`, `GET assessments?teacher_id=`, `GET assessments/{id}`, `POST assessments/{id}/cancel`, `POST assessments/{id}/report/rebuild`, `GET assessments/{id}/report.pdf`, public signed `GET report/assessment/{id}.pdf?sig=`. Teacher app: `GET teacher/assessments`, `GET teacher/assessments/{id}`, `POST .../start`, `POST .../answers/{n}` (file or text), `POST .../finish`. Chapters: `GET curriculum`.
 AI: `GET ai/status`, `POST ai/test`, `GET ai/usage`, `POST ask`. Full interactive list: `http://localhost:8000/docs`.
+
+## Teacher assessment (before the visit)
+- Flow: CRP `POST /api/assessments` (teacher, class, subject, chapter, 5-10 questions, `ai_choice` auto | claude | free) -> background job `assessment_questions` writes the questions (about 60% topic knowledge, 40% teaching method, the **last question is always** "Walk us through your complete way of teaching this topic..."; level follows board and class) -> teacher is notified (alert + push) -> teacher app `/assessment?id=`: *Start Assessment*, the browser reads each question (`speechSynthesis`), the microphone starts when it ends (`MediaRecorder`, level shown by the orb), *Done* sends it (`POST /api/teacher/assessments/{id}/answers/{n}`: Groq Whisper -> words + segments; the recording is dropped), the app says "Noted", *Next*, ..., *Generate Report* (`/finish`) -> background job `assessment_report` -> `teacher_assessments.report` -> PDF (`services/assessment_report.py`, `GET /api/assessments/{id}/report.pdf`, signed link `/api/report/assessment/{id}.pdf?sig=` for the teacher).
+- Code: `services/assessment.py` (scores `_scores`: knowledge 60 / teaching 40; speaking data `analyse`: words, pace, long pauses >= 2 s, filler words, hedging phrases; `confidence`: an *indicator* from those signals only, "not measured" for typed answers), `api/assessments.py` (CRP + signed link), `api/teacher_app.py` (teacher side), AI tasks `assessment_questions` / `assessment_report` in `ai/tasks.py` (schemas + free rule fallbacks in `providers/rules.py`), job handlers in `job_handlers.py`, table `teacher_assessments` (migration 0022; 0023 = RLS).
+- What is AI and what is code: the AI writes the questions and judges each answer against the expected points (score, covered / missing, misconceptions named and whether the fix is right, tools named and fit, checking understanding, weaker students, fit with board and class, suggestions, do / don't, visit focus). Speaking data, confidence indicators, the 60 / 40 weighting and the charts are plain code.
+- Report PDF: `report_charts.radar`, `bars_flat` (flat charts), `summary3d` (3D only for the summary), `logo`, `orb`; header says CRP Mentor Copilot. Research note on the last page (confidence is normally self-reported, so scoring it from speech is only an indicator; interviews / written tasks support the 60 / 40 split).
+- Orb: `frontend/components/ui/VoiceOrb.tsx` and `teacher-app/components/VoiceOrb.tsx` (identical) + `.orb*` CSS in both `globals.css` (colours from the theme variables `--b*`, so it follows the chosen theme; the teacher app is Evergreen). Report view: `components/AssessmentReport.tsx` (copy in both apps). CRP panel: `frontend/components/AssessmentPanel.tsx`; teacher: `teacher-app/app/assessment/page.tsx`, `components/AssessmentCard.tsx`, `lib/voice.ts`.
+- Free AI + switching: `ai.run(task, input, mode=)` with `mode` None / 'auto' (order in `config/ai.json`), 'claude' (Claude first), 'free' (free providers first, then paid, `rules` last). Any provider error (no credit, rate limit, timeout, bad JSON) moves on to the next one. Measured: Groq `gpt-oss-120b` writes questions in about 4 s and the report in about 8 s; Claude Haiku 10 s / Sonnet 22 s.
+- The Visit brief shows the teacher's newest assessment (last 120 days: scores and focus points; `visit.gather` -> `assessment.latest_for_brief`) and `visit_brief` may use it.
+
+## Chapter dropdown (curriculum)
+- `backend/app/knowledge/curriculum.json` (built by `tools/curriculum/build.py`; each book keeps `source` and `read_from`) -> `services/curriculum.lookup(board, medium, class, subject)` -> `GET /api/curriculum?school_id=&class_no=&subject=`. Board and medium come from the school. Order: own board and medium first, then every medium; current edition before older. When the own board has nothing, the next best list is returned with a plain `note` (ICSE lower classes -> NCERT; CBSE / ICSE Marathi -> Maharashtra Marathi books; classes 1-5 Science / Social Science -> EVS). Nothing found: the box becomes a text field.
+- Frontend: `components/ChapterSelect.tsx` (optgroup per book, numbered chapters, "Other (type it)"); the chosen chapter is stored as the visit's `topic`. Used in Visit > Today's class (replaces the free-text topic) and feeds the assessment panel.
+- Sources: CBSE = NCERT textbook contents pages (ncert.nic.in); Maharashtra classes 1-4 and Marathi / Hindi medium 5-8 = official e-Balbharati PDFs (contents read from page images), classes 5-10 English = Shaalaa.com chapter pages; ICSE 6-10 = Shaalaa.com (Selina, Frank, Viraf Dalal, Goyal Brothers, Oxford, ...). CISCE prescribes no books for classes 1-8.
 
 ## Upload: new school / no school detected
 - `ingest/newschool.py` (free rules, no AI) runs in `pipeline.create_batch` when no known school matches: stores `upload_items.detected` (migration 0020: `{kind:'new_school', school, teachers, data}` or `{kind:'no_school'}`). The Add files page shows a panel under the file: View details / Add school and data / Remove data (skip), or for no school: choose a school / Remove data.

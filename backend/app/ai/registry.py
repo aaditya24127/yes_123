@@ -114,10 +114,28 @@ def chain(task):
     return names
 
 
-def run(task, input, attachments=None, only=None):
+def is_free(name):
+    """A provider that costs nothing per call (no price in config/ai.json): Groq, Gemini free tier, Ollama, the free rules."""
+    pc = config()['providers'].get(name) or {}
+    return not any(pc.get('price_per_mtok') or [0])
+
+
+def order(task, mode=None):
+    """The providers to try, in order. mode: None / 'auto' = as listed in config/ai.json (Claude first, then the free models);
+    'claude' = Claude models first; 'free' = the free models first (Claude only if they all fail). `rules` is always last."""
+    names = list(chain(task))
+    if mode not in ('claude', 'free'): return names
+    kind = lambda n: (config()['providers'].get(n) or {}).get('type')
+    last = [n for n in names if n == 'rules']
+    rest = [n for n in names if n != 'rules']
+    first = [n for n in rest if (kind(n) == 'claude' if mode == 'claude' else is_free(n))]
+    return first + [n for n in rest if n not in first] + last
+
+
+def run(task, input, attachments=None, only=None, mode=None):
     t = TASKS[task]
     tried = []
-    for name in ([only] if only else chain(task)):
+    for name in ([only] if only else order(task, mode)):
         try:
             p = provider(name)
             ok, why = p.available()

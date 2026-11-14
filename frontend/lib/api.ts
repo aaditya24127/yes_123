@@ -2,6 +2,7 @@
 import type {
   AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
   Allocation, Detected, FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
+  AiChoice, Assessment, Curriculum,
 } from './types';
 import { apiUrl } from './platform';
 import { session, type CrpUser } from './auth';
@@ -104,6 +105,8 @@ export const api = {
   /** Quietly gets what the next pages need, right after signing in, so the first move to each page is quick. */
   warm: () => Promise.allSettled([api.config(), api.ranking('school'), api.directory(), api.visits.list(), api.uploads.recent(), api.connect.overview(), api.connect.notifications()]),
   health: () => get<{ ok: boolean }>('/api/health'),
+  /** Chapters of the school's board, medium, class and subject (the chapter dropdown). Does not change during a visit, so it is kept for a while. */
+  curriculum: (p: { school_id?: string; class_no?: number | null; subject?: string }) => keep(`curriculum:${qs(p)}`, 600000, () => get<Curriculum>(`/api/curriculum${qs(p)}`)),
 
   factors: {
     list: () => get<{ factors: Factor[]; groups: string[] }>('/api/factors'),
@@ -154,6 +157,15 @@ export const api = {
     notesTranslate: (text: string) => post<{ english: string; language: string | null; already_english: boolean }>('/api/notes/translate', { text }, true),
     reviewAnswer: (id: string, index: number, body: { verdict: 'agree' | 'correct' | 'partly' | 'wrong' | null; reason?: string | null }) => send<Session>('PATCH', `/api/sessions/${id}/answers/${index}`, body),
     save: (id: string, body: { growth?: number[]; next_steps?: number[] }) => post<{ visit_id: string; observations: number; resolved: number; actions: number }>(`/api/sessions/${id}/save`, body),
+  },
+
+  assessments: {
+    start: (body: { teacher_id: string; class_no?: number | null; subject: string; chapter: string; question_count: number; ai_choice: AiChoice }) => post<Assessment>('/api/assessments', body),
+    list: (teacher_id?: string) => get<Assessment[]>(`/api/assessments${qs({ teacher_id })}`),
+    get: (id: string) => get<Assessment>(`/api/assessments/${id}`),
+    cancel: (id: string) => post<{ ok: boolean }>(`/api/assessments/${id}/cancel`),
+    rebuild: (id: string, ai_choice?: AiChoice) => post<Assessment>(`/api/assessments/${id}/report/rebuild`, { ai_choice: ai_choice ?? null }),
+    pdfUrl: (id: string, download = false) => apiUrl(`/api/assessments/${id}/report.pdf${download ? '?download=true' : ''}`),
   },
 
   textbooks: {

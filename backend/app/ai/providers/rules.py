@@ -113,6 +113,52 @@ class RulesProvider(Provider):
                     confidence='low', confidence_reason='Only a few recordings and notes were available.', safety_flag=None)
 
     # ------------------------------------------------------------------
+    def assessment_questions(self, i):
+        ch = i.get('chapter') or 'this chapter'; cls = i.get('class_no') or ''; sub = i.get('subject') or 'the subject'
+        know = [(f"In your own words, what is the main idea of the chapter {ch}?", ['States the main idea correctly', 'Uses the key words of the chapter', 'Gives a short example']),
+                (f"What are the most important words or ideas in {ch}, and what do they mean?", ['Names the key terms', 'Explains each term correctly', 'Links the terms to each other']),
+                (f"Give one real-life example that shows an idea from {ch}.", ['The example is correct', 'It matches the idea', 'Students can relate to it']),
+                (f"Why is {ch} important for students of class {cls} in {sub}?", ['Connects it to earlier learning', 'Connects it to later learning or daily life']),
+                (f"What is the difference between the two most easily confused ideas in {ch}?", ['Names the two ideas', 'States the difference correctly', 'Gives an example of each']),
+                (f"Solve or explain one typical problem from {ch} step by step, aloud.", ['Correct steps in order', 'Correct final answer', 'Reason for each step'])]
+        teach = [(f"How will you introduce {ch} to class {cls} so that students become interested?", ['Starts with a question, story or object', 'Links to what students already know']),
+                 (f"Which example, object or activity will you use to explain {ch}?", ['Names a concrete example or activity', 'It suits the class', 'Explains how students take part']),
+                 (f"How will you check, during the lesson, that students have understood {ch}?", ['Asks questions to many students', 'Uses a quick check such as slates or fingers', 'Acts on what the check shows']),
+                 (f"How will you help students who find {ch} difficult?", ['Names a specific support', 'Group or peer help', 'Gives extra practice or a simpler example'])]
+        k, t = int(i.get('knowledge') or 3), int(i.get('teaching') or 1)
+        qs = [dict(kind='knowledge', question=q, expected_points=p, common_mistakes=[]) for q, p in (know * 2)[:k]]
+        qs += [dict(kind='teaching', question=q, expected_points=p, common_mistakes=[]) for q, p in (teach * 2)[:t]]
+        return dict(questions=qs)
+
+    def assessment_report(self, i):
+        qs = i.get('questions') or []
+        words = lambda s: set(w for w in re.findall(r'[a-z]{4,}', (s or '').lower()))
+        out, covered_all = [], 0
+        for q in qs:
+            ans = (q.get('answer') or '').strip(); aw = words(ans)
+            pts = q.get('expected_points') or []
+            hit = [p for p in pts if words(p) and len(words(p) & aw) / len(words(p)) >= 0.34]
+            miss = [p for p in pts if p not in hit]
+            n = len(ans.split())
+            score = 0 if not ans else min(100, round(100 * len(hit) / max(1, len(pts)) * 0.8 + min(20, n / 3)))
+            covered_all += len(hit)
+            out.append(dict(n=q['n'], score=int(score), said=' '.join(ans.split()[:35]) + ('...' if n > 35 else '') if ans else 'No answer was recorded.', covered=hit, missing=miss,
+                            comment='Scored by comparing the answer with the points a good answer contains.'))
+        text = ' '.join((q.get('answer') or '') for q in qs).lower()
+        has = lambda *ks: any(k in text for k in ks)
+        rate = lambda ok: 'some' if ok else 'not_mentioned'
+        tools = [dict(name=t.title(), kind='tool or material', fits='partly', note='Named by the teacher; fit was not checked.') for t in ('phet', 'geogebra', 'diksha', 'youtube', 'khan academy', 'scratch') if t in text]
+        return dict(summary=f'The teacher answered {sum(1 for q in qs if (q.get("answer") or "").strip())} of {len(qs)} questions. This report compares the answers with the points a good answer contains.',
+                    questions=out, strengths=['The teacher gave spoken answers to the questions.'], changes=['Add concrete examples and a clear step-by-step plan to the answers.'],
+                    better_methods=[dict(idea='Use a real object or activity before the board work', why='Students understand an idea better when they first see or touch it.')],
+                    do=['Read the chapter again and note the key ideas', 'Prepare one real example and one activity', 'Prepare two questions to check understanding'],
+                    dont=['Do not only read from the textbook', 'Do not move on before checking understanding', 'Do not skip support for weaker students'],
+                    misconceptions=[], tools=tools, checking_understanding=dict(rating=rate(has('check', 'ask', 'quiz', 'question')), note='Judged only from words in the answers.'),
+                    weaker_students=dict(rating=rate(has('weak', 'slow', 'extra', 'peer', 'group', 'remedial', 'struggl')), note='Judged only from words in the answers.'),
+                    board_class_fit=dict(rating='partly', note='This could not be judged without a reading of the answers.'),
+                    visit_focus=['Check how the teacher explains the main idea of the chapter', 'Look for a real example or activity', 'See how the teacher checks understanding'])
+
+    # ------------------------------------------------------------------
     def find_textbooks(self, i):
         board = (i.get('board') or '').lower(); cls = i.get('class_no'); subj = i.get('subject') or ''
         res = []

@@ -52,6 +52,52 @@ class GeminiProvider(Provider):
         raise AIError(f'All Gemini models busy or unavailable ({last})')
 
 
+GROQ_CHAT = 'https://api.groq.com/openai/v1/chat/completions'
+
+
+class GroqChatProvider(Provider):
+    """Free language models on Groq (the same GROQ_API_KEY as the speech-to-text). Text only.
+    `models` in config/ai.json is a list tried in order: a model that is busy, rate-limited or retired is skipped and the next one is used."""
+    needs_attachments_as = ()
+
+    def _models(self): return self.cfg.get('models') or [self.cfg.get('model', 'openai/gpt-oss-120b')]
+    def _key(self): return os.environ[self.cfg.get('needs_env', 'GROQ_API_KEY')]
+
+    def ping(self):
+        r = httpx.get('https://api.groq.com/openai/v1/models', headers={'Authorization': f'Bearer {self._key()}'}, timeout=20)
+        if r.status_code in (401, 403): return False, 'The Groq key was not accepted. Check GROQ_API_KEY in .env'
+        if r.status_code != 200: return False, f'Groq answered with error {r.status_code}'
+        have = {m['id'] for m in r.json().get('data', [])}
+        ok = [m for m in self._models() if m in have]
+        return (True, f"Key works; free models in use: {', '.join(ok)}") if ok else (False, f"None of these Groq models exist for this key any more: {', '.join(self._models())}; update config/ai.json")
+
+    def run(self, task, input, attachments):
+        if attachments: raise Unsupported('the free chat models read text only')
+        messages = [{'role': 'system', 'content': task.system() + '\n\n' + schema_hint(task.schema)}, {'role': 'user', 'content': task.user(input)}]
+        last = None
+        for model in self._models():
+            body = dict(model=model, messages=messages, temperature=self.cfg.get('temperature', 0.2), response_format={'type': 'json_object'},
+                        max_tokens=min(int(self.cfg.get('max_tokens', task.max_tokens)), 8000))
+            if model.startswith('openai/gpt-oss'): body['reasoning_effort'] = self.cfg.get('reasoning_effort', 'low')
+            if model.startswith('qwen/'): body['reasoning_effort'] = 'none'
+            try:
+                r = httpx.post(GROQ_CHAT, headers={'Authorization': f'Bearer {self._key()}'}, json=body, timeout=self.cfg.get('timeout', 120))
+            except httpx.TimeoutException:
+                last = f'{model} timed out'; continue
+            if r.status_code in BUSY or (r.status_code == 400 and 'json' in r.text.lower()):
+                last = f'{model}: error {r.status_code}'; continue
+            if r.status_code in (401, 403): raise AIError('The Groq key was not accepted')
+            if r.status_code != 200: raise AIError(f'Groq error {r.status_code}')
+            j = r.json(); u = j.get('usage', {})
+            try:
+                text = j['choices'][0]['message']['content']
+                out = parse_json(text)
+            except (KeyError, IndexError, AIError):
+                last = f'{model} gave no usable answer'; continue
+            return out, dict(model=j.get('model') or model, input_tokens=u.get('prompt_tokens', 0), output_tokens=u.get('completion_tokens', 0), cost_usd=0)
+        raise AIError(f'All free Groq models busy or unavailable ({last})')
+
+
 class OllamaProvider(Provider):
     """Any model served by Ollama on this computer or a server (free, private). PDFs are sent as page images."""
     needs_attachments_as = ('image/', 'application/pdf')
