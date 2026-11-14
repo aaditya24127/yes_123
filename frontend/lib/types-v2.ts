@@ -18,7 +18,7 @@ export interface Override {
   school_name: string; teacher_name: string | null;
 }
 export interface DirSchool { id: string; code: string; name: string; board: string; medium: string; grade_from: number; grade_to: number; village: string }
-export interface DirTeacher { id: string; school_id: string; teacher_code: string; name: string; designation: string; classes_taught: number[]; subjects_taught: string[] }
+export interface DirTeacher { id: string; school_id: string; teacher_code: string; name: string; designation: string; classes_taught: number[]; subjects_taught: string[]; phone?: string | null }
 export interface Directory { schools: DirSchool[]; teachers: DirTeacher[] }
 
 export type UploadStatus = 'sorted' | 'needs_attention' | 'duplicate' | 'skipped' | 'importing' | 'imported' | 'failed';
@@ -48,7 +48,8 @@ export interface Brief {
   scores: { score: number | null; band: Band | null; rank: number | null; flags: string[]; categories: { label: string; score: number | null; contribution: number | null; explanation: string }[] } | null;
   alerts: string[]; open_issues: { ref: string; label?: string; severity?: string; subject?: string | null; class_label?: string | null; issue: string; since: string; last_seen: string }[]; strengths_seen: { point: string; date: string; subject?: string | null; class_label?: string | null }[];
   open_actions: { action: string; due: string; overdue_days: number }[]; latest_results: { cls: number; subject: string; skill: string | null; below_pct: number; date: string }[];
-  last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; subject?: string | null; cls?: number | null; overall: string | null; next_steps: string[] , mentor?: string | null}[];
+  last_visit: string | null; visit_count: number; previous_sessions: { date: string; topic: string | null; subject?: string | null; cls?: number | null; overall: string | null; next_steps: string[] , mentor?: string | null;
+    strengths?: string[]; growth?: { area: string; try_this: string | null }[]; reasons?: { issue: string; teacher_action: string | null }[]; notes?: string }[];
   school_history?: { date: string; kind: string; cls: number | null; subject: string | null; mentor: string | null; topic: string | null; teacher: string | null; overall: string | null }[];
   textbooks: { title: string; cls: number | null; subject: string | null; url: string | null }[]; pending_requests: { title: string; kind: string; status: string; due: string | null }[];
   brief: { summary: string; focus_points: string[]; ask_teacher: string[]; check_in_class: string[] } | null; brief_by: string | null;
@@ -63,14 +64,18 @@ export interface Media {
 export interface Evaluation {
   overall: string; rubric: { element: string; score: number | null; evidence: string }[]; strengths: { point: string; evidence: string }[];
   growth: { area: string; evidence: string; why: string; try_this: string; source: string; need_code: string; severity: string }[];
-  students: { summary: string; per_question: { question: string; verdict: string; note: string; mentor?: MentorCheck }[]; misconceptions: string[] };
+  students: { summary: string; per_question: { question: string; verdict: string; note: string; mentor?: MentorCheck }[]; misconceptions: string[]; reasons?: { issue: string; evidence: string; likely_reason: string; teacher_action: string }[] };
   compared_with_before: { issue: string; change: 'improved' | 'same' | 'worse' | 'not_seen'; evidence: string }[];
   next_steps: { action: string; who: string; due_in_days: number }[]; confidence: 'high' | 'medium' | 'low'; confidence_reason: string; safety_flag: string | null;
   evaluated_by?: string; error?: string;
 }
 /** The mentor's check of the AI's verdict on one student answer (the AI's own verdict is kept beside it). */
 export interface MentorCheck { verdict: 'agree' | 'correct' | 'partly' | 'wrong'; reason: string | null; by: string | null; at: string }
+/** The spoken review of a visit: a short voice message in the teacher's language (about a minute). */
+export interface VoiceInfo { language: string; voice_language: string | null; gender: 'male' | 'female'; voice: string; script: string; seconds: number; made_at: string | null; url: string; by?: string | null }
+export interface WhatsAppResult { mode: 'sent' | 'link' | 'failed'; message: string; to: string; voice: boolean; link: string }
 export interface Session {
+  voice?: VoiceInfo | null; teacher_phone?: string | null;
   id: string; school_id: string; teacher_id: string | null; class_no: number | null; subject: string | null; topic: string | null; stage: number; status: string;
   brief: Brief; crp_notes: string | null; changes_since_last: string | null; questions: Question[]; result: Partial<Evaluation>; media: Media[];
   started_at: string; job: { status: string; error: string | null; provider: string | null } | null; visit_id: string | null; question_tips?: string[]; questions_by?: string;

@@ -9,47 +9,251 @@
     "Override from the environment: AI_TASK_EXTRACT_RECORDS=my_model,rules   AI_PROVIDER_CLAUDE_SMART_MODEL=claude-sonnet-5-5"
   ],
   "providers": {
-    "rules":         { "type": "rules" },
-    "claude_fast":   { "type": "claude", "model": "claude-haiku-5-5", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50] },
-    "claude_quick":  { "type": "claude", "model": "claude-haiku-5-5", "effort": "low", "thinking": "off", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50],
-                       "note": "Haiku with hidden thinking off: answers short jobs in a few seconds." },
-    "claude_mid":    { "type": "claude", "model": "claude-sonnet-5-5", "effort": "medium", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [1.0, 5.0],
-                       "note": "Sonnet: fast and good. Used for the lesson evaluation." },
-    "claude_smart":  { "type": "claude", "model": "claude-opus-5-5", "effort": "high", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [4.0, 20.0],
-                       "refusal_fallback": true },
-    "claude_search": { "type": "claude", "model": "claude-haiku-5-5", "needs_env": "ANTHROPIC_API_KEY", "price_per_mtok": [0.10, 0.50], "web_search": true,
-                       "allowed_domains": ["ncert.nic.in", "ebalbharati.in", "books.ebalbharati.in", "diksha.gov.in", "epathshala.nic.in", "cbseacademic.nic.in",
-                                           "maa.ac.in", "scert.kerala.gov.in", "tnschools.gov.in", "textbooks.karnataka.gov.in", "gseb.org", "scertodisha.nic.in"] },
-    "gemini_free":   { "type": "gemini", "models": ["gemini-3.5-flash", "gemini-flash-latest", "gemini-flash-lite-latest"],
-                       "needs_env": "GEMINI_API_KEY", "enabled_env": "READ_PROVIDER=gemini",
-                       "note": "Free tier, tried in this order (busy or retired models are skipped). Free tiers may use inputs for training: demo data only." },
-    "ollama_local":  { "type": "ollama", "model": "qwen2.5vl:7b", "url": "http://localhost:11434", "enabled": false,
-                       "note": "Runs on this computer for free. Install a model with: ollama pull qwen2.5vl:7b, then set enabled to true." },
-    "my_model":      { "type": "http", "url": "http://localhost:9000/predict", "enabled": false, "timeout": 120,
-                       "note": "Your own trained model. Receives POST {task, input} and must return the task's output JSON." },
-    "groq_big":      { "type": "groq_chat", "models": ["openai/gpt-oss-120b", "openai/gpt-oss-20b"], "needs_env": "GROQ_API_KEY", "reasoning_effort": "low",
-                       "note": "Free language models on Groq (same key as the speech-to-text). The first one that is not busy answers." },
-    "groq_fast":     { "type": "groq_chat", "models": ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"], "needs_env": "GROQ_API_KEY", "reasoning_effort": "low",
-                       "note": "Smaller free Groq models: quick answers for short jobs." },
-    "groq_whisper":  { "type": "groq_whisper", "model": "whisper-large-v3", "needs_env": "GROQ_API_KEY" },
-    "whisper_local": { "type": "local_whisper", "model": "base", "note": "Free speech-to-text on this computer (faster-whisper)." },
-    "web_free":      { "type": "web_search_free", "allowed_domains": ["ncert.nic.in", "ebalbharati.in", "books.ebalbharati.in", "diksha.gov.in",
-                                                                      "epathshala.nic.in", "cbseacademic.nic.in", "maa.ac.in"] }
+    "rules": {
+      "type": "rules"
+    },
+    "claude_fast": {
+      "type": "claude",
+      "model": "claude-haiku-5-5",
+      "needs_env": "ANTHROPIC_API_KEY",
+      "price_per_mtok": [
+        0.1,
+        0.5
+      ]
+    },
+    "claude_quick": {
+      "type": "claude",
+      "model": "claude-haiku-5-5",
+      "effort": "low",
+      "thinking": "off",
+      "needs_env": "ANTHROPIC_API_KEY",
+      "price_per_mtok": [
+        0.1,
+        0.5
+      ],
+      "note": "Haiku with hidden thinking off: answers short jobs in a few seconds."
+    },
+    "claude_mid": {
+      "type": "claude",
+      "model": "claude-sonnet-5-5",
+      "effort": "medium",
+      "needs_env": "ANTHROPIC_API_KEY",
+      "price_per_mtok": [
+        1.0,
+        5.0
+      ],
+      "note": "Sonnet: fast and good. Used for the lesson evaluation."
+    },
+    "claude_smart": {
+      "type": "claude",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "needs_env": "ANTHROPIC_API_KEY",
+      "price_per_mtok": [
+        4.0,
+        20.0
+      ],
+      "refusal_fallback": true
+    },
+    "claude_search": {
+      "type": "claude",
+      "model": "claude-haiku-5-5",
+      "needs_env": "ANTHROPIC_API_KEY",
+      "price_per_mtok": [
+        0.1,
+        0.5
+      ],
+      "web_search": true,
+      "allowed_domains": [
+        "ncert.nic.in",
+        "ebalbharati.in",
+        "books.ebalbharati.in",
+        "diksha.gov.in",
+        "epathshala.nic.in",
+        "cbseacademic.nic.in",
+        "maa.ac.in",
+        "scert.kerala.gov.in",
+        "tnschools.gov.in",
+        "textbooks.karnataka.gov.in",
+        "gseb.org",
+        "scertodisha.nic.in"
+      ]
+    },
+    "gemini_free": {
+      "type": "gemini",
+      "models": [
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+        "gemini-flash-lite-latest"
+      ],
+      "needs_env": "GEMINI_API_KEY",
+      "enabled_env": "READ_PROVIDER=gemini",
+      "note": "Free tier, tried in this order (busy or retired models are skipped). Free tiers may use inputs for training: demo data only."
+    },
+    "ollama_local": {
+      "type": "ollama",
+      "model": "qwen2.5vl:7b",
+      "url": "http://localhost:11434",
+      "enabled": false,
+      "note": "Runs on this computer for free. Install a model with: ollama pull qwen2.5vl:7b, then set enabled to true."
+    },
+    "my_model": {
+      "type": "http",
+      "url": "http://localhost:9000/predict",
+      "enabled": false,
+      "timeout": 120,
+      "note": "Your own trained model. Receives POST {task, input} and must return the task's output JSON."
+    },
+    "groq_big": {
+      "type": "groq_chat",
+      "models": [
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b"
+      ],
+      "needs_env": "GROQ_API_KEY",
+      "reasoning_effort": "low",
+      "note": "Free language models on Groq (same key as the speech-to-text). The first one that is not busy answers."
+    },
+    "groq_fast": {
+      "type": "groq_chat",
+      "models": [
+        "openai/gpt-oss-20b",
+        "qwen/qwen3.8-27b"
+      ],
+      "needs_env": "GROQ_API_KEY",
+      "reasoning_effort": "low",
+      "note": "Smaller free Groq models: quick answers for short jobs."
+    },
+    "groq_whisper": {
+      "type": "groq_whisper",
+      "model": "whisper-large-v3",
+      "needs_env": "GROQ_API_KEY"
+    },
+    "whisper_local": {
+      "type": "local_whisper",
+      "model": "base",
+      "note": "Free speech-to-text on this computer (faster-whisper)."
+    },
+    "web_free": {
+      "type": "web_search_free",
+      "allowed_domains": [
+        "ncert.nic.in",
+        "ebalbharati.in",
+        "books.ebalbharati.in",
+        "diksha.gov.in",
+        "epathshala.nic.in",
+        "cbseacademic.nic.in",
+        "maa.ac.in"
+      ]
+    }
   },
   "tasks": {
-    "classify_document": ["claude_fast", "groq_big", "gemini_free", "ollama_local", "rules"],
-    "extract_records": ["claude_fast", "groq_big", "gemini_free", "ollama_local", "my_model", "rules"],
-    "extract_records_scan": ["claude_smart", "gemini_free", "ollama_local", "rules"],
-    "transcribe": ["groq_whisper", "whisper_local", "rules"],
-    "suggest_factor": ["claude_quick", "claude_fast", "groq_fast", "gemini_free", "ollama_local", "rules"],
-    "visit_brief": ["claude_quick", "claude_fast", "groq_fast", "gemini_free", "ollama_local", "rules"],
-    "student_questions": ["claude_quick", "claude_fast", "groq_fast", "gemini_free", "ollama_local", "rules"],
-    "evaluate_lesson": ["claude_mid", "claude_smart", "groq_big", "gemini_free", "ollama_local", "my_model", "rules"],
-    "find_textbooks": ["claude_search", "web_free", "rules"],
-    "ask_copilot": ["claude_quick", "claude_fast", "groq_fast", "gemini_free", "ollama_local", "rules"],
-    "read_note_photo": ["claude_mid", "claude_quick", "gemini_free", "ollama_local"],
-    "notes_to_english": ["claude_quick", "claude_fast", "groq_fast", "gemini_free", "ollama_local"],
-    "assessment_questions": ["claude_quick", "groq_big", "groq_fast", "gemini_free", "rules"],
-    "assessment_report": ["claude_mid", "groq_big", "groq_fast", "gemini_free", "rules"]
+    "classify_document": [
+      "claude_fast",
+      "groq_big",
+      "gemini_free",
+      "ollama_local",
+      "rules"
+    ],
+    "extract_records": [
+      "claude_fast",
+      "groq_big",
+      "gemini_free",
+      "ollama_local",
+      "my_model",
+      "rules"
+    ],
+    "extract_records_scan": [
+      "claude_smart",
+      "gemini_free",
+      "ollama_local",
+      "rules"
+    ],
+    "transcribe": [
+      "groq_whisper",
+      "whisper_local",
+      "rules"
+    ],
+    "suggest_factor": [
+      "claude_quick",
+      "claude_fast",
+      "groq_fast",
+      "gemini_free",
+      "ollama_local",
+      "rules"
+    ],
+    "visit_brief": [
+      "claude_quick",
+      "claude_fast",
+      "groq_fast",
+      "gemini_free",
+      "ollama_local",
+      "rules"
+    ],
+    "student_questions": [
+      "claude_quick",
+      "claude_fast",
+      "groq_fast",
+      "gemini_free",
+      "ollama_local",
+      "rules"
+    ],
+    "evaluate_lesson": [
+      "claude_mid",
+      "claude_smart",
+      "groq_big",
+      "gemini_free",
+      "ollama_local",
+      "my_model",
+      "rules"
+    ],
+    "find_textbooks": [
+      "claude_search",
+      "web_free",
+      "rules"
+    ],
+    "ask_copilot": [
+      "claude_quick",
+      "claude_fast",
+      "groq_fast",
+      "gemini_free",
+      "ollama_local",
+      "rules"
+    ],
+    "read_note_photo": [
+      "claude_mid",
+      "claude_quick",
+      "gemini_free",
+      "ollama_local"
+    ],
+    "notes_to_english": [
+      "claude_quick",
+      "claude_fast",
+      "groq_fast",
+      "gemini_free",
+      "ollama_local"
+    ],
+    "assessment_questions": [
+      "claude_quick",
+      "groq_big",
+      "groq_fast",
+      "gemini_free",
+      "rules"
+    ],
+    "assessment_report": [
+      "claude_mid",
+      "groq_big",
+      "groq_fast",
+      "gemini_free",
+      "rules"
+    ],
+    "teacher_voice": [
+      "claude_quick",
+      "groq_big",
+      "groq_fast",
+      "claude_mid",
+      "gemini_free",
+      "rules"
+    ]
   }
 }

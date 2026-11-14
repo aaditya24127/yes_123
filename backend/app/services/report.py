@@ -311,6 +311,11 @@ def build_story(s):  # noqa: C901  (one long page-by-page layout, kept in one pl
             rows.append([_e(q.get('question')), lab, f"<font color='{MUTED}'>{_e(m.get('reason') or q.get('note'))}</font>"])
         f.append(grid(['Question we asked', 'Result', 'What we heard'], rows, [0.42, 0.2, 0.38]))
     elif not sts.get('summary'): f.append(P('No student answers were recorded this time.', SMALL))
+    if sts.get('reasons'):
+        f += [Paragraph('Why the students found it hard, and what to change', H3), P('This comes from what the students actually said, compared with what was taught.', SMALL)]
+        for x in sts['reasons']:
+            f.append(card(AMBER, '#fdf4e0', [Paragraph(_e(x.get('issue')), CARDT), Paragraph('<font color="%s">What we heard:</font> %s' % (MUTED, _e(x.get('evidence'))), CARDB),
+                                           Paragraph('<font color="%s">Why it may have happened:</font> %s' % (MUTED, _e(x.get('likely_reason'))), CARDB), Paragraph('<b>What you can change:</b> %s' % _e(x.get('teacher_action')), CARDB)]))
     if sts.get('misconceptions'):
         f += [Paragraph('Ideas students mixed up', H3)] + bullets([_e(x) for x in sts['misconceptions']])
         f.append(P('Tip: do not only say the right answer. Ask the class to show the idea with a drawing, a rope or a pencil, and let them find the mistake themselves.', SMALL))

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from .. import ai
 from ..core.storage import get_storage
 from ..jobs import enqueue, job_status
-from ..services import crp_auth, mailer, push, report, textbooks, visit
+from ..services import crp_auth, mailer, push, report, textbooks, visit, voice, whatsapp
 from ..services.ingest import readers
 from ..services.ingest.pipeline import _school_folder, looks_like_silence, transcribe
 from ..services.prioritization.data import get_conn
@@ -43,8 +43,8 @@ def _who_is_signed_in(conn, request: Request):
         a = crp_auth.get_account(conn, getattr(request.state, 'crp_account_id', None))
     except Exception:
         a = None
-    if not a: return dict(name=None, crp_id=None)
-    return dict(name=f"{a['title'] or ''} {a['full_name']}".strip(), crp_id=a['crp_id'])
+    if not a: return dict(name=None, crp_id=None, title=None, gender='female')
+    return dict(name=f"{a['title'] or ''} {a['full_name']}".strip(), crp_id=a['crp_id'], title=a['title'], gender=voice.gender_of(a['title']))
 
 
 @router.post('/sessions')
@@ -75,7 +75,9 @@ def get_session(sid: str):
         except ValueError as e:
             raise HTTPException(404, str(e))
     job = job_status(str(s['job_id'])) if s['job_id'] else None
-    return dict(id=str(s['id']), school_id=str(s['school_id']), teacher_id=str(s['teacher_id']) if s['teacher_id'] else None, class_no=s['class_no'], subject=s['subject'],
+    with get_conn() as conn:
+        ph = conn.execute('select phone from teachers where id = %s', (s['teacher_id'],)).fetchone() if s['teacher_id'] else None
+    return dict(voice=voice.public(s.get('voice'), str(s['id']), report.sig('v-' + str(s['id']))), teacher_phone=(ph or {}).get('phone'), id=str(s['id']), school_id=str(s['school_id']), teacher_id=str(s['teacher_id']) if s['teacher_id'] else None, class_no=s['class_no'], subject=s['subject'],
                 topic=s['topic'], stage=s['stage'], status=s['status'], brief=s['brief'], followup_days=s.get('followup_days') or 14,
                 report_sent_at=s['report_sent_at'].isoformat() if s.get('report_sent_at') else None, report_sent_to=s.get('report_sent_to'), crp_notes=s['crp_notes'], changes_since_last=s['changes_since_last'],
                 questions=s['questions'], result=s['result'], media=[_media_view(m) for m in media], started_at=s['started_at'].isoformat(), mentor_name=s.get('mentor_name'),
@@ -339,6 +341,115 @@ def send_report(sid: str, req: SendReportReq):
         pass
     push.notify_teacher(s['teacher_id'], 'Your visit report is ready', 'Open My visits to read it.', '/visits')
     return dict(app=True, email=email_state, message=email_msg, to=to)
+
+
+# ---------------------------------------------------------------- the spoken review (voice message) and WhatsApp
+class VoiceReq(BaseModel):
+    language: str = 'en'
+    ai_choice: str | None = None
+
+
+def _audio_response(data: bytes, request: Request):
+    """The mp3 with byte-range support (iPhones and Safari will not play audio without it)."""
+    total = len(data); rng = request.headers.get('range') or ''
+    m = re.match(r'bytes=(\d*)-(\d*)', rng)
+    headers = {'Accept-Ranges': 'bytes', 'Cache-Control': 'private, max-age=3600', 'Content-Disposition': 'inline; filename="review.mp3"'}
+    if m and (m.group(1) or m.group(2)):
+        start = int(m.group(1)) if m.group(1) else max(0, total - int(m.group(2)))
+        end = min(total - 1, int(m.group(2))) if m.group(1) and m.group(2) else total - 1
+        if start >= total: return Response(status_code=416, headers={'Content-Range': f'bytes */{total}'})
+        return Response(data[start:end + 1], status_code=206, media_type='audio/mpeg', headers={**headers, 'Content-Range': f'bytes {start}-{end}/{total}'})
+    return Response(data, media_type='audio/mpeg', headers=headers)
+
+
+@router.post('/sessions/{sid}/voice')
+def make_voice(sid: str, req: VoiceReq, request: Request):
+    """The spoken review for the teacher (about a minute): the AI writes it the way the CRP would say it, in the chosen language; a free Indian voice (male or female like the CRP) reads it."""
+    with get_conn() as conn:
+        try:
+            s, _ = visit.load_session(conn, sid)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        if not (s['result'] or {}).get('overall'): raise HTTPException(400, 'Get the results first. The voice message is made from them.')
+        me = _who_is_signed_in(conn, request)
+        try:
+            info = voice.make(conn, sid, s, me['name'], me['gender'], req.language, req.ai_choice)
+        except ai.AIUnavailable:
+            raise HTTPException(503, 'The message could not be written right now. Please try again in a minute.')
+        except Exception as e:
+            raise HTTPException(503, str(e)[:200])
+    return voice.public(info, sid, report.sig('v-' + sid))
+
+
+@router.get('/report/voice/{sid}.mp3')
+def voice_file(sid: str, request: Request, sig: str = ''):
+    """The voice message, opened by the teacher app, the CRP's player or a WhatsApp link: works only with the signed code."""
+    if not report.sig_ok('v-' + sid, sig): raise HTTPException(404, 'This link is not valid.')
+    with get_conn() as conn:
+        row = conn.execute('select voice from visit_sessions where id = %s', (sid,)).fetchone()
+    info = (row or {}).get('voice')
+    if not info: raise HTTPException(404, 'There is no voice message yet.')
+    return _audio_response(get_storage().get(info['key']), request)
+
+
+class WhatsAppReq(BaseModel):
+    phone: str | None = None
+    language: str = 'en'
+    origin: str | None = None          # the website's address, so the chat message can carry working links
+
+
+def _mark_sent_in_app(sid: str, teacher_id, title: str, to: str | None = None):
+    """The report also appears in the teacher app, with an alert (the same as the Send button)."""
+    with get_conn() as conn:
+        conn.execute("insert into messages (teacher_id, sender, body) values (%s,'crp',%s)", (teacher_id, 'Your visit report is ready. Open My visits to read it.'))
+        conn.execute("insert into notifications (recipient_type, teacher_id, title, body, link) values ('teacher', %s, %s, 'Open My visits to read it.', '/visits')", (teacher_id, title))
+        conn.commit()
+    try:
+        with get_conn() as conn:
+            conn.execute('update visit_sessions set report_sent_at = now(), report_sent_to = coalesce(%s, report_sent_to) where id = %s', (to, sid)); conn.commit()
+    except Exception:
+        pass
+    push.notify_teacher(teacher_id, title, 'Open My visits to read it.', '/visits')
+
+
+@router.post('/sessions/{sid}/report/whatsapp')
+def send_whatsapp(sid: str, req: WhatsAppReq, request: Request):
+    """The report (PDF) and the voice message to the teacher's WhatsApp. With a WhatsApp Business account set up they go straight to the chat; without one, WhatsApp opens with the message ready."""
+    with get_conn() as conn:
+        try:
+            s, _ = visit.load_session(conn, sid)
+        except ValueError as e:
+            raise HTTPException(404, str(e))
+        if not s['teacher_id']: raise HTTPException(400, 'This visit was for the whole school. Start a visit for one teacher to send a report.')
+        t = conn.execute('select full_name, title, phone from teachers where id = %s', (s['teacher_id'],)).fetchone()
+        phone = whatsapp.normalize(req.phone or (t or {}).get('phone'))
+        if not phone: raise HTTPException(400, 'Add the WhatsApp number of the teacher first (10 digits).')
+        if req.phone and phone != (t or {}).get('phone'):
+            conn.execute('update teachers set phone = %s where id = %s', (phone, s['teacher_id'])); conn.commit()
+        if not (s['result'] or {}).get('overall'): raise HTTPException(400, 'Get the results first.')
+        info = s.get('voice')
+        if not info or info.get('language') != req.language:
+            me = _who_is_signed_in(conn, request)
+            try:
+                info = voice.make(conn, sid, s, me['name'], me['gender'], req.language)
+            except Exception:
+                info = None          # the report still goes; the screen says that the voice message is missing
+    try:
+        name, pdf = report.build(sid)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    who = f"{(t or {}).get('title') or ''} {(t or {}).get('full_name') or 'teacher'}".strip()
+    caption = (info or {}).get('message') or f'Hello {who}, here is your visit report from your CRP.'
+    base = (req.origin or '').rstrip('/')
+    pdf_url = f"{base}/api/report/{sid}.pdf?sig={report.sig(sid)}" if base.startswith('http') else None
+    voice_url = f"{base}/api/report/voice/{sid}.mp3?sig={report.sig('v-' + sid)}" if base.startswith('http') and info else None
+    text = '\n\n'.join(x for x in (caption, f'Report (PDF): {pdf_url}' if pdf_url else '', f'Voice message: {voice_url}' if voice_url else '') if x)
+    _mark_sent_in_app(sid, s['teacher_id'], 'Your visit report is ready')
+    if whatsapp.configured():
+        audio = ('review.mp3', get_storage().get(info['key'])) if info else None
+        state, msg = whatsapp.send(phone, caption, (name, pdf), audio, who)
+        return dict(mode='sent' if state in ('sent', 'template_sent') else 'failed', message=msg, to=phone, voice=bool(info), link=whatsapp.chat_link(phone, text))
+    return dict(mode='link', message='WhatsApp will open with the message ready. Press send there.', to=phone, voice=bool(info), link=whatsapp.chat_link(phone, text))
 
 
 # ---------------------------------------------------------------- textbooks

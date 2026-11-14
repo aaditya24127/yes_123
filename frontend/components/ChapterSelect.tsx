@@ -5,12 +5,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Field, Input, Select } from '@/components/ui';
 import { api } from '@/lib/api';
 import type { Curriculum } from '@/lib/types';
+import { useLang } from '@/lib/i18n';
 
 const OTHER = '__other__';
 
 export default function ChapterSelect({ schoolId, classNo, subject, value, onChange, label = 'Chapter being taught today' }: {
   schoolId?: string; classNo?: number | null; subject?: string; value: string; onChange: (chapter: string) => void; label?: string;
 }) {
+  const { tr } = useLang();
   const [cur, setCur] = useState<Curriculum | null>(null);
   const [typing, setTyping] = useState(false);
   const ready = !!schoolId && !!classNo && !!subject;
@@ -29,31 +31,31 @@ export default function ChapterSelect({ schoolId, classNo, subject, value, onCha
   const other = typing || (!!value && !!cur && !all.has(value));
   const loading = ready && !cur;
   const note = cur?.note;
-  const hint = !ready ? 'Choose the class and subject first, or type the chapter.'
-    : loading ? 'Finding the chapters…'
-    : books.length ? `${cur?.board_label ?? ''}${books.length > 1 ? `, ${books.length} books` : ''}. Pick “Other” to type a chapter that is not here.` : undefined;
+  const hint = !ready ? tr('Choose the class and subject first, or type the chapter.')
+    : loading ? tr('Finding the chapters…')
+    : books.length ? `${cur?.board_label ?? ''}${books.length > 1 ? tr(', {n} books', { n: books.length }) : ''}. ${tr('Pick “Other” to type a chapter that is not here.')}` : undefined;
 
   return (
-    <Field label={label} hint={hint}>
+    <Field label={tr(label)} hint={tr(hint)}>
       {!ready || (cur && !books.length) ? (
-        <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="Type the chapter, for example: Place value" />
+        <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={tr('Type the chapter, for example: Place value')} />
       ) : (
         <>
           <Select value={other ? OTHER : value} disabled={loading} onChange={(e) => {
             if (e.target.value === OTHER) { setTyping(true); onChange(''); } else { setTyping(false); onChange(e.target.value); }
           }}>
-            <option value="">{loading ? 'Loading…' : 'Choose a chapter…'}</option>
+            <option value="">{loading ? tr('Loading…') : tr('Choose a chapter…')}</option>
             {books.map((b) => (
               <optgroup key={`${b.board}|${b.book}|${b.medium}`} label={`${b.book}${b.edition === 'older' ? ' (older edition)' : ''}${b.medium !== 'any' ? ` · ${b.medium}` : ''}`}>
                 {b.chapters.map((c, i) => <option key={`${i}-${c}`} value={c}>{`${i + 1}. ${c}`}</option>)}
               </optgroup>
             ))}
-            <option value={OTHER}>Other (type it)</option>
+            <option value={OTHER}>{tr('Other (type it)')}</option>
           </Select>
-          {other && <Input className="mt-2" value={value} onChange={(e) => onChange(e.target.value)} placeholder="Type the chapter" autoFocus />}
+          {other && <Input className="mt-2" value={value} onChange={(e) => onChange(e.target.value)} placeholder={tr('Type the chapter')} autoFocus />}
         </>
       )}
-      {note && <span className="mt-1 block text-xs text-amber-700">{note}</span>}
+      {note && <span className="mt-1 block text-xs text-amber-700">{tr(note)}</span>}
     </Field>
   );
 }

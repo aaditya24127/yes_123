@@ -4,10 +4,12 @@
 import { useSyncExternalStore } from 'react';
 import { STEPS } from './steps';
 
-export interface TutorialState { on: boolean; i: number; muted: boolean }
+export interface TutorialState { on: boolean; i: number; muted: boolean; speed: number }
+/** How fast the guide's voice speaks (1 = as recorded). */
+export const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
 
 const KEY = 'crp-tutorial';
-const OFF: TutorialState = { on: false, i: 0, muted: false };
+const OFF: TutorialState = { on: false, i: 0, muted: false, speed: 1 };
 let state: TutorialState = OFF;
 let loaded = false;
 const subs = new Set<() => void>();
@@ -17,7 +19,7 @@ function load() {
   loaded = true;
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (s) state = { on: !!s.on, i: Math.max(0, Math.min(STEPS.length - 1, Number(s.i) || 0)), muted: !!s.muted };
+    if (s) state = { on: !!s.on, i: Math.max(0, Math.min(STEPS.length - 1, Number(s.i) || 0)), muted: !!s.muted, speed: SPEEDS.includes(Number(s.speed)) ? Number(s.speed) : 1 };
   } catch { /* ignore */ }
 }
 function set(p: Partial<TutorialState>) {
@@ -34,6 +36,7 @@ export const tutorial = {
   stop: () => set({ on: false }),
   go: (i: number) => set({ i: Math.max(0, Math.min(STEPS.length - 1, i)) }),
   mute: (muted: boolean) => set({ muted }),
+  speed: (speed: number) => set({ speed: SPEEDS.includes(speed) ? speed : 1 }),
   subscribe: (fn: () => void) => { subs.add(fn); return () => { subs.delete(fn); }; },
 };
 

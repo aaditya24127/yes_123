@@ -1,8 +1,15 @@
 // Small helpers that turn the visit texts into short points, in plain words (shared by the visit screens).
+import { localeNow } from './i18n';
 
 /** Split a paragraph into short points. */
 export function sentences(text: string | null | undefined, limit = 5): string[] {
-  return (text ?? '').split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean).slice(0, limit);
+  const parts = (text ?? '').split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+  // "Mrs. Jadhav" or "St. Mary's" is not the end of a sentence: join the pieces back
+  const out: string[] = [];
+  for (const p of parts) {
+    if (out.length && /(?:^|\s)(?:Mr|Mrs|Ms|Dr|Prof|Sri|Shri|Smt|St|No|vs|etc)\.$/.test(out[out.length - 1])) out[out.length - 1] += ' ' + p; else out.push(p);
+  }
+  return out.slice(0, limit);
 }
 
 /** "[O1] spoken English (minor): In Mr. ..." becomes "spoken English". */
@@ -20,7 +27,7 @@ export const SCORE_WORD: Record<number, string> = { 1: 'Needs a lot of work', 2:
 
 export const BAND_WORD: Record<string, string> = { critical: 'Visit first', high: 'Visit soon', medium: 'Visit when you can', low: 'No hurry' };
 
-export const fmtDay = (iso: string | Date) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+export const fmtDay = (iso: string | Date) => new Date(iso).toLocaleDateString(localeNow(), { day: 'numeric', month: 'short', year: 'numeric' });
 export const todayIso = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 
 /** Address of the visit screen for a school or teacher card ("Visit" button). */

@@ -4,7 +4,7 @@ This file is the single starting point for anyone (person or AI assistant) worki
 before your own prompt. It explains what the product is, how the code is organised, how to run it, the rules every change
 must follow, and what is still to do in each area (security, frontend, backend, AI, mobile app, data).
 
-Last updated: 14 November 2026 (teacher assessment, chapter dropdown, free Groq models). For accounts, deployed links, the way we deliver changes, decisions and the change log see `HANDOVER.md`.
+Last updated: 14 November 2026 (voice message + WhatsApp, whole app in 11 languages, new sign-in pages, earlier visitors, reasons). For accounts, deployed links, the way we deliver changes, decisions and the change log see `HANDOVER.md`.
 
 ---
 
@@ -45,7 +45,10 @@ What it does:
    sign-out; polled lists are never kept) and `api.warm()` fetches the next pages' data right after sign-in; `useLoad(..., lastKey)` shows the
    last list at once while a fresh one loads.
 8. **Teacher assessment** (Visit page, before the visit; see the section "Teacher assessment" below) and a **chapter dropdown** (`GET /api/curriculum`).
-9. **Tutorial mode** (the graduation-cap button at the top): a guide walks through the whole app like a game: a strip of text, a glowing
+9. **Voice message and WhatsApp**: Results step, `components/TeacherReportCard.tsx`. Backend: AI task `teacher_voice` (`ai/tasks.py`, rules fallback, chain in `config/ai.json`) writes a warm spoken script (target about 140-170 words, language chosen) and a WhatsApp caption; `services/voice.py` speaks it with free `edge-tts` neural voices (en/hi/mr/bn/gu/kn/ml/ta/te/ur Indian voices, Odia uses Hindi; male or female from the CRP's title; three pieces side by side), stores the mp3 with the session (migration 0024 `teachers.phone` and voice data); `services/whatsapp.py` sends the PDF + voice through the WhatsApp Business Cloud API when `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_ID` are set, otherwise returns a `wa.me` link with signed PDF / mp3 links. Endpoints in `api/visits.py` (`POST sessions/{id}/voice` makes it and returns the player data, signed `GET report/voice/{id}.mp3?sig=` serves the mp3, `POST sessions/{id}/report/whatsapp` sends or returns the `wa.me` link), `PATCH /api/teachers/{id}/phone` in `api/assistant.py`. Demo numbers: `main.py` gives the numbers of `DEMO_WHATSAPP_NUMBERS` to teachers without a phone at start-up. The teacher app plays the voice in *My visits* (`api/teacher_app.py` visits list has `voice`).
+10. **Whole app in the chosen language**: `frontend/lib/i18n.tsx` and `teacher-app/lib/i18n.tsx` (`tr`, `tn`, `useLang`, `LANGS`, language button `components/LanguageSwitch.tsx`); phrases per language in `lib/lang/ui/<code>.json`; tools in `tools/i18n/` (see `HANDOVER.md` section 6). New UI text must be written as `tr('English phrase {name}', { name })` and added with `collect.mjs` + `translate.py`.
+11. **Sign-in pages**: `components/AuthLayout.tsx` (same file in both apps) + `app/login/page.tsx`.
+12. **Tutorial mode** (the graduation-cap button at the top): a guide walks through the whole app like a game: a strip of text, a glowing
    ring around the thing it talks about, a tapping hand when the person must tap, and a recorded voice. 51 steps, 11 languages
    (text for all; voice for 10, Odia has no voice file yet). Steps: `frontend/lib/tutorial/steps.ts`; words: `frontend/lib/tutorial/lang/*.json`
    (`t` = shown, `v` = spoken); voice files: `frontend/public/tutorial/voice/<lang>/<step>.mp3`, made by `tools/make_tutorial_voice.py`;
@@ -103,7 +106,7 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `backend/app/core/storage.py` | local folder or Supabase Storage, same keys |
 | `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (built and deployed on Render) |
 | `config/ai.json` | who does each AI task |
-| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0023; `*.supabase.sql` = row-level security, Supabase only) |
+| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0024; `*.supabase.sql` = row-level security, Supabase only) |
 | `backend/app/core/settings.py` | `TARGET=local|supabase` picks the database (`DATABASE_URL` / `SUPABASE_DATABASE_URL`) and storage |
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
@@ -155,7 +158,7 @@ Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, se
    unless that is intended.
 5. **Database changes = a new numbered migration** in `database/migrations/` (never edit an applied one).
 6. **Frontend**: backend calls only in `lib/api.ts`; menu / features in `lib/app.config.ts`; reuse `components/ui`;
-   new text in `lib/lang/en.ts`; web-vs-app differences only in `lib/platform.ts`.
+   new screen text as `tr('English phrase')` (then `node tools/i18n/collect.mjs <app>` and `translate.py <app>`; menus may still use `lib/lang/en.ts`); web-vs-app differences only in `lib/platform.ts`.
 7. **App-ready frontend**: no Next.js server features (no server actions, API routes, middleware, `cookies()`),
    no dynamic route folders like `[id]` (use `?id=` query parameters), links outside the app via `openExternal`. Check
    with `npm run build:app`.
@@ -199,8 +202,7 @@ fonts).
 - Audit log exists (`audit_logs`) for factor and override changes; extend to logins and data exports.
 
 ### Frontend
-- Translate the new screens (Upload, Visit, Teachers, Settings, factor panels) into the 10 other languages in
-  `frontend/lib/lang/*.ts` (move page text into `en.ts` keys first).
+- Translations of all screens exist (machine-made, 10 languages, `lib/lang/ui/*.json`): get a native speaker to review each language.
 - Self-host fonts (replace `next/font/google` downloads) so builds work offline and the app needs no network for fonts.
 - Mobile polish: test every page at phone width; offline-friendly states; large touch targets.
 - Accessibility: labels, focus order, colour contrast.

@@ -108,11 +108,26 @@ class RulesProvider(Provider):
         rubric = [dict(element='B2 Checks for understanding', score=None, evidence=f'{qmarks} questions in the transcript' if tr else 'No transcript')]
         notes = (i.get('crp_notes') or '').strip()
         return dict(overall=overall, rubric=rubric, strengths=[dict(point='CRP observation notes', evidence=notes[:300])] if notes else [],
-                    growth=[], students=dict(summary=f'{len(given)} answers recorded.', per_question=per_q, misconceptions=[]),
+                    growth=[], students=dict(summary=f'{len(given)} answers recorded.', per_question=per_q, misconceptions=[], reasons=[]),
                     compared_with_before=before, next_steps=[dict(action='Discuss the CRP notes with the teacher and agree one practice to try', who='CRP and teacher', due_in_days=14)],
                     confidence='low', confidence_reason='Only a few recordings and notes were available.', safety_flag=None)
 
     # ------------------------------------------------------------------
+    def teacher_voice(self, i):
+        """No AI reachable: a plain, friendly message from the same points (English)."""
+        nm = i.get('teacher_name') or 'there'; addr = i.get('teacher_form_of_address') or 'madam'
+        sub = ' '.join(x for x in (i.get('subject'), 'class ' + str(i['class_no']) if i.get('class_no') else '') if x) or 'class'
+        good = [g.get('point') for g in i.get('went_well', []) if g.get('point')][:2]
+        imp = i.get('to_improve', [])[:2]
+        parts = [f"Namaste {nm}. Thank you for letting me see your {sub} lesson."]
+        if good: parts.append('I liked that ' + ' and that '.join(g[0].lower() + g[1:] if g else g for g in good) + '.')
+        for x in imp:
+            if x.get('area') and x.get('try_this'): parts.append(f"One thing to work on is {x['area'].lower()}. Next time, try this: {x['try_this']}")
+        for w in (i.get('students') or {}).get('why_hard', [])[:1]:
+            if w.get('issue'): parts.append(f"From what the children said, I noticed {w['issue'].lower()}. {w.get('teacher_can') or ''}")
+        parts.append(f"I will come back in about {i.get('follow_up_days') or 14} days to see how it is going. You are doing good work, {addr}, and I am always here to help.")
+        return dict(script=' '.join(p.strip() for p in parts if p), message=f"Namaste {nm}. Here are your visit report and a short voice message. - {i.get('crp_name') or 'Your CRP'}", language='English')
+
     def assessment_questions(self, i):
         ch = i.get('chapter') or 'this chapter'; cls = i.get('class_no') or ''; sub = i.get('subject') or 'the subject'
         know = [(f"In your own words, what is the main idea of the chapter {ch}?", ['States the main idea correctly', 'Uses the key words of the chapter', 'Gives a short example']),

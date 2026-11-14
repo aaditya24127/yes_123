@@ -22,7 +22,7 @@ const UIS: { key: UI; label: Key; Icon: typeof LayoutGrid }[] = [
 ];
 
 export default function Home() {
-  const { t, lang, setLang, dir, date } = useLang();
+  const { t, lang, setLang, dir, date , tr } = useLang();
   const [langMenu, setLangMenu] = useState(false);
   const [config, setConfig] = useState<Config | null>(null);
   const [saved, setSaved] = useState<Record<string, number>>({});
@@ -138,14 +138,14 @@ export default function Home() {
     <main className={`mx-auto max-w-[1400px] px-4 sm:px-8 ${focus ? 'pb-4' : 'pb-16'}`}>
       <header ref={headerRef} className={`${focus || (vw >= 640 && vh >= 700) ? 'sticky' : 'relative'} top-0 z-30 -mx-4 bg-gradient-to-b from-page via-page/95 to-transparent px-4 pb-4 pt-5 sm:-mx-8 sm:px-8`}>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <a href={LANDING_URL} className="flex items-center gap-2.5" aria-label="CRP Mentor Copilot home page" title="Back to the landing page">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">C</div>
-            <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 xl:block">CRP Mentor Copilot</span>
+          <a href={LANDING_URL} className="flex items-center gap-2.5" aria-label={tr('CRP Mentor Copilot home page')} title={tr('Back to the landing page')}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">{tr('C')}</div>
+            <span className="hidden font-serif text-xl font-semibold tracking-tight text-ink-900 xl:block">{tr('CRP Mentor Copilot')}</span>
           </a>
           <NavLinks compact />
           <div className="relative hidden shrink-0 md:block">
             <button onClick={() => { setUiMenu((v) => !v); setLangMenu(false); }} aria-label={t('iface')} title={t('iface')}
-              className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-float ring-1 ring-brand-100 transition ${uiMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}>U</button>
+              className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-float ring-1 ring-brand-100 transition ${uiMenu ? 'bg-brand-600 text-white' : 'bg-surface text-brand-600 hover:text-brand-800'}`}>{tr('U')}</button>
             <AnimatePresence>
               {uiMenu && (
                 <motion.div initial={{ opacity: 0, scale: 0.9, y: -6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: -6 }}
@@ -176,8 +176,8 @@ export default function Home() {
                         initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.025 }}
                         className={`flex items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-start transition ${lang === l.code ? 'bg-brand-600 text-white shadow-float' : 'bg-brand-50/60 text-ink-900 hover:bg-brand-100'}`}>
                         <span className="min-w-0">
-                          <span className="block truncate text-[15px] font-semibold">{l.native}</span>
-                          <span className={`block text-[11px] ${lang === l.code ? 'text-white/80' : 'text-ink-500'}`} dir="ltr" lang="en">{l.english}</span>
+                          <span className="block truncate text-[15px] font-semibold">{tr(l.native)}</span>
+                          <span className={`block text-[11px] ${lang === l.code ? 'text-white/80' : 'text-ink-500'}`} dir="ltr" lang="en">{tr(l.english)}</span>
                         </span>
                         {lang === l.code && <Check size={16} className="shrink-0" />}
                       </motion.button>
@@ -194,9 +194,7 @@ export default function Home() {
               className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-ink-900 outline-none placeholder:text-ink-400" />
             {query && <button onClick={() => setQuery('')} aria-label={t('clear')} className="me-1 rounded-full p-1.5 text-ink-400 hover:bg-brand-50 hover:text-brand-700"><X size={16} /></button>}
             <button onClick={() => { if (focus) setSide((v) => (v === 'priority' ? null : 'priority')); else { setSelected(null); setPanel((p) => !p); } }} aria-label={t('priorities')} title={t('priorities')} data-tour="prio-button"
-              className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold shadow-float transition ${(focus ? side === 'priority' : panel) ? 'bg-brand-800 text-white' : 'bg-brand-600 text-white hover:bg-brand-700'}`}>
-              P
-              {dirty && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-400" />}
+              className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold shadow-float transition ${(focus ? side === 'priority' : panel) ? 'bg-brand-800 text-white' : 'bg-brand-600 text-white hover:bg-brand-700'}`}>{tr('P')}{' '}{dirty && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-400" />}
             </button>
           </div>
         </div>
@@ -215,7 +213,7 @@ export default function Home() {
               <button key={c.key} onClick={() => { setFilter(c.key); setFocusIdx(0); }}
                 className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition ${filter === c.key ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : 'bg-surface text-ink-700 ring-brand-100 hover:ring-brand-300'}`}>
                 {c.key !== 'all' && c.key !== 'insufficient' && <span className={`h-2 w-2 rounded-full ${BAND[c.key as Band].bar}`} />}
-                {c.label}<span className={`tabular-nums ${filter === c.key ? 'text-white/80' : 'text-ink-400'}`}>{c.n ?? '–'}</span>
+                {tr(c.label)}<span className={`tabular-nums ${filter === c.key ? 'text-white/80' : 'text-ink-400'}`}>{c.n ?? '–'}</span>
               </button>
             ))}
           </div>
@@ -223,7 +221,7 @@ export default function Home() {
         </div>
       </header>
 
-      {error && <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{tr(error)}</div>}
 
       {!ranking && !error && !focus && (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-60 animate-pulse rounded-3xl bg-surface/70 shadow-float" />)}</div>
@@ -291,7 +289,7 @@ export default function Home() {
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-brand-800 md:bottom-6 px-5 py-3 text-sm font-semibold text-white shadow-panel">{toast}</motion.div>
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-brand-800 md:bottom-6 px-5 py-3 text-sm font-semibold text-white shadow-panel">{tr(toast)}</motion.div>
         )}
       </AnimatePresence>
     </main>

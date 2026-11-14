@@ -1,7 +1,9 @@
 'use client';
 import { motion } from 'framer-motion';
+import { useLang } from '@/lib/i18n';
 
 export default function ScoreRing({ value, color, size = 64, stroke = 7, label }: { value: number | null; color: string; size?: number; stroke?: number; label?: string }) {
+  const { tr } = useLang();
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = value == null ? 0 : Math.max(0, Math.min(100, value));
@@ -16,7 +18,7 @@ export default function ScoreRing({ value, color, size = 64, stroke = 7, label }
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
         <span className="font-semibold text-ink-900" style={{ fontSize: size * 0.3 }}>{value == null ? '–' : Math.round(value)}</span>
-        {label && <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-500">{label}</span>}
+        {label && <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-500">{tr(label)}</span>}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Uploa
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
-from ..services import assessment, push, report, tasks, teacher_auth
+from ..services import assessment, push, report, tasks, teacher_auth, voice
 from ..services.ingest import pipeline, readers
 from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
@@ -151,12 +151,12 @@ def my_visits(tid: str = Depends(teacher_auth.current_teacher)):
         fu = conn.execute("""select f.due_date, f.status, i.approved_action as action from follow_ups f left join interventions i on i.id = f.intervention_id
                              where f.teacher_id = %s order by f.due_date desc limit 30""", (tid,)).fetchall()
         try:     # needs migration 0017; without it the page still works, just with no reports
-            rp = conn.execute("""select id, started_at, class_no, subject, topic from visit_sessions where teacher_id = %s and report_sent_at is not null
+            rp = conn.execute("""select id, started_at, class_no, subject, topic, voice from visit_sessions where teacher_id = %s and report_sent_at is not null
                                  order by started_at desc limit 20""", (tid,)).fetchall()
         except Exception:
             rp = []
     reports = [dict(id=str(x['id']), date=x['started_at'].date().isoformat(), class_no=x['class_no'], subject=x['subject'], topic=x['topic'],
-                    url=f"/api/report/{x['id']}.pdf?sig={report.sig(str(x['id']))}") for x in rp]
+                    url=f"/api/report/{x['id']}.pdf?sig={report.sig(str(x['id']))}", voice=voice.public(x.get('voice'), str(x['id']), report.sig('v-' + str(x['id'])))) for x in rp]
     return dict(visits=[_row(v) for v in vs], follow_ups=[_row(f) for f in fu], reports=reports)
 
 

@@ -8,11 +8,13 @@ import DatePrompt from '@/components/ui/DatePrompt';
 import { api } from '@/lib/api';
 import { useLoad } from '@/lib/hooks';
 import type { ConnectRow } from '@/lib/types';
+import { useLang } from '@/lib/i18n';
 
 type Draft = { kind: string; title: string; instructions: string };
 const blank = (): Draft => ({ kind: 'marks', title: '', instructions: '' });
 
 export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow; onSent: () => void; onError: (m: string) => void }) {
+  const { tr } = useLang();
   const opts = useLoad(() => api.connect.taskOptions(), []);
   const [mode, setMode] = useState<'tasks' | 'visit'>('tasks');
   const [pkgTitle, setPkgTitle] = useState('');
@@ -36,7 +38,7 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
         ? await api.connect.request({ kind: 'visit_notice', visit_date: date, message: message || undefined, ...target })
         : await api.connect.request({ kind: 'other', title: pkgTitle || undefined, message: message || undefined, due_date: date, ...target,
             items: filled.map((x) => ({ kind: x.kind, title: x.title.trim() || undefined, instructions: x.instructions.trim() || undefined })) });
-      setOk(`Sent to ${r.created} teacher${r.created === 1 ? '' : 's'}.`);
+      setOk((r.created === 1 ? tr('Sent to 1 teacher.') : tr('Sent to {n} teachers.', { n: r.created })));
       setMessage(''); setPkgTitle(''); setItems([blank()]); setAsking(false);
       onSent();
     } catch (e) { onError((e as Error).message); setAsking(false); }
@@ -44,50 +46,50 @@ export default function TaskComposer({ row, onSent, onError }: { row: ConnectRow
   };
 
   return (
-    <Card tour="t-tasks" title="Give tasks" subtitle="Write what you need, one task at a time. The teacher sees each task on their phone and sends it back. You then accept it or ask for changes.">
+    <Card tour="t-tasks" title={tr('Give tasks')} subtitle={tr('Write what you need, one task at a time. The teacher sees each task on their phone and sends it back. You then accept it or ask for changes.')}>
       <div className="mb-4 flex gap-2">
-        <Pill active={mode === 'tasks'} onClick={() => setMode('tasks')}>Tasks</Pill>
-        <Pill active={mode === 'visit'} onClick={() => setMode('visit')}>Visit notice</Pill>
+        <Pill active={mode === 'tasks'} onClick={() => setMode('tasks')}>{tr('Tasks')}</Pill>
+        <Pill active={mode === 'visit'} onClick={() => setMode('visit')}>{tr('Visit notice')}</Pill>
       </div>
 
       {mode === 'visit' ? (
         <div className="grid gap-3">
-          <Field label="Message (optional)"><TextArea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Please keep Class 4 marks and your lesson plan ready." /></Field>
+          <Field label={tr('Message (optional)')}><TextArea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={tr('Please keep Class 4 marks and your lesson plan ready.')} /></Field>
         </div>
       ) : (
         <div className="grid gap-3">
-          <Field label="Heading (optional)"><Input value={pkgTitle} onChange={(e) => setPkgTitle(e.target.value)} placeholder="Before my visit on Friday" /></Field>
-          <Field label="Message for everything (optional)"><TextArea rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Hello! Please send these before the visit." /></Field>
+          <Field label={tr('Heading (optional)')}><Input value={pkgTitle} onChange={(e) => setPkgTitle(e.target.value)} placeholder={tr('Before my visit on Friday')} /></Field>
+          <Field label={tr('Message for everything (optional)')}><TextArea rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={tr('Hello! Please send these before the visit.')} /></Field>
 
           <ol className="grid gap-3">
             {items.map((it, i) => (
               <li key={i} className="rounded-2xl bg-brand-50/60 p-3 ring-1 ring-brand-100">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">Task {i + 1}</span>
-                  <Select value={it.kind} onChange={(e) => set(i, { kind: e.target.value })} className="!w-auto flex-1">
-                    {(kinds.length ? kinds : [{ code: it.kind, label: it.kind, default_add_to: null }]).map((k) => <option key={k.code} value={k.code}>{k.label}</option>)}
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white">{tr('Task {x}', { x: i + 1 })}</span>
+                  <Select value={it.kind} onChange={(e) => set(i, { kind: e.target.value })} className="min-w-0 flex-1 truncate">
+                    {(kinds.length ? kinds : [{ code: it.kind, label: it.kind, default_add_to: null }]).map((k) => <option key={k.code} value={k.code}>{tr(k.label)}</option>)}
                   </Select>
-                  {items.length > 1 && <button type="button" onClick={() => setItems((l) => l.filter((_, j) => j !== i))} aria-label={`Remove task ${i + 1}`} className="rounded-full p-2 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>}
+                  {items.length > 1 && <button type="button" onClick={() => setItems((l) => l.filter((_, j) => j !== i))} aria-label={tr('Remove task {x}', { x: i + 1 })} className="rounded-full p-2 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>}
                 </div>
-                <Input value={it.title} onChange={(e) => set(i, { title: e.target.value })} placeholder="Short name (optional), for example Class 4 marks" className="mb-2" />
+                <Input value={it.title} onChange={(e) => set(i, { title: e.target.value })} placeholder={tr('Short name (optional), for example Class 4 marks')} className="mb-2" />
                 <TextArea rows={2} value={it.instructions} onChange={(e) => set(i, { instructions: e.target.value })}
-                  placeholder="What should the teacher add or give? For example: first term marks for all subjects, as an Excel sheet or a clear photo." />
+                  placeholder={tr('What should the teacher add or give? For example: first term marks for all subjects, as an Excel sheet or a clear photo.')} />
               </li>
             ))}
           </ol>
-          <div><Button variant="soft" icon={<ListPlus size={16} />} onClick={() => setItems((l) => [...l, blank()])}>Add Task {items.length + 1}</Button></div>
+          <div><Button variant="soft" icon={<ListPlus size={16} />} onClick={() => setItems((l) => [...l, blank()])}>{tr('Add Task {x}', { x: items.length + 1 })}</Button></div>
         </div>
       )}
 
-      <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={wholeSchool} onChange={(e) => setWholeSchool(e.target.checked)} className="h-4 w-4" />Send to all teachers of {row.school_name}</label>
+      <label className="mt-2 flex min-h-9 items-center gap-2.5 py-1 text-sm"><input type="checkbox" checked={wholeSchool} onChange={(e) => setWholeSchool(e.target.checked)} className="h-5 w-5 shrink-0" />{tr('Send to all teachers of {school}', { school: row.school_name })}</label>
       <div className="mt-3 flex items-center gap-3">
         <Button icon={mode === 'visit' ? <CalendarClock size={16} /> : <Send size={16} />} disabled={!canSend} onClick={() => setAsking(true)}>
-          {mode === 'visit' ? 'Send notice' : `Send ${filled.length > 1 ? `${filled.length} tasks` : 'task'}`}</Button>
-        {ok && <span className="text-sm text-emerald-700">{ok}</span>}
+          {mode === 'visit' ? tr('Send notice') : (filled.length > 1 ? tr('Send {n} tasks', { n: filled.length }) : tr('Send task'))}</Button>
+        {ok && <span className="text-sm text-emerald-700">{tr(ok)}</span>}
       </div>
-      <DatePrompt open={asking} busy={busy} onClose={() => setAsking(false)} onConfirm={send} confirmLabel={mode === 'visit' ? 'Send notice' : 'Send'}
-        title={mode === 'visit' ? 'Date of the visit' : 'Send by which date?'}
-        question={mode === 'visit' ? 'On which day will you visit?' : 'By which date should the teacher send these?'} />
+      <DatePrompt open={asking} busy={busy} onClose={() => setAsking(false)} onConfirm={send} confirmLabel={mode === 'visit' ? tr('Send notice') : tr('Send')}
+        title={mode === 'visit' ? tr('Date of the visit') : tr('Send by which date?')}
+        question={mode === 'visit' ? tr('On which day will you visit?') : tr('By which date should the teacher send these?')} />
     </Card>
   );
 }
