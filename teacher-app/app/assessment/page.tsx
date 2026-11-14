@@ -10,10 +10,12 @@ import Shell from '@/components/Shell';
 import { VoiceOrb, type OrbState } from '@/components/VoiceOrb';
 import AssessmentReport from '@/components/AssessmentReport';
 import { Button, Card } from '@/components/ui';
+import { useLang } from '@/lib/i18n';
 
 type Phase = 'intro' | 'reading' | 'listening' | 'saving' | 'noted' | 'writing' | 'report';
 
 function Flow() {
+  const { tr } = useLang();
   const wanted = useSearchParams().get('id');
   const { data, error } = useHome();
   const [a, setA] = useState<Assessment | null>(null);
@@ -56,7 +58,7 @@ function Flow() {
     setText('');
     if (!canRecord() || typing) { setPhase('listening'); return; }
     try { rec.current = await startRecorder(setLevel); setPhase('listening'); }
-    catch { setTyping(true); setErr('The microphone is not available. Please allow it in your browser, or type your answer below.'); setPhase('listening'); }
+    catch { setTyping(true); setErr(tr('The microphone is not available. Please allow it in your browser, or type your answer below.')); setPhase('listening'); }
   }, [typing]);
 
   const ask = useCallback(async (i: number, x: Assessment) => {
@@ -77,7 +79,7 @@ function Flow() {
       setA(v);
       const first = Math.max(0, v.questions.findIndex((x) => !x.answered));
       await ask(first, v);
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Could not start.'); }
+    } catch (e) { setErr(e instanceof Error ? e.message : tr('Could not start.')); }
     setBusy(false);
   };
 
@@ -86,7 +88,7 @@ function Flow() {
     rec.current?.cancel(); rec.current = null; setLevel(0); setErr('');
     if (!typing) { setTyping(true); return; }
     setTyping(false);
-    try { rec.current = await startRecorder(setLevel); } catch { setTyping(true); setErr('The microphone is not available. Please allow it in your browser, or type your answer.'); }
+    try { rec.current = await startRecorder(setLevel); } catch { setTyping(true); setErr(tr('The microphone is not available. Please allow it in your browser, or type your answer.')); }
   };
 
   const skipReading = () => { run.current++; stopSpeaking(); void listen(); };  const replay = () => { if (a) void ask(idx, a); };
@@ -96,10 +98,10 @@ function Flow() {
     setErr('');
     let blob: Blob | undefined;
     if (typing || !rec.current) {
-      if (!text.trim()) { setErr('Please type your answer first.'); return; }
+      if (!text.trim()) { setErr(tr('Please type your answer first.')); return; }
     } else {
       const r = await rec.current.stop(); rec.current = null; setLevel(0);
-      if (!r.heard || r.seconds < 1.5) { setErr('We did not hear you. Please answer again.'); await listen(true); return; }
+      if (!r.heard || r.seconds < 1.5) { setErr(tr('We did not hear you. Please answer again.')); await listen(true); return; }
       blob = r.blob;
     }
     setPhase('saving');
@@ -109,7 +111,7 @@ function Flow() {
       setA(next); setPhase('noted'); setNoting(true);
       await speak('Noted.'); setNoting(false);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Could not save your answer.');
+      setErr(e instanceof Error ? e.message : tr('Could not save your answer.'));
       await listen(true);
     }
   };
@@ -119,7 +121,7 @@ function Flow() {
   const finish = async () => {
     if (!a) return;
     setErr(''); setPhase('writing');
-    try { setA(await api.assessmentFinish(a.id)); } catch (e) { setErr(e instanceof Error ? e.message : 'Could not start the report.'); setPhase('noted'); }
+    try { setA(await api.assessmentFinish(a.id)); } catch (e) { setErr(e instanceof Error ? e.message : tr('Could not start the report.')); setPhase('noted'); }
   };
 
   // While the report is being written, ask again every few seconds.
@@ -144,13 +146,13 @@ function Flow() {
 
   const frame = (children: React.ReactNode) => (
     <Shell home={data} error={error}>
-      <Link href="/" className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 pe-3 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />Home</Link>
+      <Link href="/" className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 pe-3 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />{tr('Home')}</Link>
       {children}
     </Shell>
   );
 
-  if (missing) return frame(<Card><p className="text-ink-700">There is no assessment waiting for you right now. When your mentor asks for one, you will get an alert.</p></Card>);
-  if (!a) return frame(<p className="py-20 text-center text-ink-500">Loading…</p>);
+  if (missing) return frame(<Card><p className="text-ink-700">{tr('There is no assessment waiting for you right now. When your mentor asks for one, you will get an alert.')}</p></Card>);
+  if (!a) return frame(<p className="py-20 text-center text-ink-500">{tr('Loading…')}</p>);
 
   if (phase === 'report' && a.report) return frame(<AssessmentReport a={a} />);
 
@@ -158,14 +160,13 @@ function Flow() {
     return frame(
       <Card className="text-center">
         <div className="flex justify-center py-4"><VoiceOrb state="idle" size={160} /></div>
-        <h1 className="font-serif text-2xl font-semibold text-ink-900">Short assessment</h1>
-        <p className="mt-1 text-ink-700">{a.subject}{a.class_no ? `, Class ${a.class_no}` : ''}: <b>{a.chapter}</b></p>
-        <p className="mt-3 text-sm text-ink-500">{a.count} questions, asked aloud, one at a time. Answer by speaking. Press <b>Done</b> when you have finished each answer. It takes about {Math.max(8, a.count * 2)} minutes.
-          Your recording is turned into words and then deleted.</p>
-        {a.status === 'preparing' ? <p className="mt-4 text-sm text-ink-500">The questions are still being prepared. Please wait a moment.</p> : null}
-        {err && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{err}</p>}
-        <Button className="mt-5 w-full" busy={busy} disabled={a.status === 'preparing' || a.status === 'failed'} onClick={begin}><Mic size={16} />{answered ? 'Continue assessment' : 'Start Assessment'}</Button>
-        {!canRecord() && <p className="mt-3 text-xs text-ink-500">This browser cannot record. You will type your answers instead.</p>}
+        <h1 className="font-serif text-2xl font-semibold text-ink-900">{tr('Short assessment')}</h1>
+        <p className="mt-1 text-ink-700">{tr(a.subject)}{a.class_no ? tr(', Class {class_no}', { class_no: a.class_no }) : ''}: <b>{tr(a.chapter)}</b></p>
+        <p className="mt-3 text-sm text-ink-500">{tr('{n} questions, asked aloud, one at a time. Answer by speaking. Press Done when you have finished each answer. It takes about {minutes} minutes. Your recording is turned into words and then deleted.', { n: a.count, minutes: Math.max(8, a.count * 2) })}</p>
+        {a.status === 'preparing' ? <p className="mt-4 text-sm text-ink-500">{tr('The questions are still being prepared. Please wait a moment.')}</p> : null}
+        {err && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{tr(err)}</p>}
+        <Button className="mt-5 w-full" busy={busy} disabled={a.status === 'preparing' || a.status === 'failed'} onClick={begin}><Mic size={16} />{answered ? tr('Continue assessment') : tr('Start Assessment')}</Button>
+        {!canRecord() && <p className="mt-3 text-xs text-ink-500">{tr('This browser cannot record. You will type your answers instead.')}</p>}
       </Card>,
     );
   }
@@ -173,57 +174,57 @@ function Flow() {
   const shownQ = a.questions[idx];
   return frame(
     <Card className="text-center">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">Question {idx + 1} of {a.questions.length}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">{tr('Question {x} of {length}', { x: idx + 1, length: a.questions.length })}</p>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-brand-100"><div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${(answered / a.questions.length) * 100}%` }} /></div>
       <div className="flex justify-center py-5"><VoiceOrb state={orb} level={level} size={150}
-        word={phase === 'noted' ? (noting ? 'Noted' : 'Ready') : phase === 'writing' ? 'Writing your report' : phase === 'saving' ? 'Noting your answer' : undefined} /></div>
+        word={phase === 'noted' ? (noting ? 'Noted' : 'Ready') : phase === 'writing' ? tr('Writing your report') : phase === 'saving' ? tr('Noting your answer') : undefined} /></div>
 
-      {phase !== 'writing' && <h2 className="font-serif text-xl font-semibold leading-snug text-ink-900">{shownQ.question}</h2>}
+      {phase !== 'writing' && <h2 className="font-serif text-xl font-semibold leading-snug text-ink-900">{tr(shownQ.question)}</h2>}
 
       {phase === 'reading' && (
         <div className="mt-4 flex justify-center gap-2">
-          <Button variant="soft" onClick={skipReading}>Answer now</Button>
+          <Button variant="soft" onClick={skipReading}>{tr('Answer now')}</Button>
         </div>
       )}
 
       {phase === 'listening' && (
         <div className="mt-4">
           {typing && (
-            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder="Type your answer here" autoFocus
+            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={tr('Type your answer here')} autoFocus
               className="mb-3 w-full rounded-2xl border-0 bg-page px-4 py-3 text-left text-ink-900 ring-1 ring-brand-200 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-600" />
           )}
-          {!typing && <p className="mb-3 flex items-center justify-center gap-2 text-sm text-ink-500"><Mic size={16} className="text-brand-600" />Speak now. Press Done when you have finished.</p>}
-          {err && <p role="alert" className="mb-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">{err}</p>}
-          <Button className="w-full" onClick={done}><CheckCircle2 size={16} />Done</Button>
+          {!typing && <p className="mb-3 flex items-center justify-center gap-2 text-sm text-ink-500"><Mic size={16} className="text-brand-600" />{tr('Speak now. Press Done when you have finished.')}</p>}
+          {err && <p role="alert" className="mb-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">{tr(err)}</p>}
+          <Button className="w-full" onClick={done}><CheckCircle2 size={16} />{tr('Done')}</Button>
           <div className="mt-3 flex flex-wrap justify-center gap-1 text-sm">
-            {canSpeak() && <Button variant="ghost" onClick={replay}><Volume2 size={15} />Hear again</Button>}
+            {canSpeak() && <Button variant="ghost" onClick={replay}><Volume2 size={15} />{tr('Hear again')}</Button>}
             {canRecord() && <Button variant="ghost" onClick={toggleTyping}>
-              {typing ? <><Mic size={15} />Use voice</> : <><Keyboard size={15} />Type instead</>}</Button>}
+              {typing ? <><Mic size={15} />{tr('Use voice')}</> : <><Keyboard size={15} />{tr('Type instead')}</>}</Button>}
           </div>
         </div>
       )}
 
-      {phase === 'saving' && <p className="mt-4 text-sm text-ink-500">Saving your answer…</p>}
+      {phase === 'saving' && <p className="mt-4 text-sm text-ink-500">{tr('Saving your answer…')}</p>}
 
       {phase === 'noted' && (
         <div className="mt-4">
-          {err && <p role="alert" className="mb-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{err}</p>}
+          {err && <p role="alert" className="mb-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{tr(err)}</p>}
           {last
-            ? <Button className="w-full" onClick={finish}><Send size={16} />Generate Report</Button>
-            : <Button className="w-full" onClick={next}>Next<ArrowRight size={16} /></Button>}
-          <Button variant="ghost" className="mt-1" onClick={() => void ask(idx, a)}><RotateCcw size={15} />Answer this one again</Button>
+            ? <Button className="w-full" onClick={finish}><Send size={16} />{tr('Generate Report')}</Button>
+            : <Button className="w-full" onClick={next}>{tr('Next')}<ArrowRight size={16} /></Button>}
+          <Button variant="ghost" className="mt-1" onClick={() => void ask(idx, a)}><RotateCcw size={15} />{tr('Answer this one again')}</Button>
         </div>
       )}
 
       {phase === 'writing' && (
         <div className="mt-2">
-          <h2 className="font-serif text-xl font-semibold text-ink-900">Writing your report</h2>
-          <p className="mt-1 text-sm text-ink-500">This takes about half a minute. Please keep this page open.</p>
-          {err && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{err}</p>}
-          {err && <Button className="mt-3" variant="soft" onClick={finish}>Try again</Button>}
+          <h2 className="font-serif text-xl font-semibold text-ink-900">{tr('Writing your report')}</h2>
+          <p className="mt-1 text-sm text-ink-500">{tr('This takes about half a minute. Please keep this page open.')}</p>
+          {err && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{tr(err)}</p>}
+          {err && <Button className="mt-3" variant="soft" onClick={finish}>{tr('Try again')}</Button>}
         </div>
       )}
-      {phase !== 'writing' && phase !== 'noted' && <p className="mt-4 flex items-center justify-center gap-1 text-xs text-ink-400"><FileText size={13} />{answered} of {a.questions.length} answered</p>}
+      {phase !== 'writing' && phase !== 'noted' && <p className="mt-4 flex items-center justify-center gap-1 text-xs text-ink-400"><FileText size={13} />{tr('{n} of {total} answered', { n: answered, total: a.questions.length })}</p>}
     </Card>,
   );
 }

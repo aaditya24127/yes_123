@@ -16,8 +16,8 @@ export default function BottomNav() {
       {items.map(({ href, label, icon: Icon }) => {
         const on = href === '/' ? path === '/' : path.startsWith(href);
         return (
-          <Link key={href} href={href} data-tour={`nav-${href === '/' ? 'home' : href.slice(1)}`} className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-semibold ${on ? 'text-brand-700' : 'text-ink-400'}`}>
-            <Icon size={20} />{t(label)}
+          <Link key={href} href={href} data-tour={`nav-${href === '/' ? 'home' : href.slice(1)}`} className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-[11px] font-semibold ${on ? 'text-brand-700' : 'text-ink-400'}`}>
+            <Icon size={20} /><span className="block w-full truncate text-center">{t(label)}</span>
           </Link>
         );
       })}

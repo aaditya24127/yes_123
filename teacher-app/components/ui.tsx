@@ -2,6 +2,7 @@
 // Small shared pieces, styled like the CRP website (rounded cards, Evergreen buttons, serif titles).
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLang } from '@/lib/i18n';
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <section className={`rounded-3xl bg-surface p-5 shadow-float ring-1 ring-brand-100 ${className}`}>{children}</section>;
@@ -26,20 +27,22 @@ export function Badge({ tone = 'plain', children }: { tone?: keyof typeof TONE; 
 }
 
 export function Empty({ icon, title, hint }: { icon: ReactNode; title: string; hint?: string }) {
+  const { tr } = useLang();
   return (
     <div className="flex flex-col items-center gap-2 rounded-3xl bg-surface/60 px-6 py-10 text-center ring-1 ring-brand-100">
       <div className="text-brand-400">{icon}</div>
-      <p className="font-serif text-lg font-semibold text-ink-900">{title}</p>
-      {hint && <p className="max-w-xs text-sm text-ink-500">{hint}</p>}
+      <p className="font-serif text-lg font-semibold text-ink-900">{tr(title)}</p>
+      {hint && <p className="max-w-xs text-sm text-ink-500">{tr(hint)}</p>}
     </div>
   );
 }
 
 export function Title({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
+  const { tr } = useLang();
   return (
     <div className="mb-4 mt-2">
       <h1 className="font-serif text-2xl font-semibold text-ink-900 sm:text-3xl">{children}</h1>
-      {sub && <p className="mt-1 text-sm text-ink-500">{sub}</p>}
+      {sub && <p className="mt-1 text-sm text-ink-500">{typeof sub === 'string' ? tr(sub) : sub}</p>}
     </div>
   );
 }

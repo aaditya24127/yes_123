@@ -137,10 +137,10 @@ VISIT_BRIEF = Task(
     'visit_brief', 'Short pre-visit brief from the school and teacher records.',
     _obj({'summary': S, 'focus_points': ARR_S, 'ask_teacher': ARR_S, 'check_in_class': ARR_S}),
     lambda: ('You prepare a Cluster Resource Person (CRP) for a school visit in India. Using only the records given, write: summary (3-4 plain sentences: '
-             'where things stand, what changed since last time); focus_points (2-4 things to look at, most important first, each pointing to a record); '
+             'where things stand, what changed since last time); focus_points (2-4 things to look at, most important first, each based on a record); '
              'ask_teacher (2-4 respectful questions about earlier feedback and agreed actions); check_in_class (2-4 concrete things to watch for in the lesson). '
              'Be specific and kind. Do not invent facts. Use simple everyday words and very short sentences (summary: at most 3 sentences; every point: at most 15 words, one idea). Do not quote score or rank numbers: say in words how urgent a visit is. '
-             'If the records hold an assessment (spoken questions the teacher answered before the visit), use its focus points and weak areas in focus_points and ask_teacher.'),
+             'Never write record names, field names or codes such as O1, open_issues, latest_results or alerts in any point: say it in plain words only. If the records hold an assessment (spoken questions the teacher answered before the visit), use its focus points and weak areas in focus_points and ask_teacher.'),
     lambda i: _j(i), max_tokens=3000)
 
 
@@ -170,7 +170,8 @@ EVALUATE = Task(
         'growth': {'type': 'array', 'items': _obj({'area': S, 'evidence': S, 'why': S, 'try_this': S, 'source': S,
                                                    'need_code': {'type': 'string', 'enum': NEED_CODES},
                                                    'severity': {'type': 'string', 'enum': ['minor', 'significant', 'critical']}})},
-        'students': _obj({'summary': S, 'per_question': {'type': 'array', 'items': _obj({'question': S, 'verdict': S, 'note': S})}, 'misconceptions': ARR_S}),
+        'students': _obj({'summary': S, 'per_question': {'type': 'array', 'items': _obj({'question': S, 'verdict': S, 'note': S})}, 'misconceptions': ARR_S,
+                          'reasons': {'type': 'array', 'items': _obj({'issue': S, 'evidence': S, 'likely_reason': S, 'teacher_action': S})}}),
         'compared_with_before': {'type': 'array', 'items': _obj({'issue': S, 'change': {'type': 'string', 'enum': ['improved', 'same', 'worse', 'not_seen']}, 'evidence': S})},
         'next_steps': {'type': 'array', 'items': _obj({'action': S, 'who': S, 'due_in_days': {'type': 'integer'}})},
         'confidence': {'type': 'string', 'enum': ['high', 'medium', 'low']}, 'confidence_reason': S,
@@ -180,7 +181,7 @@ EVALUATE = Task(
              'Follow the guide below exactly: ground rules (section 1), the framework (section 2, scores 1-5 or null when not observed), reading student '
              'answers (section 5) and the result structure (section 7). Write for a busy CRP and a teacher: very short sentences in simple everyday words, '
              'one idea each (overall: 3 or 4 short sentences); no jargon and no framework names or codes inside the sentences. Every strength and growth point needs evidence (transcript time, CRP note, student '
-             'answer or record). growth: at most 2. In every growth try_this, name something cheap the teacher already has (chalk and blackboard, pencils, slates, stones, paper, a rope, the school yard) '
+             'answer or record). growth: at most 2. students.reasons: 0 to 3 points that explain WHY students did not understand, found by comparing what several students said with what the teacher taught (for example: three students added the sides instead of squaring them; the teacher showed the rule but never a picture). issue = the pattern seen in the answers, in a few words; evidence = what students actually said (use their words); likely_reason = what the children seem to think or what was missing in the teaching, in simple words; teacher_action = one concrete thing the teacher can change in the next lesson. Only write a reason that the answers support; use an empty list when there are no student answers. In every growth try_this, name something cheap the teacher already has (chalk and blackboard, pencils, slates, stones, paper, a rope, the school yard) '
              'and say exactly how to use it in this lesson, for example "draw the triangle on the board, then let each group make it with 3 pencils". next_steps: 1-3. source: the guide source codes, e.g. "S1, S3". safety_flag: null unless there is harm.\n\n'
              + knowledge()),
     lambda i: _j(i), tier='smart', max_tokens=12000)
@@ -278,4 +279,17 @@ ASSESS_REPORT = Task(
     lambda i: _j(i), tier='smart', max_tokens=6000)
 
 
-TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH, ASSESS_QUESTIONS, ASSESS_REPORT]}
+TEACHER_VOICE = Task(
+    'teacher_voice', "Write the short voice message a CRP speaks to a teacher after a visit, in the teacher's language.",
+    _obj({'script': S, 'message': S, 'language': S}),
+    lambda: ('You write a short voice message that a Cluster Resource Person (CRP) in India speaks to a teacher after visiting the class of that teacher. A voice will read it aloud, so write exactly what a kind, '
+             'experienced mentor would say face to face. Write it in the language named in the input, in the own script of that language, in simple everyday spoken words (the way people really talk, not textbook language). '
+             'Speak as the CRP ("I"), call the teacher by name with the respectful form of address (sir or madam, as in that language). Length: about target_words words, not fewer, so that it takes between one minute and one minute fifteen seconds to speak. '
+             'Order: a warm greeting and thanks for the lesson; the two best things you saw, in a few words each, specific to this lesson; the two or three most important things to improve, each with one concrete, '
+             'cheap thing to try in the next lesson (use try_this, and what the answers of the students showed in students.why_hard); the next step and when you will come back; a kind closing that offers help. '
+             'Be encouraging and honest, never scolding. Use ONLY the points given: do not invent anything. Plain speech only: no lists, no numbering, no headings, no markdown, no emoji, no scores, no ranks, and never '
+             'the words report, AI or system. Put the whole message in "script" as one piece of flowing text. Also write "message": two short, friendly sentences in the same language that go with the files in a WhatsApp chat (say that the visit report and a short voice message are here for the teacher, greet the teacher by name, sign with the name of the CRP; do not say attached). Put the language name in "language". Output only the JSON.'),
+    lambda i: _j(i), tier='fast', max_tokens=2500)
+
+
+TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH, ASSESS_QUESTIONS, ASSESS_REPORT, TEACHER_VOICE]}

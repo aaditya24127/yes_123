@@ -2,7 +2,7 @@
 import type {
   AIStatus, AIUsage, Batch, BatchSummary, Brief, Config, ConnectRow, Directory, Entity, EvidenceGroup, Factor, FactorSuggestion, FactPreviewRow, FactValueRow,
   Allocation, Detected, FileInfo, Message, Notice, Override, Preview, Ranking, Resource, ReviewResult, Session, SessionSummary, TaskOptions, TextbookHit, TRequest,
-  AiChoice, Assessment, Curriculum,
+  AiChoice, Assessment, Curriculum, VoiceInfo, WhatsAppResult,
 } from './types';
 import { apiUrl } from './platform';
 import { session, type CrpUser } from './auth';
@@ -105,6 +105,7 @@ export const api = {
   /** Quietly gets what the next pages need, right after signing in, so the first move to each page is quick. */
   warm: () => Promise.allSettled([api.config(), api.ranking('school'), api.directory(), api.visits.list(), api.uploads.recent(), api.connect.overview(), api.connect.notifications()]),
   health: () => get<{ ok: boolean }>('/api/health'),
+  setTeacherPhone: (id: string, phone: string) => send<{ phone: string | null }>('PATCH', `/api/teachers/${id}/phone`, { phone }),
   /** Chapters of the school's board, medium, class and subject (the chapter dropdown). Does not change during a visit, so it is kept for a while. */
   curriculum: (p: { school_id?: string; class_no?: number | null; subject?: string }) => keep(`curriculum:${qs(p)}`, 600000, () => get<Curriculum>(`/api/curriculum${qs(p)}`)),
 
@@ -152,6 +153,8 @@ export const api = {
     evaluate: (id: string) => post<Session>(`/api/sessions/${id}/evaluate`),
     reportUrl: (id: string, download = false) => apiUrl(`/api/sessions/${id}/report.pdf${download ? '?download=true' : ''}`),
     sendReport: (id: string, email?: string) => post<{ app: boolean; email: 'sent' | 'not_set_up' | 'failed' | 'skipped'; message: string; to: string }>(`/api/sessions/${id}/report/send`, { email: email || null }),
+    voice: (id: string, language: string) => post<VoiceInfo>(`/api/sessions/${id}/voice`, { language }),
+    whatsapp: (id: string, body: { phone?: string; language: string; origin: string }) => post<WhatsAppResult>(`/api/sessions/${id}/report/whatsapp`, body),
     notesVoice: (blob: Blob, name: string) => form<{ text: string; language: string | null }>('/api/notes/voice', {}, [blob], 'file', name),
     notesPhoto: (file: File) => form<{ text: string; language: string | null }>('/api/notes/photo', {}, [file], 'file', file.name),
     notesTranslate: (text: string) => post<{ english: string; language: string | null; already_english: boolean }>('/api/notes/translate', { text }, true),

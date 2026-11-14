@@ -17,7 +17,7 @@ export interface Home {
 }
 export interface Visits {
   visits: { visit_date: string; visit_type: string }[]; follow_ups: { due_date: string; status: string; action: string | null }[];
-  reports: { id: string; date: string; class_no: number | null; subject: string | null; topic: string | null; url: string }[];
+  reports: { id: string; date: string; class_no: number | null; subject: string | null; topic: string | null; url: string; voice: { url: string; script: string; seconds: number; language: string } | null }[];
 }
 
 // ---- the spoken assessment the CRP asks for

@@ -2,7 +2,7 @@
 
 All data comes fresh from the database on every call, so anything uploaded or imported a minute ago is included.
 """
-import threading
+import re, threading
 import datetime as dt, json
 
 from .. import ai
@@ -46,11 +46,16 @@ def gather(teacher_id=None, school_id=None, as_of=None):
                         date=str(a['assessment_date']), exam=a['exam_type']) for a in latest.values()]
         visits = sorted(ctx.visits, key=lambda v: v['visit_date'])
         # Records belong to the school: a chosen teacher's visits, plus the visits of the whole school, whoever made them.
-        sess = conn.execute("""select id, started_at, class_no, subject, topic, result, mentor_name from visit_sessions where status in ('evaluated', 'saved') and school_id = %s and
+        sess = conn.execute("""select id, started_at, class_no, subject, topic, result, mentor_name, crp_notes from visit_sessions where status in ('evaluated', 'saved') and school_id = %s and
                                (%s::uuid is null or teacher_id = %s or teacher_id is null) order by started_at desc limit 8""",
                             (s['id'], t['id'] if t else None, t['id'] if t else None)).fetchall()
+        # What earlier visitors (any CRP, the new CRP included) wrote down, so that a CRP who takes over gets a clear picture without asking anyone.
         prev = [dict(date=str(x['started_at'].date()), cls=x['class_no'], subject=x['subject'], topic=x['topic'], mentor=x['mentor_name'], overall=(x['result'] or {}).get('overall'),
-                     next_steps=[n['action'] for n in (x['result'] or {}).get('next_steps', [])]) for x in sess]
+                     next_steps=[n['action'] for n in (x['result'] or {}).get('next_steps', [])],
+                     strengths=[g.get('point') for g in ((x['result'] or {}).get('strengths') or [])[:2] if g.get('point')],
+                     growth=[dict(area=g.get('area'), try_this=g.get('try_this')) for g in ((x['result'] or {}).get('growth') or [])[:2] if g.get('area')],
+                     reasons=[dict(issue=g.get('issue'), teacher_action=g.get('teacher_action')) for g in (((x['result'] or {}).get('students') or {}).get('reasons') or [])[:2] if g.get('issue')],
+                     notes=(x['crp_notes'] or '').strip()[:400]) for x in sess]
         books = conn.execute("select title, class_no, subject, source_url, contents from teaching_resources where school_id = %s and (teacher_id = %s or teacher_id is null) order by created_at desc",
                              (s['id'], t['id'] if t else None)).fetchall()
         acc = conn.execute('select email from teacher_accounts where teacher_id = %s', (t['id'],)).fetchone() if t else None
@@ -77,17 +82,27 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         pending_requests=[dict(title=r['title'], kind=r['kind'], status=r['status'], due=str(r['due_date']) if r['due_date'] else None) for r in reqs], assessment=assess)
 
 
+_INTERNAL = re.compile(r'\s*[\(\[][^()\[\]]*\b(?:open_issues|latest_results|previous_sessions|open_actions|strengths_seen|school_history|alerts?(?: and overdue)?|overdue|records?|O\d+|S\d{2})\b[^()\[\]]*[\)\]]', re.I)
+
+
+def tidy_brief(b):
+    """The briefing is for people: remove any record name or code the AI may have left in brackets, for example "(open_issues O1, latest_results)"."""
+    if not b: return b
+    clean = lambda x: re.sub(r'\s+([.,;:?])', r'\1', _INTERNAL.sub('', x)).strip() if isinstance(x, str) else x
+    return {k: ([clean(i) for i in v] if isinstance(v, list) else clean(v)) for k, v in b.items()}
+
+
 def brief(teacher_id=None, school_id=None, fast=False):
     """The before-class briefing. fast=True answers at once with the plain summary built from the records (no waiting for an AI);
     the screen then asks again without fast to swap in the sharper AI version."""
     data = gather(teacher_id, school_id)
     if fast:
         from ..ai.providers.rules import RulesProvider
-        data['brief'], data['brief_by'] = RulesProvider('rules', {}).visit_brief(data), 'rules'
+        data['brief'], data['brief_by'] = tidy_brief(RulesProvider('rules', {}).visit_brief(data)), 'rules'
         return data
     try:
         r = ai.run('visit_brief', data)
-        data['brief'], data['brief_by'] = r.data, r.provider
+        data['brief'], data['brief_by'] = tidy_brief(r.data), r.provider
     except ai.AIUnavailable:
         data['brief'], data['brief_by'] = None, None
     return data

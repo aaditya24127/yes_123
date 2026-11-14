@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, GraduationCap, RotateCcw, Volume2, VolumeX, 
 import { LANGS, useLang } from '@/lib/i18n';
 import { useUser } from '@/lib/auth';
 import { CHAPTERS, STEPS, firstOfChapter, indexOfStep, type ChapterId } from '@/lib/tutorial/steps';
-import { tutorial, useTutorial } from '@/lib/tutorial/store';
+import { SPEEDS, tutorial, useTutorial } from '@/lib/tutorial/store';
 import { useTutorialText } from '@/lib/tutorial/text';
 import { isLoginPath } from '@/components/shell/AuthGate';
 
@@ -32,10 +32,10 @@ export default function TutorialOverlay() {
   const st = useTutorial();
   const path = usePathname();
   if (!st.on || isLoginPath(path)) return null;
-  return <Guide i={st.i} muted={st.muted} />;
+  return <Guide i={st.i} muted={st.muted} speed={st.speed} />;
 }
 
-function Guide({ i, muted }: { i: number; muted: boolean }) {
+function Guide({ i, muted, speed }: { i: number; muted: boolean; speed: number }) {
   const { lang, dir } = useLang();
   const text = useTutorialText(lang);
   const user = useUser();
@@ -96,6 +96,8 @@ function Guide({ i, muted }: { i: number; muted: boolean }) {
 
   // ---------------------------------------------------------------- the voice
   const audio = useRef<HTMLAudioElement | null>(null);
+  const speedRef = useRef(speed); speedRef.current = speed;
+  useEffect(() => { if (audio.current) audio.current.playbackRate = speed; }, [speed]);          // a new speed counts at once, also in the middle of a sentence
   const hush = useCallback(() => {
     if (audio.current) { audio.current.onerror = null; audio.current.pause(); audio.current = null; }
     try { window.speechSynthesis?.cancel(); } catch { /* no speech on this device */ }
@@ -109,11 +111,11 @@ function Guide({ i, muted }: { i: number; muted: boolean }) {
         const synth = window.speechSynthesis; if (!synth) return;
         const voice = synth.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang));
         if (!voice) return;
-        const u = new SpeechSynthesisUtterance(line.v); u.voice = voice; u.lang = locale; u.rate = 0.95; synth.speak(u);
+        const u = new SpeechSynthesisUtterance(line.v); u.voice = voice; u.lang = locale; u.rate = 0.95 * speedRef.current; synth.speak(u);
       } catch { /* stay silent */ }
     };
     const a = new Audio(`/tutorial/voice/${lang}/${key}.mp3`);
-    audio.current = a;
+    audio.current = a; a.playbackRate = speedRef.current;
     a.onerror = () => { if (audio.current === a) speak(); };
     a.play().catch((e: { name?: string }) => {
       // Browsers only play sound after the person has touched the page: try again at their next tap.
@@ -167,6 +169,8 @@ function Guide({ i, muted }: { i: number; muted: boolean }) {
           </div>
           <div className="ms-auto flex shrink-0 items-center gap-1">
             {i > 0 && <button onClick={() => tutorial.go(i - 1)} aria-label={u.back} title={u.back} className={icon}><ChevronLeft size={20} className="rtl:rotate-180" /></button>}
+            <button onClick={() => tutorial.speed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])} data-tour-speed aria-label={`${u.speed}: ${speed}x`} title={`${u.speed}: ${speed}x`}
+              className={`${icon} !w-auto px-2.5 text-xs font-bold tabular-nums`}>{speed}x</button>
             <button onClick={say} aria-label={u.replay} title={u.replay} className={icon}><RotateCcw size={17} /></button>
             <button onClick={() => tutorial.mute(!muted)} aria-label={muted ? u.voiceOn : u.voiceOff} title={muted ? u.voiceOn : u.voiceOff} aria-pressed={!muted} className={icon}>{muted ? <VolumeX size={19} /> : <Volume2 size={19} />}</button>
             {off && <button onClick={() => router.push(step.path === '*' ? '/' : step.path)} className="ms-1 flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800 shadow-float hover:bg-brand-50">{u.goThere}<ChevronRight size={16} className="rtl:rotate-180" /></button>}

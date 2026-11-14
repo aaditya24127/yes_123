@@ -2,6 +2,7 @@
 // Shared building blocks. Change the look of every page from here (colours come from the theme in globals.css / lib/theme.ts).
 import { forwardRef, useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLang } from '@/lib/i18n';
 
 type Variant = 'primary' | 'soft' | 'ghost' | 'danger';
 const VARIANT: Record<Variant, string> = {
@@ -62,7 +63,8 @@ export function TextArea({ className = '', ...p }: TextareaHTMLAttributes<HTMLTe
 }
 
 export function Spinner({ label }: { label?: string }) {
-  return <div className="flex items-center gap-2 text-sm text-ink-500"><Loader2 size={16} className="animate-spin text-brand-600" />{label}</div>;
+  const { tr } = useLang();
+  return <div className="flex items-center gap-2 text-sm text-ink-500"><Loader2 size={16} className="animate-spin text-brand-600" />{tr(label)}</div>;
 }
 
 export function Empty({ icon, children }: { icon?: ReactNode; children: ReactNode }) {
@@ -70,10 +72,11 @@ export function Empty({ icon, children }: { icon?: ReactNode; children: ReactNod
 }
 
 export function ErrorNote({ error, onClose }: { error: string; onClose?: () => void }) {
+  const { tr } = useLang();
   if (!error) return null;
   return (
     <div className="flex items-start justify-between gap-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-      <span>{error}</span>{onClose && <button onClick={onClose} className="text-xs font-semibold underline">OK</button>}
+      <span>{tr(error)}</span>{onClose && <button onClick={onClose} className="text-xs font-semibold underline">{tr('OK')}</button>}
     </div>
   );
 }
@@ -88,6 +91,7 @@ export function List({ items, empty }: { items: ReactNode[]; empty?: ReactNode }
 }
 
 export function Stepper({ steps, current, onPick, maxReached }: { steps: string[]; current: number; onPick?: (i: number) => void; maxReached?: number }) {
+  const { tr } = useLang();
   const box = useRef<HTMLOListElement>(null);
   // On a phone the bar scrolls sideways: keep the current step in view.
   useEffect(() => { box.current?.querySelector('[aria-current="step"]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }, [current]);
@@ -99,7 +103,7 @@ export function Stepper({ steps, current, onPick, maxReached }: { steps: string[
           <li key={s} className="flex shrink-0 items-center gap-2">
             <button disabled={!can} aria-current={here ? 'step' : undefined} onClick={() => can && onPick?.(i)}
               className={`flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold ring-1 transition ${here ? 'bg-brand-600 text-white ring-brand-600 shadow-float' : done ? 'bg-brand-50 text-brand-700 ring-brand-200' : 'bg-surface text-ink-400 ring-brand-100'} ${can ? 'cursor-pointer' : 'cursor-default'}`}>
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${here ? 'bg-white/20' : 'bg-brand-100 text-brand-700'}`}>{i + 1}</span>{s}
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${here ? 'bg-white/20' : 'bg-brand-100 text-brand-700'}`}>{i + 1}</span>{tr(s)}
             </button>
             {i < steps.length - 1 && <span className="h-px w-4 bg-brand-200" />}
           </li>

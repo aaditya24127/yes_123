@@ -29,7 +29,8 @@ SECRET = re.compile(r"sk-ant-[A-Za-z0-9_-]{10,}|AIza[0-9A-Za-z_-]{30,}|gsk_[A-Za
 
 
 def git(*a, check=True, text=True):
-    r = subprocess.run(['git', '-C', WT, *a], capture_output=True, text=text)
+    # git writes UTF-8; Windows would otherwise read it as cp1252 and fail on Indian-language files
+    r = subprocess.run(['git', '-C', WT, *a], capture_output=True, **(dict(text=True, encoding='utf-8', errors='replace') if text else {}))
     if check and r.returncode: sys.exit(f'git {" ".join(a)} failed:\n{r.stderr.strip()}')
     return r.stdout
 

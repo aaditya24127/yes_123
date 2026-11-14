@@ -1,5 +1,6 @@
 {
   "ui": {
+    "speed": "Voice speed",
     "toggle": "Tutorial",
     "next": "Next",
     "back": "Back",

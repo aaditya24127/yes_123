@@ -37,22 +37,41 @@ type Vars = Record<string, string | number>;
 interface Ctx {
   lang: Lang; setLang: (l: Lang) => void; dir: 'ltr' | 'rtl';
   t: (key: Key, vars?: Vars) => string;
+  // Any screen text: the English phrase is the key ("Send to all teachers of {school}"). Names and numbers go in `vars`. A phrase without a translation shows in English.
+  tr: <T extends string | null | undefined>(text: T, vars?: Vars) => T extends string ? string : T;
   // Looks up `${prefix}_${code}`; returns `fallback` when the backend sends a code we have no text for (new category, new flag…).
   tx: (prefix: string, code: string, fallback: string, vars?: Vars) => string;
   date: (iso: string) => string;
   alert: (a: { type: string; days: number; message: string }) => string;
   fact: (text: string) => string;
+  // A notice written by the server ("Concern from ..."): known sentence shapes are translated, names and anything typed stay as they are.
+  tn: (text: string | null | undefined) => string;
+  dateTime: (iso: string) => string;
 }
 
 const fill = (s: string, vars?: Vars) => (vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : s);
 
 const LangCtx = createContext<Ctx>({
   lang: 'en', setLang: () => {}, dir: 'ltr',
-  t: (k, v) => fill(en[k], v), tx: (p, c, f) => f, date: (d) => d, alert: (a) => a.message, fact: (x) => x,
+  t: (k, v) => fill(en[k], v), tr: (s, v) => (s == null ? s : fill(s, v)) as never, tx: (p, c, f) => f, date: (d) => d, alert: (a) => a.message, fact: (x) => x, tn: (s) => s ?? '', dateTime: (d) => d,
 });
+
+// The words of every screen, per language: lang/ui/<code>.json maps an English phrase to its translation (made by tools/i18n/translate.py). Loaded when a language is chosen.
+const UI: Partial<Record<Lang, Record<string, string>>> = {};
+async function loadUi(lang: Lang): Promise<Record<string, string>> {
+  if (lang === 'en') return {};
+  if (UI[lang]) return UI[lang]!;
+  try { const m = await import(`./lang/ui/${lang}.json`); UI[lang] = (m.default ?? m) as Record<string, string>; } catch { UI[lang] = {}; }
+  return UI[lang]!;
+}
+
+// For helpers that are not components (dates): the locale of the language chosen right now.
+let NOW_LOCALE = 'en-IN';
+export const localeNow = () => NOW_LOCALE;
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en');
+  const [ui, setUi] = useState<{ lang: Lang; words: Record<string, string> }>({ lang: 'en', words: {} });
 
   useEffect(() => {
     try { const l = localStorage.getItem('crp-lang') as Lang | null; if (l && DICTS[l]) setLangState(l); } catch { /* ignore */ }
@@ -66,6 +85,8 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     r.lang = lang; r.dir = dir;
   }, [lang, dir]);
 
+  useEffect(() => { let live = true; loadUi(lang).then((words) => { if (live) setUi({ lang, words }); }); return () => { live = false; }; }, [lang]);
+
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     try { localStorage.setItem('crp-lang', l); } catch { /* ignore */ }
@@ -73,7 +94,10 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<Ctx>(() => {
     const d = DICTS[lang];
-    const t = (key: Key, vars?: Vars) => fill(d[key] ?? en[key], vars);
+    const words = ui.lang === lang ? ui.words : {};         // never English words under another language's name while it loads
+    // A menu text without a hand-made translation in lang/<code>.ts uses the translation of its English words from lang/ui/<code>.json.
+    const t = (key: Key, vars?: Vars) => fill(d[key] ?? words[en[key]] ?? en[key], vars);
+    const tr = <T extends string | null | undefined>(text: T, vars?: Vars) => (text == null ? text : fill(words[text] ?? text, vars)) as T extends string ? string : T;
     const tx = (prefix: string, code: string, fallback: string, vars?: Vars) => {
       const k = `${prefix}_${code}` as Key;
       const s = d[k] ?? en[k];
@@ -101,8 +125,25 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
       if ((m = text.match(/^(.+?) was raised on (\d+) separate dates/))) return t('fact_recurring', { need: m[1], n: m[2] });
       return text;
     };
-    return { lang, setLang, dir, t, tx, date, alert, fact };
-  }, [lang, dir, info.locale, setLang]);
+    const dateTime = (iso: string) => new Date(iso).toLocaleString(`${info.locale}-u-nu-latn`, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+    const tn = (text: string | null | undefined) => {
+      if (!text) return '';
+      let m: RegExpMatchArray | null;
+      if ((m = text.match(/^(Concern|Message) from (.+)$/))) return tr(`${m[1]} from {name}`, { name: m[2] });
+      if ((m = text.match(/^(.+) sent Task (\d+)$/))) return tr('{name} sent Task {n}', { name: m[1], n: m[2] });
+      if ((m = text.match(/^(.+) sent (\d+) file\(s\)$/))) return tr('{name} sent {n} file(s)', { name: m[1], n: m[2] });
+      if ((m = text.match(/^Reply from (.+)$/))) return tr('Reply from {name}', { name: m[1] });
+      if ((m = text.match(/^Assessment report ready: (.+)$/))) return tr('Assessment report ready: {name}', { name: m[1] });
+      if ((m = text.match(/^(.+) has been asked to start it\.$/))) return tr('{name} has been asked to start it.', { name: m[1] });
+      if ((m = text.match(/^Follow-up overdue by (\d+) days: (.*)$/))) return tr('Follow-up overdue by {days} days: {action}', { days: m[1], action: tr(m[2]) });
+      if ((m = text.match(/^No visit for (\d+) days$/))) return tr('No visit for {days} days', { days: m[1] });
+      if ((m = text.match(/^Never observed \((\d+) days since joining\)$/))) return tr('Never observed ({days} days since joining)', { days: m[1] });
+      if ((m = text.match(/^(.+) \((\d+) files?\)$/))) return tr('{title} ({n} files)', { title: m[1], n: m[2] });
+      return tr(text);
+    };
+    NOW_LOCALE = `${info.locale}-u-nu-latn`;
+    return { lang, setLang, dir, t, tr, tx, date, alert, fact, tn, dateTime };
+  }, [lang, dir, info.locale, setLang, ui]);
 
   return <LangCtx.Provider value={value}>{children}</LangCtx.Provider>;
 }

@@ -8,17 +8,19 @@ import { useHome, fmtAgo, fmtDate } from '@/lib/hooks';
 import Shell from '@/components/Shell';
 import TaskItemCard from '@/components/TaskItemCard';
 import { Badge, Button, Card } from '@/components/ui';
+import { useLang } from '@/lib/i18n';
 
 function Task() {
+  const { tr } = useLang();
   const id = useSearchParams().get('id');
   const { data, error, reload } = useHome();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  if (!data) return <Shell home={null} error={error}><p className="py-20 text-center text-ink-500">Loading…</p></Shell>;
+  if (!data) return <Shell home={null} error={error}><p className="py-20 text-center text-ink-500">{tr('Loading…')}</p></Shell>;
   const t = data.tasks.find((x) => x.id === id);
-  if (!t) return <Shell home={data} error={error}><Link href="/" className="text-brand-700">Back to tasks</Link><p className="py-16 text-center text-ink-500">This task was not found.</p></Shell>;
+  if (!t) return <Shell home={data} error={error}><Link href="/" className="text-brand-700">{tr('Back to tasks')}</Link><p className="py-16 text-center text-ink-500">{tr('This task was not found.')}</p></Shell>;
 
   const items = t.items;
   const done = items.filter((i) => i.status === 'accepted').length;
@@ -29,39 +31,39 @@ function Task() {
 
   const confirmNotice = async () => {
     setBusy(true); setErr('');
-    try { await api.submit({ taskId: t.id }, note || 'I have seen this notice.', []); await reload(); } catch (e) { setErr(e instanceof Error ? e.message : 'Could not send.'); }
+    try { await api.submit({ taskId: t.id }, note || tr('I have seen this notice.'), []); await reload(); } catch (e) { setErr(e instanceof Error ? e.message : tr('Could not send.')); }
     setBusy(false);
   };
 
   return (
     <Shell home={data} error={error}>
-      <Link href="/" className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 pe-3 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />All tasks</Link>
+      <Link href="/" className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 pe-3 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />{tr('All tasks')}</Link>
       <Card>
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          {notice ? <Badge tone={t.status === 'open' ? 'open' : 'submitted'}>{t.status === 'open' ? 'Please confirm' : 'Confirmed'}</Badge>
-            : done === items.length && items.length > 0 ? <Badge tone="accepted">All done</Badge> : late ? <Badge tone="late">Overdue</Badge> : <Badge tone="open">{todo} to do</Badge>}
-          {!notice && items.length > 1 && <span className="text-sm text-ink-500">{sentOrDone} of {items.length} sent · {done} accepted</span>}
+          {notice ? <Badge tone={t.status === 'open' ? 'open' : 'submitted'}>{t.status === 'open' ? tr('Please confirm') : tr('Confirmed')}</Badge>
+            : done === items.length && items.length > 0 ? <Badge tone="accepted">{tr('All done')}</Badge> : late ? <Badge tone="late">{tr('Overdue')}</Badge> : <Badge tone="open">{tr('{todo} to do', { todo })}</Badge>}
+          {!notice && items.length > 1 && <span className="text-sm text-ink-500">{tr('{sentOrDone} of {length} sent · {done} accepted', { sentOrDone, length: items.length, done })}</span>}
         </div>
-        <h1 className="font-serif text-2xl font-semibold text-ink-900">{t.title}</h1>
-        {t.message && <p className="mt-2 whitespace-pre-wrap text-ink-700">{t.message}</p>}
-        <p className="mt-3 text-sm text-ink-500">Asked {fmtAgo(t.created_at)}{t.due_date ? ` · due ${fmtDate(t.due_date)}` : ''}{t.visit_date ? ` · visit on ${fmtDate(t.visit_date)}` : ''}</p>
+        <h1 className="font-serif text-2xl font-semibold text-ink-900">{tr(t.title)}</h1>
+        {t.message && <p className="mt-2 whitespace-pre-wrap text-ink-700">{tr(t.message)}</p>}
+        <p className="mt-3 text-sm text-ink-500">{tr('Asked {ago}', { ago: fmtAgo(t.created_at) })}{t.due_date ? tr(' · due {fmtDate}', { fmtDate: fmtDate(t.due_date) }) : ''}{t.visit_date ? tr(' · visit on {fmtDate}', { fmtDate: fmtDate(t.visit_date) }) : ''}</p>
       </Card>
 
       {notice ? (
         <Card className="mt-4">
           {t.status === 'open' ? (
             <>
-              <p className="mb-3 flex items-center gap-2 text-sm text-ink-500"><CalendarClock size={16} />Please confirm that you have seen this notice.</p>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Optional note"
+              <p className="mb-3 flex items-center gap-2 text-sm text-ink-500"><CalendarClock size={16} />{tr('Please confirm that you have seen this notice.')}</p>
+              <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder={tr('Optional note')}
                 className="w-full rounded-2xl border-0 bg-page px-4 py-3 text-ink-900 ring-1 ring-brand-200 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-600" />
-              {err && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{err}</p>}
-              <Button className="mt-4 w-full" busy={busy} onClick={confirmNotice}><Send size={16} />I have seen this</Button>
+              {err && <p role="alert" className="mt-3 rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-200">{tr(err)}</p>}
+              <Button className="mt-4 w-full" busy={busy} onClick={confirmNotice}><Send size={16} />{tr('I have seen this')}</Button>
             </>
-          ) : <p className="flex items-center gap-2 font-semibold text-ink-900"><CheckCircle2 size={18} className="text-brand-600" />You confirmed this notice.</p>}
+          ) : <p className="flex items-center gap-2 font-semibold text-ink-900"><CheckCircle2 size={18} className="text-brand-600" />{tr('You confirmed this notice.')}</p>}
         </Card>
       ) : (
         <div className="mt-4 space-y-4">
-          {items.map((it) => <TaskItemCard key={it.id} item={it} label={`Task ${it.position}`} onSent={reload} />)}
+          {items.map((it) => <TaskItemCard key={it.id} item={it} label={tr('Task {position}', { position: it.position })} onSent={reload} />)}
         </div>
       )}
     </Shell>

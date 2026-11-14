@@ -30,7 +30,7 @@ function FileIcon({ f }: { f: FileInfo }) {
 const FEED_AS_SECTION: Record<string, string> = { overdue_followup: 'followups', time_since_visit: 'visits', attendance: 'attendance' };
 
 export function DetailBody({ item, onClose, compact = false }: { item: Item; onClose: () => void; compact?: boolean }) {
-  const { t, tx, dir, alert } = useLang();
+  const { t, tx, dir, alert , tr } = useLang();
   const feedLabel = (x: string) => (FEED_AS_SECTION[x] ? tx('sec', FEED_AS_SECTION[x], x) : tx('feed', x, FEED_LABEL[x] ?? x));
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('Evidence');
@@ -74,12 +74,12 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
         <span className="hidden sm:block"><ScoreRing value={item.score} color={band?.ring ?? '#94A3B8'} size={76} stroke={8} /></span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 dir="auto" className="font-serif text-xl font-semibold leading-snug text-ink-900 sm:truncate sm:text-2xl">{item.name}</h2>
+            <h2 dir="auto" className="font-serif text-xl font-semibold leading-snug text-ink-900 sm:truncate sm:text-2xl">{tr(item.name)}</h2>
             {band && <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${band.chip}`}>{tx('band', item.band!, band.label)}</span>}
             {item.rank && <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">{t('rank', { n: item.rank })}</span>}
             {item.insufficient && <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-200">{t('needsMore')}</span>}
           </div>
-          <p dir="auto" className="mt-0.5 text-sm text-ink-500">{item.subtitle}</p>
+          <p dir="auto" className="mt-0.5 text-sm text-ink-500">{tr(item.subtitle)}</p>
           <div className="mt-2 hidden max-w-sm items-center gap-2 text-xs text-ink-500 sm:flex">
             <span>{t('coverage')}</span>
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-brand-100"><div className="h-full rounded-full bg-brand-600" style={{ width: `${item.coverage}%` }} /></div>
@@ -122,15 +122,15 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                   <span className="flex items-center gap-2 text-sm font-semibold text-ink-900"><span className="h-2.5 w-2.5 rounded-full" style={{ background: CAT_COLORS[i] }} />{tx('cat', g.code, g.label)}</span>
                   <span className="flex items-center gap-1 text-xs text-ink-500">{g.status === 'unknown' ? <CircleHelp size={13} /> : <CheckCircle2 size={13} className="text-emerald-600" />}{t('records', { n: g.records.length })}</span>
                 </div>
-                {g.records.length === 0 && <p dir="auto" className="px-4 py-3 text-sm text-ink-500">{g.explanation}</p>}
+                {g.records.length === 0 && <p dir="auto" className="px-4 py-3 text-sm text-ink-500">{tr(g.explanation)}</p>}
                 <ul className="divide-y divide-brand-50">
                   {g.records.map((r) => (
                     <li key={r.record_type + r.record_id} className="flex flex-wrap items-start gap-x-3 gap-y-1.5 px-4 py-3 sm:flex-nowrap">
-                      <span className="mt-0.5 w-20 shrink-0 text-xs font-medium text-ink-400">{r.date}</span>
-                      <p dir="auto" className="flex-1 text-[13px] leading-snug text-ink-700">{r.summary}</p>
+                      <span className="mt-0.5 w-20 shrink-0 text-xs font-medium text-ink-400">{tr(r.date)}</span>
+                      <p dir="auto" className="flex-1 text-[13px] leading-snug text-ink-700">{tr(r.summary)}</p>
                       {r.file && (
                         <button onClick={() => openFile(r.file!.id)} data-tour="evidence-file" className="flex max-w-full shrink-0 items-center gap-1.5 rounded-full sm:max-w-[220px] bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100" title={r.locator ?? ''}>
-                          <Eye size={13} /><span className="truncate">{r.file.name}</span>
+                          <Eye size={13} /><span className="truncate">{tr(r.file.name)}</span>
                         </button>
                       )}
                     </li>
@@ -140,7 +140,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
             ))}
             {FEATURES.overrides && !item.insufficient && (
               <details className="rounded-2xl border border-brand-100 p-4">
-                <summary className="cursor-pointer text-sm font-semibold text-brand-700">Change this priority by hand</summary>
+                <summary className="cursor-pointer text-sm font-semibold text-brand-700">{tr('Change this priority by hand')}</summary>
                 <div className="mt-3"><OverrideBox item={item} /></div>
               </details>
             )}
@@ -159,8 +159,8 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                       <button key={f.id} onClick={() => setSel(f.id)} className={`flex w-full items-start gap-2.5 rounded-2xl border p-3 text-start transition ${sel === f.id ? 'border-brand-500 bg-brand-50 shadow-float' : 'border-brand-100 bg-surface hover:border-brand-300'}`}>
                         <FileIcon f={f} />
                         <div className="min-w-0 flex-1">
-                          <p dir="auto" className="break-words text-[13px] font-semibold text-ink-900 sm:truncate">{f.name}</p>
-                          <p className="text-[11px] text-ink-500">{f.record_date} · {f.format.toUpperCase()}{f.scanned ? ` · ${t('scanned')}` : ''}</p>
+                          <p dir="auto" className="break-words text-[13px] font-semibold text-ink-900 sm:truncate">{tr(f.name)}</p>
+                          <p className="text-[11px] text-ink-500">{tr(f.record_date)} · {f.format.toUpperCase()}{f.scanned ? ` · ${t('scanned')}` : ''}</p>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {f.feeds.map((x) => <span key={x} className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-800">{feedLabel(x)}</span>)}
                             {f.duplicate_of && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t('duplicate')}</span>}
@@ -173,7 +173,7 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
               ))}
             </div>
             <div data-tour="file-viewer" className={`min-h-[420px] min-w-0 lg:min-h-[480px] ${!wide && !sel ? 'hidden' : ''}`}>
-              {!wide && sel && <button onClick={() => setSel(null)} className="mb-3 text-sm font-semibold text-brand-700 underline">← All files</button>}
+              {!wide && sel && <button onClick={() => setSel(null)} className="mb-3 text-sm font-semibold text-brand-700 underline">{tr('← All files')}</button>}
               {sel && files ? <DataViewer file={files.find((f) => f.id === sel)!} key={sel} /> : <p className="text-sm text-ink-500">{t('selectFile')}</p>}
             </div>
           </div>
@@ -184,12 +184,13 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
 }
 
 export default function DetailModal({ item, onClose }: { item: Item | null; onClose: () => void }) {
+  const { tr } = useLang();
   return (
     <AnimatePresence>
       {item && (
         <>
           <motion.div className="fixed inset-0 z-[59] bg-ink-900/25 backdrop-blur-[2px] sm:z-[59] md:z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.div role="dialog" aria-label={item.name} className="fixed inset-x-0 bottom-0 top-10 z-[60] mx-auto flex max-w-6xl flex-col overflow-hidden rounded-t-[28px] bg-surface shadow-panel sm:inset-x-6 sm:bottom-6 sm:top-6 sm:z-[60] md:z-50 sm:rounded-[28px]"
+          <motion.div role="dialog" aria-label={tr(item.name)} className="fixed inset-x-0 bottom-0 top-10 z-[60] mx-auto flex max-w-6xl flex-col overflow-hidden rounded-t-[28px] bg-surface shadow-panel sm:inset-x-6 sm:bottom-6 sm:top-6 sm:z-[60] md:z-50 sm:rounded-[28px]"
             initial={{ opacity: 0, y: 30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
             <DetailBody item={item} onClose={onClose} />
           </motion.div>

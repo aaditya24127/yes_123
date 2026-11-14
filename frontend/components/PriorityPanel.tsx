@@ -16,7 +16,7 @@ interface BodyProps {
 }
 
 export function PriorityBody({ onClose, categories, weights, onChange, onReset, onApply, applying, dirty, library = [], onFactorsChanged, onDelete }: BodyProps) {
-  const { t, tx, dir } = useLang();
+  const { t, tx, dir , tr } = useLang();
   const [showLib, setShowLib] = useState(false);
   const [creating, setCreating] = useState(false);
   const [askDel, setAskDel] = useState('');       // code of the priority waiting for "Yes, delete"
@@ -30,9 +30,9 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
   const deletable = (c: { builtin?: boolean }) => !!onDelete && c.builtin === false;
   const confirmRow = (code: string) => (
     <span className="flex items-center gap-1.5 text-xs">
-      <span className="text-ink-700">Delete this priority?</span>
-      <button disabled={deleting} onClick={() => doDelete(code)} className="rounded-full bg-red-600 px-2.5 py-1 font-semibold text-white hover:bg-red-700 disabled:opacity-50">{deleting ? 'Deleting…' : 'Yes, delete'}</button>
-      <button disabled={deleting} onClick={() => { setAskDel(''); setDelErr(''); }} className="rounded-full px-2.5 py-1 font-semibold text-ink-700 hover:bg-brand-50">Keep</button>
+      <span className="text-ink-700">{tr('Delete this priority?')}</span>
+      <button disabled={deleting} onClick={() => doDelete(code)} className="rounded-full bg-red-600 px-2.5 py-1 font-semibold text-white hover:bg-red-700 disabled:opacity-50">{deleting ? tr('Deleting…') : tr('Yes, delete')}</button>
+      <button disabled={deleting} onClick={() => { setAskDel(''); setDelErr(''); }} className="rounded-full px-2.5 py-1 font-semibold text-ink-700 hover:bg-brand-50">{tr('Keep')}</button>
     </span>
   );
   // Sliders: factors already in the saved list + any library factor the CRP switched on in this session.
@@ -66,16 +66,16 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
           return (
             <div key={c.code}>
               <div className="flex items-baseline justify-between gap-3">
-                <label htmlFor={`w-${c.code}`} className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-ink-900" title={c.description}>
+                <label htmlFor={`w-${c.code}`} className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-ink-900" title={tr(c.description)}>
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: CAT_COLORS[i] }} /><span className="truncate">{tx('cat', c.code, c.label)}</span>
                 </label>
                 <span className="flex items-center gap-1">
-                  {fromLibrary.has(c.code) && <button onClick={() => onChange(c.code, 0)} title="Switch off" aria-label="Switch off" className="rounded-full p-1 text-ink-400 hover:bg-brand-50 hover:text-brand-700"><Minus size={14} /></button>}
-                  {deletable(c) && <button onClick={() => { setAskDel(c.code); setDelErr(''); }} title="Delete this priority" aria-label="Delete this priority" className="rounded-full p-1 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
+                  {fromLibrary.has(c.code) && <button onClick={() => onChange(c.code, 0)} title={tr('Switch off')} aria-label={tr('Switch off')} className="rounded-full p-1 text-ink-400 hover:bg-brand-50 hover:text-brand-700"><Minus size={14} /></button>}
+                  {deletable(c) && <button onClick={() => { setAskDel(c.code); setDelErr(''); }} title={tr('Delete this priority')} aria-label={tr('Delete this priority')} className="rounded-full p-1 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
                   <span className="text-lg font-semibold tabular-nums text-ink-900">{v}%</span>
                 </span>
               </div>
-              {askDel === c.code && <div className="mt-1.5">{confirmRow(c.code)}{delErr && <p className="mt-1 text-xs text-red-600">{delErr}</p>}</div>}
+              {askDel === c.code && <div className="mt-1.5">{confirmRow(c.code)}{delErr && <p className="mt-1 text-xs text-red-600">{tr(delErr)}</p>}</div>}
               <input id={`w-${c.code}`} type="range" min={0} max={100} step={1} value={v} className="prio-range mt-1" style={{ ['--p' as string]: `${v}%` }}
                 onChange={(e) => onChange(c.code, Number(e.target.value))} />
               <p className="mt-0.5 text-xs text-ink-500">{t('ofRanking', { p: share(c.code) })}</p>
@@ -98,20 +98,20 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
                 )}
                 {Object.entries(groups).map(([g, list]) => (
                   <div key={g}>
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-ink-400">{g}</p>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-ink-400">{tr(g)}</p>
                     <ul className="space-y-1.5">
                       {list.map((c) => (
                         <li key={c.code} className="flex flex-wrap items-start gap-2 rounded-xl bg-surface px-3 py-2 ring-1 ring-brand-100">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-ink-900">{c.name}</p>
-                            <p className="text-xs leading-snug text-ink-500">{c.description}</p>
-                            {c.data_hint && <p className="mt-0.5 text-[11px] text-ink-400">Uses: {c.data_hint}{c.scope && c.scope !== 'both' ? ` · ${c.scope}s only` : ''}</p>}
+                            <p className="text-sm font-semibold text-ink-900">{tr(c.name)}</p>
+                            <p className="text-xs leading-snug text-ink-500">{tr(c.description)}</p>
+                            {c.data_hint && <p className="mt-0.5 text-[11px] text-ink-400">{tr('Uses:')}{' '}{tr(c.data_hint)}{c.scope && c.scope !== 'both' ? tr(' · {scope}s only', { scope: c.scope }) : ''}</p>}
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
-                            {deletable(c) && <button onClick={() => { setAskDel(c.code); setDelErr(''); }} title="Delete this priority" aria-label="Delete this priority" className="rounded-full p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
-                            <button onClick={() => onChange(c.code, 10)} className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700">Add</button>
+                            {deletable(c) && <button onClick={() => { setAskDel(c.code); setDelErr(''); }} title={tr('Delete this priority')} aria-label={tr('Delete this priority')} className="rounded-full p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>}
+                            <button onClick={() => onChange(c.code, 10)} className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700">{tr('Add')}</button>
                           </div>
-                          {askDel === c.code && <div className="basis-full">{confirmRow(c.code)}{delErr && <p className="mt-1 text-xs text-red-600">{delErr}</p>}</div>}
+                          {askDel === c.code && <div className="basis-full">{confirmRow(c.code)}{delErr && <p className="mt-1 text-xs text-red-600">{tr(delErr)}</p>}</div>}
                         </li>
                       ))}
                     </ul>
@@ -124,7 +124,7 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
       </div>
 
       <div data-tour="prio-actions" className="mt-5 flex items-center gap-3 border-t border-brand-100 pt-4">
-        <button onClick={onReset} title="Go back to the 5 main priorities we started with" className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
+        <button onClick={onReset} title={tr('Go back to the 5 main priorities we started with')} className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
           <RotateCcw size={16} /> {t('reset')}
         </button>
         <button onClick={onApply} disabled={applying || total <= 0}
@@ -139,12 +139,13 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
 }
 
 export default function PriorityPanel({ open, ...body }: BodyProps & { open: boolean }) {
+  const { tr } = useLang();
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div className="fixed inset-0 z-[59] bg-ink-900/5 sm:z-[59] md:z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={body.onClose} />
-          <motion.aside role="dialog" aria-label="Priority settings"
+          <motion.aside role="dialog" aria-label={tr('Priority settings')}
             className="fixed bottom-2 right-2 top-2 z-[60] flex w-[calc(100vw-1rem)] flex-col rounded-[28px] bg-surface p-4 shadow-panel sm:bottom-4 sm:right-4 sm:top-4 sm:z-[60] md:z-50 sm:w-[min(460px,calc(100vw-2rem))] sm:p-6"
             initial={{ x: 480, opacity: 0.6 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 480, opacity: 0.6 }} transition={{ type: 'spring', stiffness: 280, damping: 32 }}>
             <PriorityBody {...body} />

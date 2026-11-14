@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, AuthError, token, type Home } from './api';
+import { localeNow, trNow } from './i18n';
 
 const EVERY_MS = 10000;
 
@@ -41,13 +42,13 @@ export function useHome() {
 export function fmtDate(iso: string | null | undefined) {
   if (!iso) return '';
   const d = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(localeNow(), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export function fmtAgo(iso: string) {
   const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  if (s < 60) return trNow('just now');
+  if (s < 3600) return trNow('{n} min ago', { n: Math.floor(s / 60) });
+  if (s < 86400) return trNow('{n} h ago', { n: Math.floor(s / 3600) });
   return fmtDate(iso);
 }

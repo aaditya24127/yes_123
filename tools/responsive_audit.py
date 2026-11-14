@@ -1,5 +1,5 @@
 """Responsive audit of the three websites: opens every page at 14 device sizes (small phones, big phones, landscape phones, tablets, laptops) with a real Chrome and measures
-what makes a site awkward on a phone: the page scrolling sideways, things sticking out of the screen, tap targets under 32 px, text under 11 px, inputs under 16 px (iPhones zoom in on
+what makes a site awkward on a phone: the page scrolling sideways, things sticking out of the screen or out of their own card, tap targets under 32 px, text under 11 px, inputs under 16 px (iPhones zoom in on
 them), and console errors. It also saves screenshots of every page at 360, 768 and 1280 px wide and of any page that overflows.
 
     python tools/responsive_audit.py crp [base_url]        (website, default http://localhost:3000, API on :8000, demo CRP account)
@@ -20,17 +20,19 @@ SIZES = [  # name, width, height, phone-like
 ]
 SITES = {
     'crp': dict(base='http://localhost:3000', token='crp-token', pages=[('priorities', '/'), ('upload', '/upload'), ('visit', '/visit'), ('visit-brief', f'/visit?school={SCHOOL}&teacher={TEACHER}'),
-                                                                        ('connect', '/connect'), ('ask', '/ask'), ('settings', '/settings'), ('login', '/login')]),
+                                                                        ('connect', '/connect'), ('connect-teacher', '/connect', lambda p: p.locator('[data-tour=t-item]').first.click(timeout=8000)),
+                                                                        ('ask', '/ask'), ('settings', '/settings'), ('login', '/login')]),
     'teacher': dict(base='http://localhost:3001', token='crp-teacher-token', pages=[('home', '/'), ('messages', '/messages'), ('visits', '/visits'), ('account', '/account'), ('updates', '/updates'), ('login', '/login')]),
     'landing': dict(base='http://localhost:5173', token=None, pages=[('landing', '/')]),
 }
 
 # What is measured on each page (runs inside the browser).
 JS = r"""
-() => {
-  const W = window.innerWidth, H = window.innerHeight; const out = {};
+(want) => {
+  // `want` is the width the device really has. A phone browser silently widens its layout when something does not fit, so everything is measured against `want`, not against window.innerWidth.
+  const W = want || window.innerWidth, H = window.innerHeight; const out = {};
   const de = document.documentElement;
-  out.scrollW = de.scrollWidth; out.innerW = W; out.overflowX = de.scrollWidth - W; out.docH = de.scrollHeight;
+  out.scrollW = de.scrollWidth; out.innerW = window.innerWidth; out.overflowX = Math.max(de.scrollWidth, window.innerWidth) - W; out.docH = de.scrollHeight;
   const vis = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0'; };
   const label = (e) => (e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\s+/).slice(0, 3).join('.') : '') + ' "' + (e.innerText || e.getAttribute('aria-label') || e.placeholder || '').trim().slice(0, 28).replace(/\n/g, ' ') + '"');
   // inside a box that scrolls or clips sideways on purpose (a row of chips, a wide table), sticking out is fine
@@ -56,13 +58,22 @@ JS = r"""
   }
   out.tinyText = tiny; out.tinySamples = tinySamples;
   out.smallInputFont = [...document.querySelectorAll('input:not([type=hidden]):not([type=range]):not([type=checkbox]):not([type=radio]), select, textarea')].filter(vis).filter((e) => parseFloat(getComputedStyle(e).fontSize) < 16).length;
+  // something sticking out of the card (rounded box, list item, section) it sits in, even though it is still on the screen
+  const esc = [];
+  for (const e of document.body.querySelectorAll('input, select, textarea, button, a[href], img, svg, canvas, table, p, h1, h2, h3, li, span, div')) {
+    if (!vis(e)) continue; const s = getComputedStyle(e); if (s.position === 'absolute' || s.position === 'fixed') continue;
+    const box = e.parentElement && e.parentElement.closest('section, li, article, [class*="rounded-2xl"], [class*="rounded-3xl"], [class*="rounded-xl"]'); if (!box || box === e) continue;
+    const r = e.getBoundingClientRect(), c = box.getBoundingClientRect(); if (c.width < 80) continue;
+    if ((r.right > c.right + 1 || r.left < c.left - 1) && !scrolls(e)) esc.push({ el: label(e), over: Math.round(Math.max(r.right - c.right, c.left - r.left)) });
+  }
+  out.escapesCard = esc.slice(0, 6); out.escapesCardCount = esc.length;
   return out;
 }
 """
 
 
 def login(page, site, base):
-    page.goto(base + '/login', wait_until='domcontentloaded'); page.wait_for_timeout(1200)
+    page.goto(base + '/login', wait_until='domcontentloaded'); page.wait_for_timeout(3500)      # the page must have started (hydrated) before it is typed into, or the button stays disabled
     if site == 'crp':
         page.get_by_text('Fill in the demo account').click(); page.wait_for_timeout(300)
     else:
@@ -86,24 +97,25 @@ def main():
             ctx = browser.new_context(viewport={'width': w, 'height': h}, is_mobile=phone, has_touch=phone, device_scale_factor=2 if phone else 1)
             page = ctx.new_page(); errors = []
             page.on('console', lambda m: errors.append(m.text[:160]) if m.type == 'error' else None); page.on('pageerror', lambda e: errors.append(('pageerror ' + str(e))[:160]))
-            for pname, path in cfg['pages']:
+            for pname, path, *act in cfg['pages']:
                 try:
                     if pname == 'login':
                         page.goto(base + '/', wait_until='domcontentloaded'); page.evaluate('localStorage.clear()')
                     elif cfg['token'] and not signed_in(page, cfg['token']):
                         login(page, site, base)
                     errors.clear(); page.goto(base + path, wait_until='domcontentloaded'); page.wait_for_timeout(4000 if pname in ('visit-brief', 'priorities') else 2500)
-                    m = page.evaluate(JS); m.update(size=name, page=pname, errors=list(errors)[:3]); res.append(m)
+                    if act: act[0](page); page.wait_for_timeout(1500)
+                    m = page.evaluate(JS, w); m.update(size=name, page=pname, errors=list(errors)[:3]); res.append(m)
                     if name in ('phone-360', 'tablet-768', 'laptop-1280') or m['overflowX'] > 1:
                         page.screenshot(path=os.path.join(shots, f'{pname}_{name}.png'), full_page=True)
-                    print(f"{name:17} {pname:12} overflowX={m['overflowX']:>4} off={m['offscreenCount']:>3} smallTap={m['smallTargetCount']:>3}/{m['interactive']:<3} tiny={m['tinyText']:>3} inFont<16={m['smallInputFont']} err={len(m['errors'])}", flush=True)
+                    print(f"{name:17} {pname:12} overflowX={m['overflowX']:>4} off={m['offscreenCount']:>3} card={m['escapesCardCount']:>2} smallTap={m['smallTargetCount']:>3}/{m['interactive']:<3} tiny={m['tinyText']:>3} inFont<16={m['smallInputFont']} err={len(m['errors'])}", flush=True)
                 except Exception as e:
                     print(name, pname, 'ERROR', str(e)[:150], flush=True); res.append(dict(size=name, page=pname, error=str(e)[:200]))
             ctx.close()
         browser.close()
     os.makedirs(OUT, exist_ok=True); json.dump(res, open(os.path.join(OUT, f'{site}.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
-    bad = [r for r in res if r.get('overflowX', 0) > 1 or r.get('offscreenCount', 0) or r.get('errors')]
-    print(f'\n{len(res)} measurements, {len(bad)} with sideways overflow, off-screen elements or console errors.')
+    bad = [r for r in res if r.get('overflowX', 0) > 1 or r.get('offscreenCount', 0) or r.get('escapesCardCount', 0) or r.get('errors')]
+    print(f'\n{len(res)} measurements, {len(bad)} with sideways overflow, off-screen or card-escaping elements or console errors.')
 
 
 if __name__ == '__main__':

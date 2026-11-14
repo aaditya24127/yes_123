@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -21,7 +21,7 @@ function rowSet(preview: Preview, sheet: string, single: boolean): Set<number> {
 }
 
 function Sheets({ preview }: { preview: Preview }) {
-  const { t } = useLang();
+  const { t , tr } = useLang();
   const [tab, setTab] = useState(0);
   const sheet = preview.sheets![tab];
   const hl = useMemo(() => rowSet(preview, sheet.name, preview.sheets!.length === 1), [preview, sheet]);
@@ -33,7 +33,7 @@ function Sheets({ preview }: { preview: Preview }) {
       {preview.sheets!.length > 1 && (
         <div className="mb-2 flex gap-1.5">
           {preview.sheets!.map((s, i) => (
-            <button key={s.name} onClick={() => setTab(i)} className={`rounded-full px-3 py-1 text-xs font-semibold ${i === tab ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-700'}`}>{s.name}</button>
+            <button key={s.name} onClick={() => setTab(i)} className={`rounded-full px-3 py-1 text-xs font-semibold ${i === tab ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-700'}`}>{tr(s.name)}</button>
           ))}
         </div>
       )}
@@ -46,7 +46,7 @@ function Sheets({ preview }: { preview: Preview }) {
               return (
                 <tr key={i} ref={ref} className={on ? 'bg-brand-100/70' : i % 2 ? 'bg-surface' : 'bg-brand-50/30'}>
                   <td className={`sticky left-0 w-9 border-r border-brand-100 px-2 py-1.5 text-right tabular-nums ${on ? 'bg-brand-600 font-semibold text-white' : 'bg-brand-50 text-ink-400'}`}>{n}</td>
-                  {r.map((c, j) => <td key={j} className="whitespace-nowrap border-b border-brand-50 px-3 py-1.5 text-ink-700">{c}</td>)}
+                  {r.map((c, j) => <td key={j} className="whitespace-nowrap border-b border-brand-50 px-3 py-1.5 text-ink-700">{tr(c)}</td>)}
                 </tr>
               );
             })}
@@ -70,6 +70,7 @@ function blocks(text: string): string[] {
 }
 
 function Paragraphs({ items, highlights }: { items: string[]; highlights: Preview['highlights'] }) {
+  const { tr } = useLang();
   const keys = useMemo(() => highlights.map((h) => (h.text ? norm(h.text).split(' [concern level')[0].slice(0, 70) : '')).filter(Boolean), [highlights]);
   const first = useRef<HTMLParagraphElement | null>(null);
   useEffect(() => { first.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, [items]);
@@ -79,7 +80,7 @@ function Paragraphs({ items, highlights }: { items: string[]; highlights: Previe
       {items.map((p, i) => {
         const on = keys.some((k) => norm(p).includes(k));
         const ref = on && !firstSet ? ((firstSet = true), first) : undefined;
-        return <p key={i} ref={ref} className={on ? 'rounded-xl border-l-4 border-brand-600 bg-brand-50 px-3 py-2' : 'px-3 py-1'}>{p}</p>;
+        return <p key={i} ref={ref} className={on ? 'rounded-xl border-l-4 border-brand-600 bg-brand-50 px-3 py-2' : 'px-3 py-1'}>{tr(p)}</p>;
       })}
     </div>
   );
@@ -106,7 +107,7 @@ function Audio({ src, duration }: { src: string; duration: number | null }) {
 }
 
 export default function DataViewer({ file }: { file: FileInfo }) {
-  const { t } = useLang();
+  const { t , tr } = useLang();
   const [p, setP] = useState<Preview | null>(null); const [err, setErr] = useState('');
   useEffect(() => {
     setP(null); setErr('');
@@ -117,19 +118,19 @@ export default function DataViewer({ file }: { file: FileInfo }) {
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-ink-900">{file.name}</p>
-          <p className="text-xs text-ink-500">{file.format.toUpperCase()} · {file.record_date}{file.scanned ? ` · ${t('scanned')}` : ''}</p>
+          <p className="truncate text-sm font-semibold text-ink-900">{tr(file.name)}</p>
+          <p className="text-xs text-ink-500">{file.format.toUpperCase()} · {tr(file.record_date)}{file.scanned ? ` · ${t('scanned')}` : ''}</p>
         </div>
         <ExtLink href={raw} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100"><ExternalLink size={13} /> {t('openOriginal')}</ExtLink>
       </div>
       <div className="min-h-0 flex-1">
-        {err && <p className="text-sm text-red-600">{err}</p>}
+        {err && <p className="text-sm text-red-600">{tr(err)}</p>}
         {!p && !err && <div className="h-full animate-pulse rounded-2xl bg-brand-50" />}
         {p?.view === 'sheets' && <Sheets preview={p} />}
         {p?.view === 'doc' && <Paragraphs items={[...(p.paragraphs ?? []), ...(p.tables ?? []).flatMap((t) => t.map((r) => r.join('  |  ')))]} highlights={p.highlights} />}
         {p?.view === 'text' && <Paragraphs items={blocks(p.text ?? '')} highlights={p.highlights} />}
-        {p?.view === 'pdf' && <div className="thin-scroll h-full space-y-3 overflow-auto rounded-2xl border border-brand-100 bg-brand-50/50 p-3">{Array.from({ length: p.pages ?? 1 }).map((_, i) => <img key={i} src={api.pageUrl(file.id, i + 1)} alt={`Page ${i + 1}`} className="mx-auto w-full max-w-3xl rounded-lg bg-surface shadow-float" />)}</div>}
-        {p?.view === 'image' && <div className="thin-scroll h-full overflow-auto rounded-2xl border border-brand-100 bg-surface p-3"><img src={raw} alt={file.name} className="mx-auto max-w-full rounded-lg" /></div>}
+        {p?.view === 'pdf' && <div className="thin-scroll h-full space-y-3 overflow-auto rounded-2xl border border-brand-100 bg-brand-50/50 p-3">{Array.from({ length: p.pages ?? 1 }).map((_, i) => <img key={i} src={api.pageUrl(file.id, i + 1)} alt={tr('Page {x}', { x: i + 1 })} className="mx-auto w-full max-w-3xl rounded-lg bg-surface shadow-float" />)}</div>}
+        {p?.view === 'image' && <div className="thin-scroll h-full overflow-auto rounded-2xl border border-brand-100 bg-surface p-3"><img src={raw} alt={tr(file.name)} className="mx-auto max-w-full rounded-lg" /></div>}
         {p?.view === 'audio' && <Audio src={raw} duration={file.duration} />}
       </div>
     </div>

@@ -18,7 +18,7 @@ const TONE = ['bg-red-50 text-red-600', 'bg-orange-50 text-orange-600', 'bg-bran
 const short = (t: string) => t.split(/;|\(/)[0].trim().replace(/\.$/, '');
 
 export default function ItemCard({ item, onOpen, plain = false }: { item: Item; onOpen: (i: Item) => void; plain?: boolean }) {
-  const { t, tx, dir, alert, fact } = useLang();
+  const { t, tx, dir, alert, fact , tr } = useLang();
   const band = item.band ? BAND[item.band] : null;
   const router = useRouter();
   const [tip, setTip] = useState(false);
@@ -44,7 +44,7 @@ export default function ItemCard({ item, onOpen, plain = false }: { item: Item; 
           {item.rank ?? <HelpCircle size={18} />}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 dir="auto" className="line-clamp-2 font-serif text-[17px] font-semibold leading-snug text-ink-900">{item.name}</h3>
+          <h3 dir="auto" className="line-clamp-2 font-serif text-[17px] font-semibold leading-snug text-ink-900">{tr(item.name)}</h3>
           <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold" style={{ color: band?.ring ?? 'rgb(var(--b600))' }}>
             <span className="h-2 w-2 rounded-full" style={{ background: band?.ring ?? 'rgb(var(--b400))' }} />
             {band ? tx('band', item.band!, band.label) : t('unranked')}
