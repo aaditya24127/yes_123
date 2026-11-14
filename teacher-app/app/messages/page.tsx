@@ -7,6 +7,15 @@ import Shell from '@/components/Shell';
 import { Button, Card, Empty, Title } from '@/components/ui';
 import { useLang } from '@/lib/i18n';
 
+// A link in a message (the visit report) becomes a clear button-like link that opens in a new tab.
+function linkify(text: string, mine: boolean, reportLabel: string) {
+  return text.split(/(https?:\/\/\S+)/g).map((part, i) => {
+    if (!/^https?:\/\//.test(part)) return part;
+    const report = /\/r\?id=/.test(part);
+    return <a key={i} href={part} target="_blank" rel="noreferrer" className={`mt-2 inline-flex min-h-11 items-center rounded-2xl px-4 py-2 font-semibold underline-offset-2 ${report ? (mine ? 'bg-white text-brand-700' : 'bg-brand-600 text-white no-underline shadow-float') : 'underline'}`}>{report ? reportLabel : part}</a>;
+  });
+}
+
 export default function Messages() {
   const { tr, tn } = useLang();
   const { data, error, reload } = useHome();
@@ -38,7 +47,7 @@ export default function Messages() {
             <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-float ${mine ? 'rounded-br-lg bg-brand-600 text-white' : 'rounded-bl-lg bg-surface text-ink-900 ring-1 ring-brand-100'}`}>
                 {m.is_concern && <p className={`mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${mine ? 'text-amber-300' : 'text-amber-700'}`}><TriangleAlert size={12} />{tr('Concern')}</p>}
-                <p className="whitespace-pre-wrap">{tn(m.body)}</p>
+                <p className="whitespace-pre-wrap break-words">{linkify(tn(m.body), mine, tr('Open the report'))}</p>
                 <p className={`mt-1 text-xs ${mine ? 'text-brand-200' : 'text-ink-400'}`}>{mine ? tr('You') : tr('Your CRP')} · {fmtAgo(m.created_at)}</p>
               </div>
             </div>

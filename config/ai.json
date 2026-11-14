@@ -247,6 +247,13 @@
       "gemini_free",
       "rules"
     ],
+    "report_translate": [
+      "claude_quick",
+      "groq_big",
+      "claude_mid",
+      "gemini_free",
+      "rules"
+    ],
     "teacher_voice": [
       "claude_quick",
       "groq_big",

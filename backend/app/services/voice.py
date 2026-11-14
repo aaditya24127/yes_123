@@ -4,7 +4,7 @@ How it is made (nothing here is a fixed text):
   1. `voice_input` picks what matters from the evaluated visit: what went well, what to try, why the students found it hard, the next step.
   2. The AI (task `teacher_voice`) writes the message the way the CRP would say it, in the chosen language, warm and plain, with the teacher's name.
   3. A free Indian neural voice (Microsoft Edge voices through the `edge-tts` package; male or female like the CRP) reads it. About 5 seconds.
-  4. The mp3 is saved with the visit; the teacher app and the WhatsApp message use a signed link to it.
+  4. The mp3 is saved with the visit; the report page and the teacher app use a signed link to it.
 Odia has no Indian voice yet, so its message is spoken in Hindi (the screen says so).
 """
 import asyncio, hashlib, re
@@ -20,7 +20,7 @@ VOICES = {'en': ('en-IN-PrabhatNeural', 'en-IN-NeerjaNeural'), 'hi': ('hi-IN-Mad
           'ur': ('ur-IN-SalmanNeural', 'ur-IN-GulNeural')}
 VOICE_FALLBACK = {'or': 'hi'}                   # no Odia voice exists
 # about 70 seconds of speech: agglutinative languages need fewer, longer words
-WORDS = {'en': 165, 'hi': 175, 'bn': 170, 'mr': 175, 'te': 155, 'ta': 155, 'gu': 175, 'ur': 175, 'kn': 155, 'or': 170, 'ml': 135}
+WORDS = {'en': 165, 'hi': 175, 'bn': 170, 'mr': 175, 'te': 130, 'ta': 130, 'gu': 175, 'ur': 175, 'kn': 130, 'or': 170, 'ml': 115}
 MAX_SECONDS = 76                 # the message should last 1 to 1:15 minutes: longer ones are read a little faster
 
 
@@ -42,6 +42,14 @@ def in_script(text: str, language: str) -> bool:
 
 def gender_of(title: str | None) -> str:
     return 'male' if title == 'Mr.' else 'female'
+
+
+def fit_words(text: str, limit: int) -> str:
+    """The AI does not count words well. A message over the limit loses sentences from the middle (the greeting and the kind closing stay), so it keeps to about a minute."""
+    sents = [x.strip() for x in re.split(r'(?<=[.!?।۔])\s+', text) if x.strip()]
+    while len(' '.join(sents).split()) > limit and len(sents) > 5:
+        sents.pop(len(sents) - 3)
+    return ' '.join(sents)
 
 
 def _first(x, n=1):
@@ -105,22 +113,50 @@ async def _speak(text: str, voice: str, rate: str) -> bytes:
 
 
 def synth(text: str, language: str, gender: str) -> tuple[bytes, float, str, str]:
-    """(mp3 bytes, seconds, voice name, rate). Reads a little faster if the message would run longer than about a minute and a half."""
+    """(mp3 bytes, seconds, voice name, rate). Spoken at the normal speed; if that runs longer than MAX_SECONDS it is spoken once more, faster by just the amount needed."""
+    import math
     vl = voice_language(language); voice = VOICES[vl][0 if gender == 'male' else 1]
-    last = None
-    for rate in ('+0%', '+8%', '+16%', '+24%'):
-        for attempt in range(3):
+
+    def speak(rate: str) -> bytes:
+        last = None
+        for _ in range(3):
             try:
-                audio = asyncio.run(_speak(text, voice, rate)); break
+                audio = asyncio.run(_speak(text, voice, rate))
+                if audio: return audio
             except Exception as e:           # the free voice service is sometimes busy
-                last = e; audio = b''
-        if not audio: raise RuntimeError(f'The voice could not be made right now ({last}).')
-        seconds = len(audio) * 8 / 48000     # edge-tts sends 48 kbit/s mp3
-        if seconds <= MAX_SECONDS: break
+                last = e
+        raise RuntimeError(f'The voice could not be made right now ({last}).')
+    rate = '+0%'
+    audio = speak(rate)
+    seconds = len(audio) * 8 / 48000         # edge-tts sends 48 kbit/s mp3
+    if seconds > MAX_SECONDS:
+        pct = min(35, math.ceil((seconds / MAX_SECONDS - 1) * 100) + 2)
+        rate = f'+{pct}%'
+        audio = speak(rate)
+        seconds = len(audio) * 8 / 48000
     return audio, seconds, voice, rate
 
 
-def make(conn, sid: str, s, crp_name: str | None, gender: str, language: str, ai_choice: str | None = None) -> dict:
+def _result_key(s) -> str:
+    """Changes when the evaluation changes: a saved message of an older result is not reused."""
+    import json
+    return hashlib.sha1(json.dumps([s['result'], s.get('followup_days')], sort_keys=True, default=str).encode('utf8')).hexdigest()[:12]
+
+
+def cached(sid: str, s, language: str) -> dict | None:
+    """The message already made for this visit in this language (made for the same result), or None."""
+    import json
+    st = get_storage(); key = f'voice/{sid}/meta_{language}.json'
+    try:
+        if st.exists(key):
+            info = json.loads(st.get(key))
+            if info.get('result_key') == _result_key(s) and st.exists(info['key']): return info
+    except Exception:
+        pass
+    return None
+
+
+def make(conn, sid: str, s, crp_name: str | None, gender: str, language: str, ai_choice: str | None = None, latest: bool = True) -> dict:
     """Write the message with the AI, speak it, save it with the visit. Returns what the screen needs."""
     import json
     import time
@@ -137,6 +173,7 @@ def make(conn, sid: str, s, crp_name: str | None, gender: str, language: str, ai
             pass
     if sl != 'en' and not in_script(script, sl): raise RuntimeError('The message could not be written in that language right now. Please try again, or choose English.')
     if not script: raise RuntimeError('The message could not be written.')
+    script = fit_words(script, int(WORDS.get(sl, 150) * 1.1))
     t1 = time.time()
     audio, seconds, voice, rate = synth(script, language, gender)
     t2 = time.time()
@@ -144,7 +181,11 @@ def make(conn, sid: str, s, crp_name: str | None, gender: str, language: str, ai
     get_storage().put(key, audio, 'audio/mpeg')
     info = dict(language=language, voice_language=voice_language(language), gender=gender, voice=voice, rate=rate, script=script, message=clean_script(r.data.get('message')), key=key, seconds=round(seconds), by=r.provider, timing=dict(write=round(t1 - t0, 1), speak=round(t2 - t1, 1)),
                 made_at=__import__('datetime').datetime.now().isoformat(timespec='seconds'))
-    conn.execute('update visit_sessions set voice = %s where id = %s', (json.dumps(info), sid)); conn.commit()
+    info['crp_name'] = crp_name; info['result_key'] = _result_key(s)
+    try: get_storage().put(f'voice/{sid}/meta_{language}.json', json.dumps(info, ensure_ascii=False).encode('utf8'), 'application/json')
+    except Exception: pass
+    if latest:
+        conn.execute('update visit_sessions set voice = %s where id = %s', (json.dumps(info), sid)); conn.commit()
     return info
 
 
@@ -152,4 +193,4 @@ def public(info: dict | None, sid: str, sig: str) -> dict | None:
     """The voice message as the screens see it (without the storage key)."""
     if not info: return None
     return dict(language=info['language'], voice_language=info.get('voice_language'), gender=info['gender'], voice=info['voice'], script=info['script'], seconds=info['seconds'], made_at=info.get('made_at'), by=info.get('by'), timing=info.get('timing'),
-                url=f"/api/report/voice/{sid}.mp3?sig={sig}")
+                url=f"/api/report/voice/{sid}.mp3?sig={sig}&lang={info['language']}")

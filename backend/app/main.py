@@ -55,11 +55,6 @@ def _start_workers():
     from app.services import teacher_auth
     with get_conn() as conn:
         teacher_auth.ensure_accounts(conn)     # demo logins for every teacher (firstname.lastname@crp.com)
-        try:
-            from app.services import whatsapp
-            whatsapp.assign_demo_numbers(conn)     # the demo WhatsApp numbers from the host settings (DEMO_WHATSAPP_NUMBERS)
-        except Exception:
-            pass
         crp_auth.ensure_demo(conn)             # the demo CRP login (DEMO_CRP_EMAIL), unless DEMO_CRP_LOGIN=0
     jobs.start_in_api()     # background workers inside the API (WORKERS_IN_API, default 4); more can run separately: python -m app.jobs
 

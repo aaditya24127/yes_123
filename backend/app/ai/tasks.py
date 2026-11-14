@@ -284,12 +284,22 @@ TEACHER_VOICE = Task(
     _obj({'script': S, 'message': S, 'language': S}),
     lambda: ('You write a short voice message that a Cluster Resource Person (CRP) in India speaks to a teacher after visiting the class of that teacher. A voice will read it aloud, so write exactly what a kind, '
              'experienced mentor would say face to face. Write it in the language named in the input, in the own script of that language, in simple everyday spoken words (the way people really talk, not textbook language). '
-             'Speak as the CRP ("I"), call the teacher by name with the respectful form of address (sir or madam, as in that language). Length: about target_words words, not fewer, so that it takes between one minute and one minute fifteen seconds to speak. '
+             'Speak as the CRP ("I"), call the teacher by name with the respectful form of address (sir or madam, as in that language). Length: a HARD limit of target_words words in total, never more (count them): it must take between one minute and one minute fifteen seconds to speak, so keep each point short and drop the less important ones. '
              'Order: a warm greeting and thanks for the lesson; the two best things you saw, in a few words each, specific to this lesson; the two or three most important things to improve, each with one concrete, '
              'cheap thing to try in the next lesson (use try_this, and what the answers of the students showed in students.why_hard); the next step and when you will come back; a kind closing that offers help. '
              'Be encouraging and honest, never scolding. Use ONLY the points given: do not invent anything. Plain speech only: no lists, no numbering, no headings, no markdown, no emoji, no scores, no ranks, and never '
-             'the words report, AI or system. Put the whole message in "script" as one piece of flowing text. Also write "message": two short, friendly sentences in the same language that go with the files in a WhatsApp chat (say that the visit report and a short voice message are here for the teacher, greet the teacher by name, sign with the name of the CRP; do not say attached). Put the language name in "language". Output only the JSON.'),
+             'the words report, AI or system. Put the whole message in "script" as one piece of flowing text. Also write "message": two short, friendly sentences in the same language for the chat message that carries the link to the report (say that the visit report and a short voice message are here for the teacher; do not say attached). Do not include the link itself.'),
     lambda i: _j(i), tier='fast', max_tokens=2500)
 
 
-TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH, ASSESS_QUESTIONS, ASSESS_REPORT, TEACHER_VOICE]}
+REPORT_TRANSLATE = Task(
+    'report_translate', "Translate the short texts of a visit report into the language of the teacher.",
+    _obj({'items': {'type': 'array', 'items': S}}),
+    lambda: ('You translate short texts of a school visit report written by a mentor (a Cluster Resource Person) for a teacher in India. The input has "language" and "items", a list of English texts. '
+             'Return {"items": [...]} with exactly one translation per input text, in the same order and the same count. Write in the own script of that language, in simple, warm, respectful everyday words that a '
+             'school teacher uses, never word for word and never stiff. Keep names of people and schools, numbers, times such as 02:42, codes such as S1 or A1, and short English terms that teachers use as they are. '
+             'Do not add or remove anything, do not explain.'),
+    lambda i: _j(i), tier='fast', max_tokens=6000)
+
+
+TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH, ASSESS_QUESTIONS, ASSESS_REPORT, TEACHER_VOICE, REPORT_TRANSLATE]}

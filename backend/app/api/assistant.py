@@ -15,26 +15,9 @@ router = APIRouter(prefix='/api', tags=['assistant'])
 def directory():
     with get_conn() as conn:
         schools = conn.execute('select id, code, name, board, medium, grade_from, grade_to, village from schools where is_active order by code').fetchall()
-        teachers = conn.execute('select id, school_id, teacher_code, title, full_name, designation, classes_taught, subjects_taught, phone from teachers where is_active order by teacher_code').fetchall()
+        teachers = conn.execute('select id, school_id, teacher_code, title, full_name, designation, classes_taught, subjects_taught from teachers where is_active order by teacher_code').fetchall()
     return dict(schools=[dict(s, id=str(s['id'])) for s in schools],
                 teachers=[dict(t, id=str(t['id']), school_id=str(t['school_id']), name=f"{t['title'] or ''} {t['full_name']}".strip()) for t in teachers])
-
-
-class PhoneReq(BaseModel):
-    phone: str | None = None
-
-
-@router.patch('/teachers/{tid}/phone')
-def set_teacher_phone(tid: str, req: PhoneReq):
-    """The teacher's WhatsApp number (10 digits; the country code 91 is added). An empty value removes it."""
-    from ..services import whatsapp
-    raw = (req.phone or '').strip()
-    phone = whatsapp.normalize(raw) if raw else None
-    if raw and not phone: raise HTTPException(400, 'That does not look like a phone number. Please type 10 digits.')
-    with get_conn() as conn:
-        if not conn.execute('select 1 from teachers where id = %s', (tid,)).fetchone(): raise HTTPException(404, 'Teacher not found.')
-        conn.execute('update teachers set phone = %s where id = %s', (phone, tid)); conn.commit()
-    return dict(phone=phone)
 
 
 @router.get('/curriculum')

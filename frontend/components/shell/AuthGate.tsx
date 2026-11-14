@@ -7,6 +7,10 @@ import { api } from '@/lib/api';
 import { session } from '@/lib/auth';
 
 export const isLoginPath = (path: string | null) => (path ?? '').replace(/\/$/, '') === '/login';
+// Pages a teacher opens from a link, without signing in (the link carries a signed code): the report page.
+export const isPublicPath = (path: string | null) => (path ?? '').replace(/\/$/, '') === '/r';
+// No menu, no tutorial: the sign-in page and the public pages.
+export const isBarePath = (path: string | null) => isLoginPath(path) || isPublicPath(path);
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const path = usePathname();
@@ -14,6 +18,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const onLogin = isLoginPath(path);
+  const onPublic = isPublicPath(path);
 
   useEffect(() => {
     const sync = () => { setSignedIn(!!session.token()); setReady(true); };
@@ -27,11 +32,12 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => { if (!ready || !signedIn) return; const h = setTimeout(() => { api.warm(); }, 600); return () => clearTimeout(h); }, [ready, signedIn]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || onPublic) return;
     if (!signedIn && !onLogin) router.replace('/login');
     if (signedIn && onLogin) router.replace('/');
   }, [ready, signedIn, onLogin, router]);
 
+  if (onPublic) return <>{children}</>;
   if (!ready || signedIn === onLogin) return null;      // nothing flashes while we work out where the person belongs
   return <>{children}</>;
 }

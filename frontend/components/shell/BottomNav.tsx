@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FEATURES, NAV } from '@/lib/app.config';
 import { useLang } from '@/lib/i18n';
-import { isLoginPath } from './AuthGate';
+import { isBarePath } from './AuthGate';
 
 export default function BottomNav() {
   const { t } = useLang();
   const path = usePathname();
   const items = NAV.filter((n) => !n.feature || FEATURES[n.feature]);
-  if (isLoginPath(path)) return null;      // nothing to go to before signing in
+  if (isBarePath(path)) return null;      // nothing to go to before signing in
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-0 z-[55] flex border-t border-brand-100 bg-surface/95 backdrop-blur md:hidden">
       {items.map(({ href, label, icon: Icon }) => {

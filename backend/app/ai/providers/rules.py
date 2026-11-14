@@ -128,6 +128,10 @@ class RulesProvider(Provider):
         parts.append(f"I will come back in about {i.get('follow_up_days') or 14} days to see how it is going. You are doing good work, {addr}, and I am always here to help.")
         return dict(script=' '.join(p.strip() for p in parts if p), message=f"Namaste {nm}. Here are your visit report and a short voice message. - {i.get('crp_name') or 'Your CRP'}", language='English')
 
+    def report_translate(self, i):
+        """No AI reachable: the texts stay in English (the page says so)."""
+        return dict(items=list(i.get('items') or []))
+
     def assessment_questions(self, i):
         ch = i.get('chapter') or 'this chapter'; cls = i.get('class_no') or ''; sub = i.get('subject') or 'the subject'
         know = [(f"In your own words, what is the main idea of the chapter {ch}?", ['States the main idea correctly', 'Uses the key words of the chapter', 'Gives a short example']),

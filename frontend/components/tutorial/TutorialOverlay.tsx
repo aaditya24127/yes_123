@@ -9,7 +9,7 @@ import { useUser } from '@/lib/auth';
 import { CHAPTERS, STEPS, firstOfChapter, indexOfStep, type ChapterId } from '@/lib/tutorial/steps';
 import { SPEEDS, tutorial, useTutorial } from '@/lib/tutorial/store';
 import { useTutorialText } from '@/lib/tutorial/text';
-import { isLoginPath } from '@/components/shell/AuthGate';
+import { isBarePath } from '@/components/shell/AuthGate';
 
 type Box = { x: number; y: number; w: number; h: number; r: number };
 
@@ -31,7 +31,7 @@ const met = (cond: string) => (cond.startsWith('/') ? norm(window.location.pathn
 export default function TutorialOverlay() {
   const st = useTutorial();
   const path = usePathname();
-  if (!st.on || isLoginPath(path)) return null;
+  if (!st.on || isBarePath(path)) return null;
   return <Guide i={st.i} muted={st.muted} speed={st.speed} />;
 }
 
