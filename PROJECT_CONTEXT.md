@@ -4,7 +4,7 @@ This file is the single starting point for anyone (person or AI assistant) worki
 before your own prompt. It explains what the product is, how the code is organised, how to run it, the rules every change
 must follow, and what is still to do in each area (security, frontend, backend, AI, mobile app, data).
 
-Last updated: 1 November 2026.
+Last updated: 14 November 2026. For accounts, deployed links, the way we deliver changes, decisions and the change log see `HANDOVER.md`.
 
 ---
 
@@ -100,9 +100,9 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 | `backend/app/services/` | `prioritization/` (engine), `ingest/` (upload pipeline), `visit.py`, `textbooks.py` |
 | `backend/app/ai/` | `tasks.py`, `registry.py`, `providers/` |
 | `backend/app/core/storage.py` | local folder or Supabase Storage, same keys |
-| `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (not yet test-built) |
+| `backend/requirements.txt`, `backend/Dockerfile` | dependencies; server image (built and deployed on Render) |
 | `config/ai.json` | who does each AI task |
-| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0019; `*.supabase.sql` = row-level security, Supabase only) |
+| `database/migrations/` | SQL, applied in order by `database/cli.py migrate` (0001-0021; `*.supabase.sql` = row-level security, Supabase only) |
 | `backend/app/core/settings.py` | `TARGET=local|supabase` picks the database (`DATABASE_URL` / `SUPABASE_DATABASE_URL`) and storage |
 | `database/seed_data/` | demo records (CSV) |
 | `data/schools/` | demo source files (the uploads the records came from) |
@@ -121,9 +121,8 @@ frontend (Next.js 15, React 19, Tailwind)  --HTTP JSON-->  backend (FastAPI, Pyt
 Needs: Python 3.12+, Node 20+, and PostgreSQL 17 (easiest: Docker).
 
 ```
-git clone https://github.com/janhavideshmukh860-svg/yes_123.git
+git clone https://github.com/aaditya24127/yes_123.git
 cd yes_123
-git checkout real-world-v2
 copy .env.example .env                        (Mac/Linux: cp)
 docker compose up -d db                       (or install PostgreSQL yourself; Windows portable option: docs/DATABASE.md)
 python -m venv backend/.venv
@@ -161,7 +160,7 @@ Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, se
 8. **Plain language** in the UI: users are CRPs and teachers, not engineers.
 9. **Windows note**: do not run uvicorn with `--reload` on Windows (reloading hangs); restart after backend edits.
 10. **Work on a branch** named for your area (e.g. `security/auth`, `frontend/translations`) and open a pull request into
-    `real-world-v2` (or `main` once merged). Do not push to `main` directly.
+    `main`. Do not push to `main` directly (`python tools/push_branch.py "message"` does it; the owner merges).
 
 ---
 
@@ -173,8 +172,7 @@ evaluation; CRP <-> teacher requests and messages; numbered tasks per request (T
 cost log and free connection test; job queue; app-ready frontend (single API address, static export build, phone layout,
 bottom menu); free local speech-to-text verified (99% word match on a demo recording).
 
-Not yet checked: real AI answers with a Claude key (no key was set while building; the rule-based fallbacks were tested);
-`backend/Dockerfile` build; `npm run build:app` (it stalled downloading Google fonts on a slow network; consider self-hosted
+Not yet checked: `npm run build:app` (it stalled downloading Google fonts on a slow network; consider self-hosted
 fonts).
 
 ### Security (highest priority before any real use)
