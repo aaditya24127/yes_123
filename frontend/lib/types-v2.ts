@@ -52,6 +52,8 @@ export interface Brief {
   school_history?: { date: string; kind: string; cls: number | null; subject: string | null; mentor: string | null; topic: string | null; teacher: string | null; overall: string | null }[];
   textbooks: { title: string; cls: number | null; subject: string | null; url: string | null }[]; pending_requests: { title: string; kind: string; status: string; due: string | null }[];
   brief: { summary: string; focus_points: string[]; ask_teacher: string[]; check_in_class: string[] } | null; brief_by: string | null;
+  /** The teacher's newest spoken assessment (last 120 days), if any. */
+  assessment?: { id: string; date: string; subject: string; class_no: number | null; chapter: string; scores: { knowledge: number | null; teaching: number | null; overall: number | null; confidence: number | null } | null; focus: string[]; reliability: string | null } | null;
 }
 export interface Question { question: string; level: string; good_answer: string; watch_for: string; ask_who: string }
 export interface Media {
@@ -113,3 +115,29 @@ export interface AIUsage {
 /** Where the data of an uploaded file goes (GET /api/uploads/items/{id}/allocation): one row per priority. */
 export interface AllocationRow { code: string; priority: string; takes: string; records: number | null; example: string | null; counted: 'yes' | 'no' | 'after_import'; note: string | null }
 export interface Allocation { state: 'expected' | 'done'; rows: AllocationRow[]; nothing?: boolean }
+
+/** Chapter lists per board / class / subject (GET /api/curriculum). `note` says when the list is a nearest match; `books` can be empty (then the chapter is typed). */
+export interface CurriculumBook { book: string; edition: 'current' | 'older'; chapters: string[]; source: string | null; read_from: string | null; medium: string; board: string }
+export interface Curriculum { books: CurriculumBook[]; note: string | null; board: string | null; own_board: string | null; board_label: string | null; count: number }
+
+/** The spoken before-visit assessment (CRP side). */
+export type AssessmentStatus = 'preparing' | 'ready' | 'in_progress' | 'submitted' | 'reported' | 'failed' | 'cancelled';
+export interface AssessScores { knowledge: number | null; teaching: number | null; overall: number | null; confidence: number | null }
+export interface AssessReport {
+  scores: AssessScores; summary: string; strengths: string[]; changes: string[]; do: string[]; dont: string[]; visit_focus: string[];
+  better_methods: { idea: string; why: string }[];
+  questions: { n: number; kind: 'knowledge' | 'teaching'; question: string; score: number; said: string; comment: string; confidence: { score: number | null; band: string } }[];
+  tools: { name: string; kind: string; fits: string; note: string }[];
+  misconceptions: { misconception: string; fix_given: string; fix_is: string; note: string }[];
+  checking_understanding: { rating: string; note: string }; weaker_students: { rating: string; note: string }; board_class_fit: { rating: string; note: string };
+  speaking: { avg_wpm: number | null; pauses: number; longest_pause: number; fillers: number; hedges: number };
+  data_quality: { answered: number; total: number; reliability: string; note: string };
+  context?: { teacher?: string };
+}
+export interface Assessment {
+  id: string; teacher_id: string; teacher_name?: string | null; status: AssessmentStatus; subject: string; class_no: number | null; chapter: string; count: number; ai_choice: string;
+  requested_by: string | null; requested_at: string; ready_at: string | null; started_at: string | null; submitted_at: string | null; reported_at: string | null;
+  answered: number; questions_by: string | null; report_by: string | null; error: string | null; scores: AssessScores | null;
+  questions?: { n: number; kind: string; question: string }[]; report?: AssessReport | null;
+}
+export type AiChoice = 'auto' | 'claude' | 'free';

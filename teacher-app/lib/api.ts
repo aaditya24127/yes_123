@@ -20,6 +20,24 @@ export interface Visits {
   reports: { id: string; date: string; class_no: number | null; subject: string | null; topic: string | null; url: string }[];
 }
 
+// ---- the spoken assessment the CRP asks for
+export interface AssessQuestion { n: number; question: string; answered: boolean; last: boolean }
+export interface AssessReport {
+  scores: { knowledge: number | null; teaching: number | null; overall: number | null; confidence: number | null };
+  summary: string; strengths: string[]; changes: string[]; do: string[]; dont: string[]; visit_focus: string[];
+  better_methods: { idea: string; why: string }[];
+  questions: { n: number; kind: 'knowledge' | 'teaching'; question: string; score: number; said: string; comment: string; confidence: { score: number | null; band: string } }[];
+  tools: { name: string; kind: string; fits: string; note: string }[];
+  misconceptions: { misconception: string; fix_given: string; fix_is: string; note: string }[];
+  checking_understanding: { rating: string; note: string }; weaker_students: { rating: string; note: string }; board_class_fit: { rating: string; note: string };
+  speaking: { avg_wpm: number | null; pauses: number; longest_pause: number; fillers: number; hedges: number };
+  data_quality: { answered: number; total: number; reliability: string; note: string };
+}
+export interface Assessment {
+  id: string; status: 'preparing' | 'ready' | 'in_progress' | 'submitted' | 'reported' | 'failed'; subject: string; class_no: number | null; chapter: string; count: number;
+  requested_by: string | null; requested_at: string; questions: AssessQuestion[]; report: AssessReport | null; error: string | null; pdf_url: string | null;
+}
+
 const KEY = 'crp-teacher-token';
 export const token = {
   get: () => { try { return localStorage.getItem(KEY); } catch { return null; } },
@@ -64,6 +82,17 @@ export const api = {
   readAll: () => call<{ ok: boolean }>('/api/teacher/notifications/read', { method: 'POST' }),
   message: (body: string, concern: boolean) => call<{ ok: boolean }>('/api/teacher/messages', json({ body, concern })),
   password: (old_password: string, new_password: string) => call<{ ok: boolean }>('/api/teacher/password', json({ old_password, new_password })),
+  assessments: () => call<Assessment[]>('/api/teacher/assessments'),
+  assessment: (id: string) => call<Assessment>(`/api/teacher/assessments/${id}`),
+  assessmentStart: (id: string) => call<Assessment>(`/api/teacher/assessments/${id}/start`, { method: 'POST' }),
+  /** One answer: a recording (read and then dropped by the server) or typed text. */
+  assessmentAnswer: (id: string, n: number, a: { blob?: Blob; text?: string }) => {
+    const f = new FormData();
+    if (a.blob) f.append('file', a.blob, a.blob.type.includes('mp4') ? 'answer.m4a' : 'answer.webm');
+    if (a.text?.trim()) f.append('text', a.text.trim());
+    return call<{ ok: boolean; words: number; source: string }>(`/api/teacher/assessments/${id}/answers/${n}`, { method: 'POST', body: f });
+  },
+  assessmentFinish: (id: string) => call<Assessment>(`/api/teacher/assessments/${id}/finish`, { method: 'POST' }),
   /** Send one numbered task (itemId), or confirm a visit notice (taskId). */
   submit: (target: { itemId?: string; taskId?: string }, text: string, files: File[]) => {
     const f = new FormData();

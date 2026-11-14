@@ -3,6 +3,8 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, CheckCircle2, Download, Eye, FileAudio, FileText, Loader2, Mic, Send, Sparkles, Trash2 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
+import AssessmentPanel from '@/components/AssessmentPanel';
+import ChapterSelect from '@/components/ChapterSelect';
 import NotesBox from '@/components/NotesBox';
 import TextbookPanel from '@/components/TextbookPanel';
 import AudioRecorder from '@/components/ui/AudioRecorder';
@@ -70,7 +72,7 @@ function VisitPage() {
   // Choosing another teacher (or the whole school) after pressing Visit on a school card: fill in their class and subject and show their briefing.
   const pickTeacher = (id: string) => {
     const t = dir?.teachers.find((x) => x.id === id);
-    setPick((p) => ({ ...p, teacher_id: id, class_no: t?.classes_taught[0] ? String(t.classes_taught[0]) : '', subject: t?.subjects_taught[0] ?? '' }));
+    setPick((p) => ({ ...p, teacher_id: id, class_no: t?.classes_taught[0] ? String(t.classes_taught[0]) : '', subject: t?.subjects_taught[0] ?? '', topic: '' }));
     loadBrief(id ? { teacher_id: id } : { school_id: pick.school_id || brief?.school.id });
   };
   const start = () => run('start', async () => {
@@ -250,14 +252,18 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Teacher"><Select data-tour="v-teacher" value={pick.teacher_id} onChange={(e) => onPickTeacher(e.target.value)}>
               <option value="">The whole school</option>{teachers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</Select></Field>
-            <Field label="Class"><Select value={pick.class_no} onChange={(e) => setPick({ ...pick, class_no: e.target.value })}>
+            <Field label="Class"><Select value={pick.class_no} onChange={(e) => setPick({ ...pick, class_no: e.target.value, topic: '' })}>
               <option value="">Not sure</option>{classes.map((c) => <option key={c} value={c}>Class {c}</option>)}</Select></Field>
-            <Field label="Subject"><Select value={pick.subject} onChange={(e) => setPick({ ...pick, subject: e.target.value })}>
+            <Field label="Subject"><Select value={pick.subject} onChange={(e) => setPick({ ...pick, subject: e.target.value, topic: '' })}>
               <option value="">Not sure</option>{subjects.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-            <Field label="Topic being taught today"><Input value={pick.topic} onChange={(e) => setPick({ ...pick, topic: e.target.value })} placeholder="For example: place value" /></Field>
+            <ChapterSelect schoolId={b.school.id} classNo={pick.class_no ? Number(pick.class_no) : null} subject={pick.subject} value={pick.topic} onChange={(topic) => setPick({ ...pick, topic })} />
           </div>
           <div className="mt-4"><Button data-tour="v-start" onClick={onStart} busy={busy} icon={<Mic size={16} />}>Start the visit</Button></div>
         </Card>
+      )}
+
+      {onStart && b.teacher && (
+        <AssessmentPanel teacher={{ id: b.teacher.id, name: b.teacher.name }} classNo={pick.class_no ? Number(pick.class_no) : null} subject={pick.subject} chapter={pick.topic} />
       )}
 
       <div role="tablist" aria-label="About this visit" className="flex flex-wrap gap-2">
@@ -267,6 +273,17 @@ function BriefView({ b, pick, setPick, teacher, dir, onStart, busy, teachers, on
       </div>
 
       {tab === 'summary' && summary.length > 0 && <Card title="In short"><List items={summary} /></Card>}
+
+      {tab === 'summary' && b.assessment && (
+        <Card title="Teacher assessment" subtitle={`${b.assessment.subject}${b.assessment.class_no ? `, Class ${b.assessment.class_no}` : ''}: ${b.assessment.chapter} · ${fmtDay(b.assessment.date)}`}>
+          <p className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
+            <span>Overall <b>{b.assessment.scores?.overall ?? '-'}</b></span><span>Topic knowledge <b>{b.assessment.scores?.knowledge ?? '-'}</b></span><span>Teaching method <b>{b.assessment.scores?.teaching ?? '-'}</b></span>
+            {b.assessment.reliability === 'low' && <span className="text-amber-700">Few answers: treat as a rough guide.</span>}
+          </p>
+          <p className={head}>To check during the visit</p>
+          <List items={point(b.assessment.focus, 5)} empty="No focus points." />
+        </Card>
+      )}
 
       {tab === 'summary' && <div data-tour="v-brief" className="grid gap-4 md:grid-cols-3">
         {columns.map(([title, items, tint]) => (

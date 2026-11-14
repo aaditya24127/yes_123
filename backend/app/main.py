@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from app.core.storage import get_storage, LocalStorage
 from app.services.prioritization import engine
 from app.services.prioritization.data import Data, get_conn
-from app.api import factors as factors_api, uploads as uploads_api, visits as visits_api, connect as connect_api, assistant as assistant_api, teacher_app as teacher_api
+from app.api import factors as factors_api, uploads as uploads_api, visits as visits_api, connect as connect_api, assistant as assistant_api, teacher_app as teacher_api, assessments as assessments_api
 from app.api import auth as auth_api
 from app.services import crp_auth
 from app import jobs
@@ -45,8 +45,9 @@ async def require_crp(request: Request, call_next):
 ORIGINS = [o.strip() for o in os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if o.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=['*'], allow_headers=['*'])
 app.add_middleware(GZipMiddleware, minimum_size=1000)      # big answers (priority list, evidence) travel compressed
-for r in (auth_api, factors_api, uploads_api, visits_api, connect_api, assistant_api, teacher_api):
+for r in (auth_api, factors_api, uploads_api, visits_api, connect_api, assistant_api, teacher_api, assessments_api):
     app.include_router(r.router)
+app.include_router(assessments_api.public)                  # the signed assessment-report link inside the teacher app
 
 
 @app.on_event('startup')

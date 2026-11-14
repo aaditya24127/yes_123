@@ -6,6 +6,7 @@ import threading
 import datetime as dt, json
 
 from .. import ai
+from . import assessment as assessment_svc
 from .prioritization import engine
 from .prioritization.data import Data, get_conn
 from .prioritization.factors import _open_threads
@@ -59,6 +60,7 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         history = conn.execute("""select v.visit_date, v.visit_type, v.class_no, v.subject, v.mentor_name, t.title, t.full_name as teacher_name, vs.result->>'overall' as overall, vs.topic
                                    from visits v left join teachers t on t.id = v.teacher_id left join visit_sessions vs on vs.visit_id = v.id
                                    where v.school_id = %s order by v.visit_date desc, v.id desc limit 12""", (s['id'],)).fetchall()
+        assess = assessment_svc.latest_for_brief(conn, t['id']) if t else None      # the teacher's latest spoken assessment (last 120 days)
     return dict(
         who=_who(t, s), entity=entity, school=dict(id=str(s['id']), code=s['code'], name=s['name'], type=s['school_type'], board=s['board'], medium=s['medium'],
                                                     grades=f"{s['grade_from']}-{s['grade_to']}", village=s['village'] or ''),
@@ -72,7 +74,7 @@ def gather(teacher_id=None, school_id=None, as_of=None):
         school_history=[dict(date=str(h['visit_date']), kind=h['visit_type'], cls=h['class_no'], subject=h['subject'], mentor=h['mentor_name'], topic=h['topic'],
                              teacher=(f"{h['title'] or ''} {h['teacher_name']}".strip() if h['teacher_name'] else None), overall=h['overall']) for h in history],
         textbooks=[dict(title=b['title'], cls=b['class_no'], subject=b['subject'], url=b['source_url'], chapters=(b['contents'] or [])[:30]) for b in books],
-        pending_requests=[dict(title=r['title'], kind=r['kind'], status=r['status'], due=str(r['due_date']) if r['due_date'] else None) for r in reqs])
+        pending_requests=[dict(title=r['title'], kind=r['kind'], status=r['status'], due=str(r['due_date']) if r['due_date'] else None) for r in reqs], assessment=assess)
 
 
 def brief(teacher_id=None, school_id=None, fast=False):
