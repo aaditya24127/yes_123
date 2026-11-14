@@ -98,6 +98,7 @@ export const api = {
   files: (schoolId: string) => keep(`files:${schoolId}`, 120000, () => get<FileInfo[]>(`/api/schools/${schoolId}/files`)),
   preview: (fileId: string) => get<Preview>(`/api/files/${fileId}/preview`),
   voice: {
+    warm: () => post<{ ok: boolean }>('/api/voice/warm'),
     turn: (body: { utterance: string; language: string; page: string; page_state: unknown; history: { user: string; assistant: string }[] }) =>
       post<{ say: string; actions: Record<string, unknown>[]; took: number; by: string }>('/api/voice/turn', body),
   },

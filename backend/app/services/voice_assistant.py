@@ -18,7 +18,7 @@ THEMES = ['Royal blue', 'Evergreen', 'Deep teal', 'Plum', 'Crimson dusk', 'Fiery
 PAGES = ['priorities', 'upload', 'visit', 'teachers', 'ask', 'settings']
 _cache: dict = {}
 _lock = threading.Lock()
-TTL = 45
+TTL = 600                      # the ranking changes rarely; saving priorities clears it (forget). Rebuilding it on a hosted database takes about 10 seconds, so it is kept and warmed in advance
 
 
 def _today():
@@ -33,7 +33,7 @@ def _item_brief(i: dict) -> dict:
 
 
 def _context() -> dict:
-    """What the AI is told about the world. Kept for 45 seconds (it is the same for every sentence of a conversation)."""
+    """What the AI is told about the world. Kept for ten minutes (it is the same for every sentence of a conversation)."""
     with _lock:
         hit = _cache.get('ctx')
         if hit and time.time() - hit[0] < TTL: return hit[1]
@@ -57,6 +57,16 @@ def _context() -> dict:
         ranking=rank, factors=[f for f in factors if f['weight'] > 0] + [dict(f, off=True) for f in factors if f['weight'] <= 0][:12], themes=THEMES, pages=PAGES)
     with _lock: _cache['ctx'] = (time.time(), ctx)
     return ctx
+
+
+def warm():
+    """Builds the context in the background (called when voice mode is switched on), so the first sentence is not slow."""
+    threading.Thread(target=lambda: _safe(_context), daemon=True).start()
+
+
+def _safe(fn):
+    try: fn()
+    except Exception: pass
 
 
 def forget():

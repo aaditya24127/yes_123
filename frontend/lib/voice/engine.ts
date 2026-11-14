@@ -43,6 +43,7 @@ export async function start(opts: { greet?: boolean } = {}) {
   const mode = canRecognize() ? 'browser' : canRecord() ? 'whisper' : 'none';
   setVoice({ on: true, status: 'listening', error: '', heard: '', interim: '', doing: [], pending: null, open: true, support: { listen: mode !== 'none', speak: canSpeak(), mode } });
   api.directory().then((d) => { dir = d; }).catch(() => {});
+  api.voice.warm().catch(() => {});                                // the server gets its view of the schools ready while the greeting is spoken
   if (mode === 'none') { setVoice({ error: h.tr('This browser cannot listen. Please use Chrome or Edge. You can still type to the assistant.') }); }
   else {
     listener = makeListener(h.lang, {

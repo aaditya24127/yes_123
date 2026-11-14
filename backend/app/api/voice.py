@@ -32,3 +32,10 @@ def forget():
     """The priorities changed: the next sentence should see the new ranking."""
     voice_assistant.forget()
     return dict(ok=True)
+
+
+@router.post('/warm')
+def warm():
+    """Voice mode was switched on: get the assistant's view of the schools ready now."""
+    voice_assistant.warm()
+    return dict(ok=True)
