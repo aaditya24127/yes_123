@@ -160,6 +160,7 @@ Online database: `docs/SUPABASE.md` (create a Mumbai project, paste 3 values, se
    no dynamic route folders like `[id]` (use `?id=` query parameters), links outside the app via `openExternal`. Check
    with `npm run build:app`.
 8. **Plain language** in the UI: users are CRPs and teachers, not engineers.
+8b. **Every screen must work on a phone, a tablet and a laptop** (see "Responsive rules" in `HANDOVER.md` section 3). New UI: phone layout first, no fixed widths wider than a phone, tap areas of at least 32 px, inputs at 16 px, no sideways page scroll. Run `python tools/responsive_audit.py crp|teacher|landing` before opening a pull request that changes screens.
 9. **Windows note**: do not run uvicorn with `--reload` on Windows (reloading hangs); restart after backend edits.
 10. **Work on a branch** named for your area (e.g. `security/auth`, `frontend/translations`) and open a pull request into
     `main`. Do not push to `main` directly (`python tools/push_branch.py "message"` does it; the owner merges).

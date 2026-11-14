@@ -45,7 +45,7 @@ export default function Login() {
           <div className="relative mt-1">
             <input type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password"
               className="w-full rounded-2xl border-0 bg-page py-3 pe-12 ps-4 text-ink-900 ring-1 ring-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-600" />
-            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute end-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-brand-700">
+            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute end-0.5 top-1/2 -translate-y-1/2 p-3 text-ink-400 hover:text-brand-700">
               {show ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>

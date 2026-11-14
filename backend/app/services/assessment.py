@@ -64,6 +64,13 @@ def create(conn, *, teacher_id, class_no, subject, chapter, count, ai_choice='au
     return a
 
 
+def _plain(text):
+    """A question as plain text for the voice: some models write non-breaking spaces and hyphens (6 cm, right‑angled), which a voice can misread."""
+    for a, b in (('\u202f', ' '), ('\u00a0', ' '), ('\u2009', ' '), ('\u2011', '-'), ('\u2010', '-'), ('\u2013', '-'), ('\u2019', "'"), ('\u2018', "'")):
+        text = text.replace(a, b)
+    return re.sub(r'\s+', ' ', text).strip()
+
+
 def _fit_questions(raw, k, t_gen, ctx):
     """Exactly k knowledge + t_gen teaching questions from what the AI wrote (a missing one is made by the free rules), then the fixed last question."""
     know = [q for q in raw if q.get('kind') == 'knowledge'][:k]
@@ -76,7 +83,7 @@ def _fit_questions(raw, k, t_gen, ctx):
             if q['kind'] == 'knowledge' and len(know) < k: know.append(q)
             elif q['kind'] == 'teaching' and len(teach) < t_gen: teach.append(q)
     qs = know + teach + [dict(kind='teaching', question=FINAL_QUESTION, expected_points=FINAL_POINTS, common_mistakes=[])]
-    return [dict(n=i, kind=q['kind'], question=q['question'].strip(), expected_points=list(q.get('expected_points') or [])[:6], common_mistakes=list(q.get('common_mistakes') or [])[:4])
+    return [dict(n=i, kind=q['kind'], question=_plain(q['question']), expected_points=list(q.get('expected_points') or [])[:6], common_mistakes=list(q.get('common_mistakes') or [])[:4])
             for i, q in enumerate(qs, 1)]
 
 

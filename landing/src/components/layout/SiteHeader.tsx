@@ -144,7 +144,7 @@ export function SiteHeader() {
           {/* Mobile hamburger button */}
           <button
             type="button"
-            className="inline-flex size-10 items-center justify-center rounded-full text-brand-900 hover:bg-brand-50 lg:hidden"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-brand-900 hover:bg-brand-50 lg:hidden"
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
             onClick={() => setMenuOpen((open) => !open)}

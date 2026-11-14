@@ -14,7 +14,7 @@ const toneClasses: Record<Tone, string> = {
 /** A small rounded status label. */
 export function Pill({ tone, children, className }: { tone: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cn('inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.65rem] font-semibold', toneClasses[tone], className)}>
+    <span className={cn('inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.7rem] font-semibold', toneClasses[tone], className)}>
       {children}
     </span>
   )

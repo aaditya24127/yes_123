@@ -44,7 +44,7 @@ export function ProgressCurve() {
         <div className="absolute inset-0 flex flex-col" aria-hidden="true">
           {bands.map((band) => (
             <div key={band} className="flex flex-1 items-start border-t border-dashed border-brand-50/12">
-              <span className="hidden pt-1 text-[0.65rem] font-medium tracking-wider text-brand-100/50 uppercase md:inline">
+              <span className="hidden pt-1 text-[0.7rem] font-medium tracking-wider text-brand-100/50 uppercase md:inline">
                 {band}
               </span>
             </div>
@@ -91,7 +91,7 @@ export function ProgressCurve() {
           </span>
         ))}
       </div>
-      <p className="mt-3 text-[0.65rem] font-medium tracking-wider text-brand-100/50 uppercase md:hidden" aria-hidden="true">
+      <p className="mt-3 text-[0.7rem] font-medium tracking-wider text-brand-100/50 uppercase md:hidden" aria-hidden="true">
         Low: beginning · Middle: developing · High: secure
       </p>
       <figcaption className="mt-3 text-xs text-brand-100/60">

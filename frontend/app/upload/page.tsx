@@ -102,7 +102,7 @@ function UploadPage() {
         <FileDrop onFiles={send} title={busy ? 'Reading your files…' : 'Drop files here, or tap to choose'}
           hint="Many files, or one zip. Nothing changes until you press Import." />
         <details className="mt-3">
-          <summary className="cursor-pointer text-sm font-semibold text-brand-700">All for one school? (optional)</summary>
+          <summary className="-my-2 cursor-pointer py-2 text-sm font-semibold text-brand-700">All for one school? (optional)</summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <Field label="School"><Select value={hint.school_id} onChange={(e) => setHint({ ...hint, school_id: e.target.value, teacher_id: '' })}>
               <option value="">We will find it</option>{dir?.schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>

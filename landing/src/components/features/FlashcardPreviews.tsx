@@ -25,7 +25,7 @@ export function PrioritiesPreview() {
 export function GapsPreview() {
   return (
     <div className="flex h-full flex-col p-3">
-      <p className="text-[0.6rem] font-semibold tracking-wider text-subtle uppercase">Learners on track, by grade</p>
+      <p className="text-[0.7rem] font-semibold tracking-wider text-subtle uppercase">Learners on track, by grade</p>
       <div className="mt-2 flex flex-1 items-end justify-around border-b border-border pb-px">
         {gradeIndicators.map((indicator) => (
           <div key={indicator.grade} className="flex h-full items-end gap-1">
@@ -34,12 +34,12 @@ export function GapsPreview() {
           </div>
         ))}
       </div>
-      <div className="mt-1 flex justify-around text-[0.6rem] text-muted">
+      <div className="mt-1 flex justify-around text-[0.7rem] text-muted">
         {gradeIndicators.map((indicator) => (
           <span key={indicator.grade}>{indicator.grade}</span>
         ))}
       </div>
-      <div className="mt-1.5 flex justify-center gap-3 text-[0.6rem] text-muted">
+      <div className="mt-1.5 flex justify-center gap-3 text-[0.7rem] text-muted">
         <span className="inline-flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-teal-400" aria-hidden="true" />
           Reading
@@ -56,14 +56,14 @@ export function GapsPreview() {
 export function RecommendationPreview() {
   return (
     <div className="flex h-full flex-col justify-between bg-brand-800 p-3.5 text-brand-50">
-      <p className="flex items-center gap-1 text-[0.58rem] font-semibold tracking-[0.14em] text-accent-200 uppercase">
+      <p className="flex items-center gap-1 text-[0.7rem] font-semibold tracking-[0.14em] text-accent-200 uppercase">
         <Sparkles className="size-3" aria-hidden="true" />
         Suggested next step
       </p>
       <p className="font-display text-[0.9rem] leading-snug text-surface">
         Model a ten-minute place-value warm-up, then co-teach it once with the teacher.
       </p>
-      <p className="text-[0.6rem] text-brand-100/70">Based on three sample observations</p>
+      <p className="text-[0.7rem] text-brand-100/70">Based on three sample observations</p>
     </div>
   )
 }
@@ -72,11 +72,11 @@ export function VisitPlanPreview() {
   return (
     <div className="flex h-full gap-3 p-3">
       <div className="flex w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-surface py-2 shadow-card">
-        <span className="text-[0.55rem] font-semibold text-clay-500 uppercase">{visitPlan.visitWeek}</span>
+        <span className="text-[0.7rem] font-semibold text-clay-500 uppercase">{visitPlan.visitWeek}</span>
         <span className="font-display text-xl leading-tight text-brand-900">{visitPlan.visitDay}</span>
-        <span className="text-[0.55rem] text-muted">Visit</span>
+        <span className="text-[0.7rem] text-muted">Visit</span>
       </div>
-      <div className="min-w-0 flex-1 text-[0.68rem]">
+      <div className="min-w-0 flex-1 text-[0.7rem]">
         <p className="truncate font-semibold text-foreground">{visitPlan.school}</p>
         <p className="truncate text-muted">{visitPlan.focus}</p>
         <ul className="mt-2 space-y-1">
@@ -89,7 +89,7 @@ export function VisitPlanPreview() {
             </li>
           ))}
         </ul>
-        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[0.6rem] font-semibold text-teal-700">
+        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[0.7rem] font-semibold text-teal-700">
           <CalendarClock className="size-3" aria-hidden="true" />
           Follow-up · {visitPlan.followUp}
         </p>
@@ -103,7 +103,7 @@ export function ProgressPreview() {
     <div className="flex h-full flex-col justify-center gap-3 p-3">
       {progressPairs.map((pair) => (
         <div key={pair.area}>
-          <p className="text-[0.68rem] font-medium text-foreground">{pair.area}</p>
+          <p className="text-[0.7rem] font-medium text-foreground">{pair.area}</p>
           <div className="mt-1 space-y-1">
             {(
               [
@@ -112,7 +112,7 @@ export function ProgressPreview() {
               ] as const
             ).map(([label, value, barClass]) => (
               <div key={label} className="flex items-center gap-2">
-                <span className="w-9 text-[0.58rem] text-muted">{label}</span>
+                <span className="w-9 text-[0.7rem] text-muted">{label}</span>
                 <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sage-100">
                   <span className={cn('block h-full rounded-full', barClass)} style={{ width: `${value * 100}%` }} />
                 </span>
