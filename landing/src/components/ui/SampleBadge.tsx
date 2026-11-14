@@ -13,7 +13,7 @@ export function SampleBadge({ children = 'Sample data', tone = 'light', classNam
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.6rem] font-semibold tracking-wider uppercase',
+        'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[0.7rem] font-semibold tracking-wider uppercase',
         tone === 'light' ? 'bg-accent-100 text-accent-700' : 'bg-accent-300/15 text-accent-200',
         className,
       )}

@@ -30,7 +30,7 @@ export default function AskPage() {
             {dir?.schools.map((s) => <option key={s.id} value={`s:${s.id}`}>{s.name}</option>)}
             {dir?.teachers.map((t) => <option key={t.id} value={`t:${t.id}`}>{t.name}</option>)}</Select></Field>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">{EXAMPLES.map((x) => <button key={x} onClick={() => setQ(x)} className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-100 hover:bg-brand-100">{x}</button>)}</div>
+        <div className="mt-3 flex flex-wrap gap-2">{EXAMPLES.map((x) => <button key={x} onClick={() => setQ(x)} className="rounded-full bg-brand-50 px-3 py-2.5 text-xs font-semibold text-brand-700 ring-1 ring-brand-100 hover:bg-brand-100 lg:py-1.5">{x}</button>)}</div>
         <div className="mt-4"><Button onClick={ask} busy={busy} disabled={!q.trim()}>Ask</Button></div>
         <div className="mt-3"><ErrorNote error={error} /></div>
         {ans && <div className="mt-3 rounded-2xl bg-brand-50/60 p-4 text-sm"><p className="whitespace-pre-wrap text-ink-900">{ans.answer}</p></div>}

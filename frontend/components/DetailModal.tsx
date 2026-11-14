@@ -162,8 +162,8 @@ export function DetailBody({ item, onClose, compact = false }: { item: Item; onC
                           <p dir="auto" className="break-words text-[13px] font-semibold text-ink-900 sm:truncate">{f.name}</p>
                           <p className="text-[11px] text-ink-500">{f.record_date} · {f.format.toUpperCase()}{f.scanned ? ` · ${t('scanned')}` : ''}</p>
                           <div className="mt-1 flex flex-wrap gap-1">
-                            {f.feeds.map((x) => <span key={x} className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-800">{feedLabel(x)}</span>)}
-                            {f.duplicate_of && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">{t('duplicate')}</span>}
+                            {f.feeds.map((x) => <span key={x} className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-800">{feedLabel(x)}</span>)}
+                            {f.duplicate_of && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t('duplicate')}</span>}
                           </div>
                         </div>
                       </button>
@@ -188,8 +188,8 @@ export default function DetailModal({ item, onClose }: { item: Item | null; onCl
     <AnimatePresence>
       {item && (
         <>
-          <motion.div className="fixed inset-0 z-[59] bg-ink-900/25 backdrop-blur-[2px] sm:z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.div role="dialog" aria-label={item.name} className="fixed inset-x-0 bottom-0 top-10 z-[60] mx-auto flex max-w-6xl flex-col overflow-hidden rounded-t-[28px] bg-surface shadow-panel sm:inset-x-6 sm:bottom-6 sm:top-6 sm:z-50 sm:rounded-[28px]"
+          <motion.div className="fixed inset-0 z-[59] bg-ink-900/25 backdrop-blur-[2px] sm:z-[59] md:z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+          <motion.div role="dialog" aria-label={item.name} className="fixed inset-x-0 bottom-0 top-10 z-[60] mx-auto flex max-w-6xl flex-col overflow-hidden rounded-t-[28px] bg-surface shadow-panel sm:inset-x-6 sm:bottom-6 sm:top-6 sm:z-[60] md:z-50 sm:rounded-[28px]"
             initial={{ opacity: 0, y: 30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
             <DetailBody item={item} onClose={onClose} />
           </motion.div>

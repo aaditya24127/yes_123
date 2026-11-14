@@ -37,7 +37,7 @@ export default function ConnectPage() {
           action={<Button variant="ghost" onClick={async () => { await api.connect.readAll(); notices.reload(); }}>Mark all read</Button>}>
           <ul className="space-y-1.5 text-sm">{unread.slice(0, 8).map((n) => (
             <li key={n.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:flex-nowrap"><span className="text-xs text-ink-400 sm:text-sm">{new Date(n.created_at).toLocaleString()}</span><b>{n.title}</b><span className="min-w-0 basis-full truncate text-ink-500 sm:basis-auto">{n.body}</span>
-              {n.link && <Link href={n.link} className="ms-auto shrink-0 text-brand-700 underline">Open</Link>}</li>))}</ul>
+              {n.link && <Link href={n.link} className="-my-2.5 ms-auto shrink-0 px-2 py-2.5 text-brand-700 underline">Open</Link>}</li>))}</ul>
         </Card>
       )}
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
@@ -89,8 +89,8 @@ function TeacherPanel({ row, onChange, onBack }: { row: ConnectRow; onChange: ()
           <div className="thin-scroll flex max-h-80 flex-col gap-2 overflow-y-auto pe-1">
             {!msgs.data?.length ? <Empty>No messages yet.</Empty> : msgs.data.map((m) => (
               <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.sender === 'crp' ? 'self-end bg-brand-600 text-white' : m.sender === 'teacher' ? 'self-start bg-brand-50 text-ink-900' : 'self-center bg-slate-100 text-xs text-ink-500'}`}>
-                {m.is_concern && <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-amber-700"><TriangleAlert size={11} />Concern</div>}
-                {m.body}<div className={`mt-0.5 text-[10px] ${m.sender === 'crp' ? 'text-white/70' : 'text-ink-400'}`}>{new Date(m.created_at).toLocaleString()}</div>
+                {m.is_concern && <div className="mb-0.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-amber-700"><TriangleAlert size={11} />Concern</div>}
+                {m.body}<div className={`mt-0.5 text-[11px] ${m.sender === 'crp' ? 'text-white/70' : 'text-ink-400'}`}>{new Date(m.created_at).toLocaleString()}</div>
               </div>
             ))}
           </div>

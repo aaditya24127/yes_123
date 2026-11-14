@@ -43,17 +43,18 @@ export default function Home() {
   const [focusIdx, setFocusIdx] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [vw, setVw] = useState(1280);
+  const [vh, setVh] = useState(900);
   const [hdr, setHdr] = useState(170);
   const headerRef = useRef<HTMLElement>(null);
   const guided = useTutorial().on;                // the tutorial explains the card list, so it is shown while the tutorial is on
-  const focus = ui !== 'grid' && vw >= 768 && !guided;      // the one-by-one and sideways layouts need a wide screen; phones always get the card list
+  const focus = ui !== 'grid' && vw >= 768 && vh >= 560 && !guided;      // the one-by-one and sideways layouts need a wide AND tall screen; phones (also turned sideways) always get the scrolling card list
   useEffect(() => { try { const u = localStorage.getItem('crp-ui'); if (u === 'vertical' || u === 'horizontal') setUi(u); } catch { /* ignore */ } }, []);
   const pickUi = (u: UI) => {
     setUi(u); setUiMenu(false); setSide(null); setPanel(false); setSelected(null); setFocusIdx(0);
     try { localStorage.setItem('crp-ui', u); } catch { /* ignore */ }
   };
   useEffect(() => {
-    const on = () => { setVw(window.innerWidth); if (headerRef.current) setHdr(headerRef.current.offsetHeight); };
+    const on = () => { setVw(window.innerWidth); setVh(window.innerHeight); if (headerRef.current) setHdr(headerRef.current.offsetHeight); };
     on(); window.addEventListener('resize', on);
     const ro = headerRef.current ? new ResizeObserver(on) : null; if (headerRef.current) ro?.observe(headerRef.current);
     return () => { window.removeEventListener('resize', on); ro?.disconnect(); };
@@ -135,7 +136,7 @@ export default function Home() {
 
   return (
     <main className={`mx-auto max-w-[1400px] px-4 sm:px-8 ${focus ? 'pb-4' : 'pb-16'}`}>
-      <header ref={headerRef} className={`${focus ? 'sticky' : 'relative sm:sticky'} top-0 z-30 -mx-4 bg-gradient-to-b from-page via-page/95 to-transparent px-4 pb-4 pt-5 sm:-mx-8 sm:px-8`}>
+      <header ref={headerRef} className={`${focus || (vw >= 640 && vh >= 700) ? 'sticky' : 'relative'} top-0 z-30 -mx-4 bg-gradient-to-b from-page via-page/95 to-transparent px-4 pb-4 pt-5 sm:-mx-8 sm:px-8`}>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <a href={LANDING_URL} className="flex items-center gap-2.5" aria-label="CRP Mentor Copilot home page" title="Back to the landing page">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-800 text-lg font-bold text-white shadow-float">C</div>
@@ -187,7 +188,7 @@ export default function Home() {
             </AnimatePresence>
           </div>
           <TutorialToggle />
-          <div className="relative order-last flex h-12 min-w-0 flex-[1_1_100%] items-center sm:order-none sm:ms-auto sm:h-14 sm:flex-1 sm:max-w-3xl sm:items-center rounded-full bg-surface ps-5 pe-2 shadow-float ring-1 ring-brand-100 transition focus-within:ring-2 focus-within:ring-brand-500">
+          <div className="relative order-last flex h-12 min-w-0 flex-[1_1_100%] items-center lg:order-none lg:ms-auto lg:h-14 lg:flex-1 lg:max-w-3xl lg:items-center rounded-full bg-surface ps-5 pe-2 shadow-float ring-1 ring-brand-100 transition focus-within:ring-2 focus-within:ring-brand-500">
             <Search size={20} className="shrink-0 text-brand-500" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={entity === 'school' ? t('searchSchools') : t('searchTeachers')}
               className="h-full min-w-0 flex-1 bg-transparent px-3 text-[15px] text-ink-900 outline-none placeholder:text-ink-400" />
@@ -229,7 +230,7 @@ export default function Home() {
       )}
 
       {focus && ranking && list.length > 0 && (
-        <div dir="ltr" className="mt-2 flex gap-5" style={{ height: `calc(100vh - ${hdr}px - 20px)` }}>
+        <div dir="ltr" className="focus-height mt-2 flex gap-5" style={{ '--hdr': `${hdr}px` } as React.CSSProperties}>
           <div className="relative min-w-0 flex-1">
             <Carousel key={ui} items={list} axis={ui === 'vertical' ? 'y' : 'x'} index={fi} onIndex={setFocusIdx} onActivate={() => setSide('detail')} />
           </div>
@@ -290,7 +291,7 @@ export default function Home() {
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-panel">{toast}</motion.div>
+            className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-brand-800 md:bottom-6 px-5 py-3 text-sm font-semibold text-white shadow-panel">{toast}</motion.div>
         )}
       </AnimatePresence>
     </main>

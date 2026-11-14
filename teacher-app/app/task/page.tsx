@@ -35,7 +35,7 @@ function Task() {
 
   return (
     <Shell home={data} error={error}>
-      <Link href="/" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />All tasks</Link>
+      <Link href="/" className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 pe-3 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />All tasks</Link>
       <Card>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {notice ? <Badge tone={t.status === 'open' ? 'open' : 'submitted'}>{t.status === 'open' ? 'Please confirm' : 'Confirmed'}</Badge>

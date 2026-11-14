@@ -24,7 +24,12 @@ const orya = Noto_Sans_Oriya({ subsets: ['oriya'], variable: '--font-orya', disp
 const mlym = Noto_Sans_Malayalam({ subsets: ['malayalam'], variable: '--font-mlym', display: 'swap', preload: false });
 const arab = Noto_Naskh_Arabic({ subsets: ['arabic'], variable: '--font-arab', display: 'swap', preload: false });
 
-export const metadata: Metadata = { title: 'CRP Mentor Copilot', description: 'Prioritise schools and teachers for mentoring visits' };
+// The manifest and icons let a phone or tablet install the site to the home screen and open it full screen like an app.
+export const metadata: Metadata = {
+  title: 'CRP Mentor Copilot', description: 'Prioritise schools and teachers for mentoring visits', manifest: '/manifest.webmanifest',
+  icons: { icon: [{ url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' }, { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }], apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: 'CRP Copilot', statusBarStyle: 'default' },
+};
 // Phone and app friendly: fills the whole screen (notch / home bar handled in globals.css), no zoom jumps on inputs.
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#235347' };
 
@@ -33,7 +38,7 @@ const fonts = [sans, serif, deva, beng, telu, tami, guju, knda, orya, mlym, arab
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={fonts}>
-      <body className="min-h-screen font-sans antialiased"><LangProvider><ThemeInit /><ServerWake /><AuthGate>{children}<BottomNav /><TutorialOverlay /></AuthGate></LangProvider></body>
+      <body className="min-h-screen min-h-dvh font-sans antialiased"><LangProvider><ThemeInit /><ServerWake /><AuthGate>{children}<BottomNav /><TutorialOverlay /></AuthGate></LangProvider></body>
     </html>
   );
 }

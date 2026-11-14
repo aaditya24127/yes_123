@@ -144,7 +144,7 @@ function Flow() {
 
   const frame = (children: React.ReactNode) => (
     <Shell home={data} error={error}>
-      <Link href="/" className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />Home</Link>
+      <Link href="/" className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 pe-3 text-sm font-semibold text-brand-700"><ChevronLeft size={16} />Home</Link>
       {children}
     </Shell>
   );

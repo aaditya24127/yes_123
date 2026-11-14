@@ -66,7 +66,7 @@ export default function Home() {
 
       {fresh.length > 0 && (
         <Card className="mb-5">
-          <div className="mb-2 flex items-center justify-between"><h2 className="font-serif text-lg font-semibold text-ink-900">New for you</h2><Link href="/updates" className="text-sm font-semibold text-brand-700">See all</Link></div>
+          <div className="mb-2 flex items-center justify-between"><h2 className="font-serif text-lg font-semibold text-ink-900">New for you</h2><Link href="/updates" className="-my-2 px-1 py-2 text-sm font-semibold text-brand-700">See all</Link></div>
           <ul className="space-y-2.5">
             {fresh.map((n) => (
               <li key={n.id} className="flex gap-3"><span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-amber-400" />

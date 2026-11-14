@@ -42,7 +42,7 @@ export default function Login() {
   const canSend = mode === 'in' ? !!email && !!password : !!email && password.length >= 8 && name.trim().length >= 2;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
+    <div className="mx-auto flex min-h-screen min-h-dvh max-w-md flex-col justify-center px-5 py-10">
       <div className="mb-7 flex flex-col items-center text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-500 to-brand-800 text-3xl font-bold text-white shadow-lift">{APP.short}</div>
         <h1 className="mt-4 font-serif text-3xl font-semibold text-ink-900">{APP.name}</h1>
@@ -78,7 +78,7 @@ export default function Login() {
           <div className="relative mt-1">
             <input type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
               minLength={mode === 'new' ? 8 : undefined} className={`${field} !mt-0 pe-12`} />
-            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute end-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-brand-700">
+            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute end-0.5 top-1/2 -translate-y-1/2 p-3 text-ink-400 hover:text-brand-700">
               {show ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -91,7 +91,7 @@ export default function Login() {
         {demo && mode === 'in' && (
           <div className="rounded-2xl bg-brand-50/70 p-3 text-center">
             <p className="text-xs text-ink-500">Just looking at the prototype?</p>
-            <button type="button" onClick={fillDemo} className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800">
+            <button type="button" onClick={fillDemo} className="-my-1 inline-flex items-center gap-1.5 py-2 text-sm font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800">
               <Sparkles size={15} />Fill in the demo account
             </button>
             <p className="mt-1 text-[11px] text-ink-400">Then press Sign in.</p>

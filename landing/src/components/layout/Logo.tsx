@@ -32,7 +32,7 @@ export function Logo({ tone = 'dark', className }: LogoProps) {
         >
           CRP Mentor Copilot
         </span>
-        <span className={cn('mt-1 text-[0.65rem] font-medium tracking-[0.18em] uppercase', light ? 'text-brand-100/70' : 'text-muted')}>
+        <span className={cn('mt-1 text-[0.7rem] font-medium tracking-[0.18em] uppercase', light ? 'text-brand-100/70' : 'text-muted')}>
           Mentoring intelligence
         </span>
       </span>

@@ -52,7 +52,7 @@ export default function Shell({ home, error, children }: { home: Home | null; er
           <Link key={href} href={href} className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-semibold ${on(href) ? 'text-brand-700' : 'text-ink-400'}`}>
             <span className={`flex h-8 w-14 items-center justify-center rounded-full transition ${on(href) ? 'bg-brand-100' : ''}`}><Icon size={20} /></span>
             {label}
-            {badge(href) > 0 && <span className="absolute right-[26%] top-1 rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-ink-900">{badge(href)}</span>}
+            {badge(href) > 0 && <span className="absolute right-[26%] top-1 rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-ink-900">{badge(href)}</span>}
           </Link>
         ))}
       </nav>
