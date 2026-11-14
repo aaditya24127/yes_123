@@ -3,6 +3,7 @@
     python tools/push_branch.py "Commit message"                 (branch name is made from the message)
     python tools/push_branch.py "Commit message" my-branch
     python tools/push_branch.py "Commit message" --dry-run       (shows what would be pushed, changes nothing on GitHub)
+    python tools/push_branch.py "Commit message" --delete=backend/app/services/old.py     (also removes a file you deleted here)
 
 What it does: keeps a clone of the repository in a temporary folder, makes a branch from origin/main, copies every changed file from
 this project folder into it (each file keeps the line endings it has in the repository, pictures / audio are copied untouched),
@@ -49,6 +50,7 @@ def listing():
 def main():
     try: sys.stdout.reconfigure(encoding='utf-8', errors='replace')           # Windows consoles cannot print the robot sign
     except Exception: pass
+    delete = [a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('--delete=')]      # files removed here that must also go from GitHub: --delete=path/in/repo
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     dry = '--dry-run' in sys.argv
     if not args: sys.exit(__doc__)
@@ -71,6 +73,9 @@ def main():
         old = open(dst, 'rb').read() if os.path.exists(dst) else None
         if old is None or (old.replace(b'\r\n', b'\n') != new.replace(b'\r\n', b'\n') if not rel.lower().endswith(BINARY) else old != new):
             os.makedirs(os.path.dirname(dst), exist_ok=True); open(dst, 'wb').write(new); changed.append(rel)
+    for rel in delete:                                                     # only files that are really gone from this folder
+        if not os.path.exists(os.path.join(ROOT, rel)) and os.path.exists(os.path.join(WT, rel)):
+            os.remove(os.path.join(WT, rel)); changed.append(rel + '  (deleted)')
     if not changed:
         git('checkout', '-q', 'main', check=False); print('Nothing to push: this folder matches origin/main.'); return
     git('add', '-A')

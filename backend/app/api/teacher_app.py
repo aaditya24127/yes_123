@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Uploa
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
-from ..services import assessment, push, report, tasks, teacher_auth, voice
+from ..services import assessment, push, report, report_view, tasks, teacher_auth, voice
 from ..services.ingest import pipeline, readers
 from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
@@ -156,7 +156,7 @@ def my_visits(tid: str = Depends(teacher_auth.current_teacher)):
         except Exception:
             rp = []
     reports = [dict(id=str(x['id']), date=x['started_at'].date().isoformat(), class_no=x['class_no'], subject=x['subject'], topic=x['topic'],
-                    url=f"/api/report/{x['id']}.pdf?sig={report.sig(str(x['id']))}", voice=voice.public(x.get('voice'), str(x['id']), report.sig('v-' + str(x['id'])))) for x in rp]
+                    url=f"{report_view.site_url()}/r?id={x['id']}&sig={report.sig(str(x['id']))}", voice=voice.public(x.get('voice'), str(x['id']), report.sig('v-' + str(x['id'])))) for x in rp]
     return dict(visits=[_row(v) for v in vs], follow_ups=[_row(f) for f in fu], reports=reports)
 
 

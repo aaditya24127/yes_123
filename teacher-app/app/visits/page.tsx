@@ -28,8 +28,8 @@ export default function VisitsPage() {
             <li key={r.id} className="rounded-3xl bg-surface shadow-float ring-1 ring-brand-100">
               <a href={r.url} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 rounded-3xl px-4 py-3 hover:bg-brand-50/60">
                 <span className="min-w-0"><span className="block font-semibold text-ink-900">{tr('Report for your visit on {fmtDate}', { fmtDate: fmtDate(r.date) })}</span>
-                  <span className="block truncate text-sm text-ink-500">{[r.class_no ? tr('Class {class_no}', { class_no: r.class_no }) : null, r.subject, r.topic].filter(Boolean).join(' · ') || tr('Open the PDF')}</span></span>
-                <span className="shrink-0 text-sm font-semibold text-brand-700">{tr('Open PDF')}</span></a>
+                  <span className="block truncate text-sm text-ink-500">{[r.class_no ? tr('Class {class_no}', { class_no: r.class_no }) : null, r.subject, r.topic].filter(Boolean).join(' · ') || tr('Open the report')}</span></span>
+                <span className="shrink-0 text-sm font-semibold text-brand-700">{tr('Open the report')}</span></a>
               {r.voice && (
                 <div className="border-t border-brand-100 px-4 pb-3 pt-2.5">
                   <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-ink-900"><Volume2 size={16} className="text-brand-600" />{tr('Listen to your CRP ({n} seconds)', { n: Math.max(1, Math.round(r.voice.seconds / 5) * 5) })}</p>

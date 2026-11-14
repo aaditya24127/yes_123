@@ -18,7 +18,7 @@ export interface Override {
   school_name: string; teacher_name: string | null;
 }
 export interface DirSchool { id: string; code: string; name: string; board: string; medium: string; grade_from: number; grade_to: number; village: string }
-export interface DirTeacher { id: string; school_id: string; teacher_code: string; name: string; designation: string; classes_taught: number[]; subjects_taught: string[]; phone?: string | null }
+export interface DirTeacher { id: string; school_id: string; teacher_code: string; name: string; designation: string; classes_taught: number[]; subjects_taught: string[] }
 export interface Directory { schools: DirSchool[]; teachers: DirTeacher[] }
 
 export type UploadStatus = 'sorted' | 'needs_attention' | 'duplicate' | 'skipped' | 'importing' | 'imported' | 'failed';
@@ -73,9 +73,19 @@ export interface Evaluation {
 export interface MentorCheck { verdict: 'agree' | 'correct' | 'partly' | 'wrong'; reason: string | null; by: string | null; at: string }
 /** The spoken review of a visit: a short voice message in the teacher's language (about a minute). */
 export interface VoiceInfo { language: string; voice_language: string | null; gender: 'male' | 'female'; voice: string; script: string; seconds: number; made_at: string | null; url: string; by?: string | null }
-export interface WhatsAppResult { mode: 'sent' | 'link' | 'failed'; message: string; to: string; voice: boolean; link: string }
+/** The report as the teacher's page shows it (text already in the chosen language). */
+export interface ReportView {
+  language: string; translated: boolean; pdf_url: string;
+  content: {
+    meta: { teacher: string; school: string; class_no: number | null; subject: string; topic: string; date: string; crp: string };
+    overall: string; strengths: { point: string; evidence: string }[]; growth: { area: string; why: string; evidence: string; try_this: string }[];
+    students: { summary: string; answers: { question: string; verdict: string; note: string }[]; reasons: { issue: string; likely_reason: string; teacher_action: string }[] };
+    next_steps: { action: string; due_in_days: number | null }[]; follow_up_days: number; practices: { element: string; score: number | null; evidence: string }[];
+  };
+}
+export interface SendReportResult { app: boolean; email: 'sent' | 'not_set_up' | 'failed' | 'skipped'; message: string; to: string; link: string }
 export interface Session {
-  voice?: VoiceInfo | null; teacher_phone?: string | null;
+  voice?: VoiceInfo | null;
   id: string; school_id: string; teacher_id: string | null; class_no: number | null; subject: string | null; topic: string | null; stage: number; status: string;
   brief: Brief; crp_notes: string | null; changes_since_last: string | null; questions: Question[]; result: Partial<Evaluation>; media: Media[];
   started_at: string; job: { status: string; error: string | null; provider: string | null } | null; visit_id: string | null; question_tips?: string[]; questions_by?: string;
