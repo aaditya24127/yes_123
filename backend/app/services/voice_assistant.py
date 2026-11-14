@@ -32,11 +32,26 @@ def _item_brief(i: dict) -> dict:
                 school=i.get('school_name') if i.get('entity') == 'teacher' else None, needs_evidence=bool(i.get('insufficient')))
 
 
-def _context() -> dict:
-    """What the AI is told about the world. Kept for ten minutes (it is the same for every sentence of a conversation)."""
+_building = threading.Lock()
+
+
+def _fresh():
     with _lock:
         hit = _cache.get('ctx')
-        if hit and time.time() - hit[0] < TTL: return hit[1]
+        return hit[1] if hit and time.time() - hit[0] < TTL else None
+
+
+def _context() -> dict:
+    """What the AI is told about the world. Kept for ten minutes (it is the same for every sentence of a conversation).
+    When the warm-up is still building it, a sentence that arrives waits for that build instead of starting a second one."""
+    hit = _fresh()
+    if hit is not None: return hit
+    with _building:
+        hit = _fresh()
+        return hit if hit is not None else _build_context()
+
+
+def _build_context() -> dict:
     with get_conn() as conn:
         schools = conn.execute('select id, code, name, board, medium, village from schools where is_active order by code').fetchall()
         teachers = conn.execute('select id, school_id, title, full_name, designation, classes_taught, subjects_taught from teachers where is_active order by teacher_code').fetchall()
