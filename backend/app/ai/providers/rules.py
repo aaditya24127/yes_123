@@ -132,6 +132,17 @@ class RulesProvider(Provider):
         """No AI reachable: the texts stay in English (the page says so)."""
         return dict(items=list(i.get('items') or []))
 
+    def voice_turn(self, i):
+        """No AI reachable: only the simplest English commands (open a page), so the voice mode still moves around."""
+        u = (i.get('utterance') or '').lower()
+        pages = {'priorit': 'priorities', 'home': 'priorities', 'upload': 'upload', 'add file': 'upload', 'visit': 'visit', 'teacher': 'teachers', 'connect': 'teachers', 'ask': 'ask', 'setting': 'settings'}
+        blank = dict(type='navigate', page='', entity='', id='', filter='', query='', school_id='', teacher_id='', class_no=0, subject='', topic='', text='', name='', code='', weight=-1, layout='', language='', step='', tab='', count=0)
+        none = dict(name='none', entity='', id='', school_id='', teacher_id='', class_no=0, subject='', text='')
+        for k, p in pages.items():
+            if k in u and any(w in u for w in ('open', 'go', 'show', 'take')):
+                return dict(say=f'Opening {p}.', actions=[dict(blank, page=p)], query=none)
+        return dict(say='The assistant brain is not reachable right now, so I can only open pages. Try saying: open settings.', actions=[], query=none)
+
     def assessment_questions(self, i):
         ch = i.get('chapter') or 'this chapter'; cls = i.get('class_no') or ''; sub = i.get('subject') or 'the subject'
         know = [(f"In your own words, what is the main idea of the chapter {ch}?", ['States the main idea correctly', 'Uses the key words of the chapter', 'Gives a short example']),

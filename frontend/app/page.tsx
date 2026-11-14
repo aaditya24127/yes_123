@@ -13,6 +13,8 @@ import Carousel from '@/components/Carousel';
 import { LANGS, useLang, type Key } from '@/lib/i18n';
 import NavLinks from '@/components/shell/NavLinks';
 import TutorialToggle from '@/components/tutorial/TutorialToggle';
+import VoiceToggle from '@/components/voice/VoiceToggle';
+import { useVoicePage } from '@/lib/voice/bus';
 import { useTutorial } from '@/lib/tutorial/store';
 
 type Filter = 'all' | Band | 'insufficient';
@@ -120,6 +122,43 @@ export default function Home() {
   const focusedId = list[fi]?.id ?? null;
   useEffect(() => { const t = setTimeout(() => setDetailId(focusedId), 160); return () => clearTimeout(t); }, [focusedId]);
   const detailItem = list.find((i) => i.id === detailId) ?? list[fi] ?? null;
+
+  // ---- Voice control: what the voice assistant may do on this page (lib/voice). The state tells the assistant what is on the screen.
+  const live = useRef({ entity, ranking, list });
+  live.current = { entity, ranking, list };
+  const until = async (ok: () => boolean, ms = 7000) => { const end = Date.now() + ms; while (!ok() && Date.now() < end) await new Promise((r) => setTimeout(r, 100)); return ok(); };
+  useVoicePage('priorities', {
+    view: async (p: { entity?: Entity; filter?: Filter; query?: string }) => {
+      if (p.entity && p.entity !== live.current.entity) { setEntity(p.entity); setFilter('all'); setFocusIdx(0); setSelected(null); setSide(null); }
+      if (p.filter) { setFilter(p.filter); setFocusIdx(0); }
+      if (typeof p.query === 'string') setQuery(p.query); else if (p.entity || p.filter) setQuery('');
+    },
+    open: async (p: { entity?: Entity; id: string }) => {
+      if (p.entity && p.entity !== live.current.entity) { setEntity(p.entity); setFilter('all'); setQuery(''); await until(() => live.current.ranking?.entity === p.entity && live.current.entity === p.entity); }
+      setFilter('all'); setQuery('');
+      await until(() => !!live.current.ranking?.items.some((i) => i.id === p.id));
+      const item = live.current.ranking?.items.find((i) => i.id === p.id); if (!item) throw new Error('I could not find it in the list.');
+      if (focus) { const idx = live.current.ranking!.items.filter((i) => !i.insufficient).findIndex((i) => i.id === p.id); setFocusIdx(Math.max(0, idx)); setSide('detail'); }
+      else { setPanel(false); setSelected(item); }
+    },
+    panel: async (p: { open: boolean }) => { if (focus) setSide(p.open ? 'priority' : null); else { setSelected(null); setPanel(p.open); } },
+    weight: async (p: { code: string; weight: number }) => {
+      if (!config || ![...config.categories, ...config.library].some((c) => c.code === p.code)) throw new Error('I do not know that priority.');
+      setWeights((w) => ({ ...w, [p.code]: Math.max(0, Math.min(100, p.weight)) }));
+    },
+    reset: async () => { resetMain(); },
+    save: async () => { await apply(); },
+  }, () => ({
+    page: 'priorities', showing: entity === 'school' ? 'schools' : 'teachers', filter, search: query || null, layout: ui, unsavedPriorityChanges: dirty,
+    priorityPanelOpen: focus ? side === 'priority' : panel, detailOpen: (focus ? side === 'detail' : !!selected) ? (selected?.name ?? detailItem?.name ?? null) : null,
+    counts: s ?? null, list: list.slice(0, 12).map((i) => ({ rank: i.rank, name: i.name, score: i.score, band: i.band })),
+    priorities: config ? config.categories.map((c) => ({ code: c.code, name: c.name, weight: weights[c.code] ?? 0 })) : null,
+  }));
+  // A layout chosen by voice (or on the settings page) shows at once.
+  useEffect(() => {
+    const read = () => { try { const u = localStorage.getItem('crp-ui'); setUi(u === 'vertical' || u === 'horizontal' ? u : 'grid'); } catch { /* ignore */ } };
+    window.addEventListener('crp-voice-prefs', read); return () => window.removeEventListener('crp-voice-prefs', read);
+  }, []);
   // Side pane widths. Detail is the focus, so it gets most of the screen.
   // To revert the "bigger details" try-out, set DETAIL_WIDE = false (previous detail width: 46% of the screen, max 640px).
   const DETAIL_WIDE = true;
@@ -187,6 +226,7 @@ export default function Home() {
               )}
             </AnimatePresence>
           </div>
+          <VoiceToggle />
           <TutorialToggle />
           <div className="relative order-last flex h-12 min-w-0 flex-[1_1_100%] items-center lg:order-none lg:ms-auto lg:h-14 lg:flex-1 lg:max-w-3xl lg:items-center rounded-full bg-surface ps-5 pe-2 shadow-float ring-1 ring-brand-100 transition focus-within:ring-2 focus-within:ring-brand-500">
             <Search size={20} className="shrink-0 text-brand-500" />

@@ -5,6 +5,7 @@ import { ArrowLeftRight, ArrowUpDown, Check, LayoutGrid, LogOut } from 'lucide-r
 import PageShell from '@/components/shell/PageShell';
 import { Button, Card, Input } from '@/components/ui';
 import { LANGS, useLang } from '@/lib/i18n';
+import { useVoicePage } from '@/lib/voice/bus';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { AIUsage } from '@/lib/types';
@@ -76,6 +77,12 @@ export default function SettingsPage() {
     setTheme(loadTheme());
     try { const u = localStorage.getItem('crp-ui'); if (u === 'vertical' || u === 'horizontal') setLayout(u); } catch { /* ignore */ }
   }, []);
+  // The voice assistant can change the colours and layout: this page follows.
+  useEffect(() => {
+    const read = () => { setTheme(loadTheme()); try { const u = localStorage.getItem('crp-ui'); setLayout(u === 'vertical' || u === 'horizontal' ? u : 'grid'); } catch { /* ignore */ } };
+    window.addEventListener('crp-voice-prefs', read); return () => window.removeEventListener('crp-voice-prefs', read);
+  }, []);
+  useVoicePage('settings', {}, () => ({ page: 'settings', colours: THEMES[theme]?.name, layout, language: lang, signedInAs: user?.name ?? null }));
   const pickLayout = (l: Layout) => { setLayout(l); try { localStorage.setItem('crp-ui', l); } catch { /* ignore */ } };
   const pickTheme = (i: number) => { setTheme(i); saveTheme(i); };
 

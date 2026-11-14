@@ -97,6 +97,10 @@ export const api = {
   evidence: (entity: Entity, id: string) => keep(`evidence:${entity}:${id}`, 120000, () => post<EvidenceGroup[]>('/api/evidence', { entity, id }, true)),
   files: (schoolId: string) => keep(`files:${schoolId}`, 120000, () => get<FileInfo[]>(`/api/schools/${schoolId}/files`)),
   preview: (fileId: string) => get<Preview>(`/api/files/${fileId}/preview`),
+  voice: {
+    turn: (body: { utterance: string; language: string; page: string; page_state: unknown; history: { user: string; assistant: string }[] }) =>
+      post<{ say: string; actions: Record<string, unknown>[]; took: number; by: string }>('/api/voice/turn', body),
+  },
   publicReport: {
     view: (id: string, sig: string, lang: string) => get<ReportView>(`/api/report/view/${id}?sig=${sig}&lang=${lang}`),
     voice: (id: string, sig: string, lang: string) => post<VoiceInfo>(`/api/report/view/${id}/voice?sig=${sig}&lang=${lang}`),

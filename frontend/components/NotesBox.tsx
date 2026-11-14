@@ -1,7 +1,7 @@
 'use client';
 // The "What did you see?" box on the visit page: type, speak (any language, also mixed), photo of handwriting, or tap quick notes.
 // Whatever is added lands in the same box and can be edited. One button turns it into English and back. Recordings and photos are not saved.
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, Languages, ListChecks } from 'lucide-react';
 import AudioRecorder from '@/components/ui/AudioRecorder';
 import { Button, Field, Spinner, TextArea } from '@/components/ui';
@@ -30,6 +30,11 @@ export default function NotesBox({ value, onSave, setError }: { value: string; o
     const n = ref.current.trim() ? `${ref.current.replace(/\s+$/, '')}\n${t}` : t;
     change(n); setStash(null); setEnglish(false); commit(n);
   };
+  // The voice assistant adds a note the same way a spoken note of this box is added (shown here and saved).
+  useEffect(() => {
+    const h = (e: Event) => { const t = String((e as CustomEvent<string>).detail ?? '').trim(); if (t) add(t); };
+    window.addEventListener('crp-add-note', h); return () => window.removeEventListener('crp-add-note', h);
+  });
   const run = async (kind: Exclude<Busy, null>, fn: () => Promise<void>) => {
     setBusy(kind); setNote(''); setError('');
     try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(null); }

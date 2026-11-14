@@ -9,6 +9,7 @@ import ThemeInit from '@/components/shell/ThemeInit';
 import ServerWake from '@/components/shell/ServerWake';
 import AuthGate from '@/components/shell/AuthGate';
 import TutorialOverlay from '@/components/tutorial/TutorialOverlay';
+import VoiceAssistant from '@/components/voice/VoiceAssistant';
 import './globals.css';
 
 const sans = Source_Sans_3({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -38,7 +39,7 @@ const fonts = [sans, serif, deva, beng, telu, tami, guju, knda, orya, mlym, arab
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={fonts}>
-      <body className="min-h-screen min-h-dvh font-sans antialiased"><LangProvider><ThemeInit /><ServerWake /><AuthGate>{children}<BottomNav /><TutorialOverlay /></AuthGate></LangProvider></body>
+      <body className="min-h-screen min-h-dvh font-sans antialiased"><LangProvider><ThemeInit /><ServerWake /><AuthGate>{children}<BottomNav /><TutorialOverlay /><VoiceAssistant /></AuthGate></LangProvider></body>
     </html>
   );
 }
