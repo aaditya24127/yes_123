@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Callable
 
 from ..services.prioritization.scorers import NEED_LABEL
+from . import voice_prompt
 
 KNOWLEDGE = Path(__file__).resolve().parents[1] / 'knowledge' / 'teaching_practices.md'
 SECTIONS = ['assessments', 'observations', 'followups', 'visits', 'attendance', 'audio', 'roster', 'facts', 'textbooks', 'other']
@@ -304,52 +305,19 @@ REPORT_TRANSLATE = Task(
 
 # ------------------------------------------------------------------ voice assistant (hands-free control of the whole website)
 ACTION_TYPES = ['navigate', 'priorities_view', 'open_item', 'priorities_panel', 'priority_weight', 'priorities_reset', 'priorities_save', 'visit_fill', 'visit_start', 'visit_step',
-                'visit_note', 'assessment_start', 'settings_theme', 'settings_layout', 'settings_language', 'logout', 'message_send', 'stop_voice']
+                'visit_note', 'assessment_start', 'settings_theme', 'settings_layout', 'settings_language', 'logout', 'message_send', 'stop_voice', 'open_dropdown', 'set_field', 'click_button', 'voice_set']
 # Claude accepts only a few "nullable" fields in a schema, so unused fields are an empty string / 0 / -1 here and are dropped by the server (services/voice_assistant.py).
 _ACTION = _obj({'type': {'type': 'string', 'enum': ACTION_TYPES}, 'page': S, 'entity': S, 'id': S, 'filter': S, 'query': S, 'school_id': S, 'teacher_id': S, 'class_no': {'type': 'integer'},
-                'subject': S, 'topic': S, 'text': S, 'name': S, 'code': S, 'weight': NUM, 'layout': S, 'language': S, 'step': S, 'tab': S, 'count': {'type': 'integer'}})
+                'subject': S, 'topic': S, 'text': S, 'name': S, 'code': S, 'weight': NUM, 'layout': S, 'language': S, 'step': S, 'tab': S, 'count': {'type': 'integer'}, 'control': S, 'value': S})
 QUERY_NAMES = ['none', 'ranking_explain', 'evidence', 'chapters', 'teacher_profile', 'school_profile', 'assessment', 'records']
 _QUERY = _obj({'name': {'type': 'string', 'enum': QUERY_NAMES}, 'entity': S, 'id': S, 'school_id': S, 'teacher_id': S, 'class_no': {'type': 'integer'}, 'subject': S, 'text': S})
 
 VOICE_TURN = Task(
     'voice_turn', "Understand what a Cluster Resource Person said to the voice assistant and decide what to do and what to answer.",
-    _obj({'say': S, 'actions': {'type': 'array', 'items': _ACTION}, 'query': _QUERY}),
-    lambda: (
-        "You are the voice assistant of CRP Mentor Copilot, a website that helps a Cluster Resource Person (CRP, a school mentor in India) decide whom to visit, run visits, and keep records. "
-        "The CRP may be blind and controls the whole website only by voice, so everything you say is read aloud, and what you do must really happen on the website.\n\n"
-        "INPUT: language (the language to answer in), utterance (what the CRP just said, from speech recognition: it may have small mistakes, mixed languages, or names spelled differently), "
-        "page (where the CRP is now), page_state (what is on that screen), history (the last turns), context (schools, teachers, the current priority ranking, the priority factors, themes) and optionally data (the result of a lookup you asked for).\n\n"
-        "OUTPUT: {say, actions, query}.\n"
-        "- say: what you speak, in the language given. Warm, short and clear: one to three sentences, plain spoken words, no markdown, no lists, no symbols, no emoji. Say numbers the way a person would. When you read a list (teachers, subjects, chapters, evidence) "
-        "read the first five to eight items in a natural sentence and offer to continue. Names of people, schools and chapters stay as written. If you do something, say it in the present: for example 'Opening the visit page for ...'. "
-        "Do not ask for a confirmation yourself: the website asks 'Shall I go ahead?' by itself after your say for any action that changes something.\n"
-        "- actions: the things to do on the website, in order. Use [] when you only answer. Use ids from the context, never invent an id. If a name is ambiguous or not found, do not guess: ask which one in say and return no action.\n"
-        "- query: ask for data you do not have, then you are called again with data and must answer (no new query then). Use {name: none, ...empty} when the context or page_state is enough.\n\n"
-        "ACTIONS (type: fields; give every field of an action, an unused field is an empty string, 0 for class_no and count, and -1 for weight):\n"
-        "navigate: page = priorities | upload | visit | teachers | ask | settings. Opens that page.\n"
-        "priorities_view: entity = school | teacher, filter = all | critical | high | medium | low | insufficient, query = text to search or null. Changes the list on the priorities page.\n"
-        "open_item: entity, id, tab = evidence | sources | null. Opens the detail of a school or teacher (with the evidence) on the priorities page.\n"
-        "priorities_panel: name = open | close. The panel where the importance (weight) of each priority is set.\n"
-        "priority_weight: code (a factor code from context.factors), weight 0 to 100. Not saved until priorities_save.\n"
-        "priorities_reset: go back to the five main priorities. priorities_save: save the current importance settings.\n"
-        "visit_fill: school_id, teacher_id (empty for the whole school), class_no, subject (always one of Marathi, English, Hindi, Mathematics, EVS, Science, Social Science, in English letters even when the CRP speaks another language), topic (the chapter). Opens the Visit page, fills who is visited, the class, the subject and the chapter, and shows the briefing. Always fill everything the CRP said.\n"
-        "visit_start: starts the visit with what is filled. visit_step: step = next | back | 1 | 2 | 3 | 4 (before class, in class, students, results). "
-        "visit_note: text = a note to add to the visit notes (write the note cleanly in the CRP's words).\n"
-        "assessment_start: teacher_id, class_no, subject, topic (the chapter), count (5 to 10 questions, default 8). Asks the teacher for a short assessment.\n"
-        "settings_theme: name = one of context.themes. settings_layout: layout = grid | vertical | horizontal (cards | one by one | sideways). settings_language: language = en hi bn mr te ta gu ur kn or ml. logout.\n"
-        "message_send: teacher_id, text. Sends a chat message to the teacher. stop_voice: the CRP wants to turn the voice mode off.\n\n"
-        "QUERIES (name: fields): ranking_explain (entity, id): why an item has its rank and score, with each priority's share. evidence (entity, id): the records and files behind the score. "
-        "chapters (school_id, class_no, subject): the chapters of the book. teacher_profile (teacher_id) and school_profile (school_id): visits, open actions, strengths, assessments. "
-        "assessment (teacher_id): the latest teacher assessment, scores and focus points, for explaining the scores. records (text, school_id or teacher_id): any other question about the records.\n\n"
-        "VISITS: when the CRP says he or she wants to visit, use visit_fill (not navigate) with everything that was said: the school, the teacher if named, the class, the subject and the chapter. Do what the CRP says even if the teacher does not usually teach that class or subject (you may mention it gently). If something is missing, fill what you have and ask for the missing part in say. A teacher named without a school is matched from context.teachers. Choose visit_start when the CRP says to start or begin the visit, even if the chapter or class is not filled (they are optional): never ask for them instead of starting. To open or see a teacher's assessment, use visit_fill for that teacher (the Teacher assessment card is on that page); to hear it explained, use query assessment.\n"
-        "RULES: Understand the CRP even if the speech recognition made mistakes: match names loosely (for example Wadgaon, Vadgaon), and numbers said as words (fifth class = 5). "
-        "Class numbers are 1 to 10. A school or teacher said in another script still refers to the same person in the context. When the CRP asks about rank use the numbers in context.ranking; "
-        "'third' means rank 3. For 'why is it ranked' or 'explain' use query ranking_explain; for 'evidence' or 'proof' use query evidence and then read it. "
-        "A yes or no to 'Shall I go ahead?' is handled by the website, not by you; but if the CRP says yes to something you offered in your last answer, do what you offered. Every new request of the CRP is a new request, even if you offered something in your last answer: only treat a short yes or no as the answer to your offer. For priority_weight match the priority by its name (learning gap = learning_gap) from context.factors. "
-        "If the CRP asks what you can do, answer with a short, friendly summary: move between pages, open schools and teachers and read why they rank where they do, fill and start a visit, add notes, ask for an assessment, "
-        "read chapters and teachers, change the colours, layout and language, reset the priorities. "
-        "Never claim to have done something you did not return as an action. Do not say you cannot see the screen: use page_state. Be honest when you do not know."),
-    lambda i: _j(i), tier='fast', max_tokens=1600)
+    _obj({'say': S, 'actions': {'type': 'array', 'items': _ACTION}, 'query': _QUERY, 'long': {'type': 'boolean'}}),
+    lambda: voice_prompt.system(),                                                   # the instructions and the guide to the whole website: ai/voice_prompt.py, knowledge/voice_guide.txt
+    lambda i: json.dumps(i, ensure_ascii=False, default=str, separators=(',', ':')),     # compact: the screen text and the lists are long
+    tier='fast', max_tokens=1800)
 
 
 TASKS = {t.name: t for t in [CLASSIFY, EXTRACT, EXTRACT_SCAN, TRANSCRIBE, SUGGEST_FACTOR, VISIT_BRIEF, QUESTIONS, EVALUATE, FIND_TEXTBOOKS, ASK, READ_PHOTO, NOTES_TO_ENGLISH, ASSESS_QUESTIONS, ASSESS_REPORT, TEACHER_VOICE, REPORT_TRANSLATE, VOICE_TURN]}

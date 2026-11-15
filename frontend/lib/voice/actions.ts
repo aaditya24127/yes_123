@@ -8,13 +8,17 @@ import { THEMES, saveTheme } from '@/lib/theme';
 import type { Directory } from '@/lib/types';
 import { LANGS, type Lang } from '@/lib/i18n';
 import { callPage } from './bus';
+import { clickControl, labelFor, needsYes, openDropdown, setField, type Choices } from './forms';
+import { getVoice, setVoice } from './store';
 
 export type Act = { type: string } & Record<string, any>;
 export interface Host {
   nav: (path: string) => void; path: () => string; tr: (s: string, v?: Record<string, string | number>) => string;
   lang: string; setLang: (l: Lang) => void; turnOff: () => void; dir: Directory | null;
+  say?: (text: string) => Promise<void>;           // speaks a line now (given by the controller)
+  switchLanguage?: (code: string) => Promise<void>; // changes the language of the whole app, waits until its words are loaded, then answers in the new language
 }
-interface Def { risk: 'safe' | 'change'; describe: (a: Act, h: Host) => string; check?: (a: Act, h: Host) => string | null; run: (a: Act, h: Host) => Promise<void>; }
+interface Def { risk: 'safe' | 'change'; confirm?: (a: Act) => boolean; describe: (a: Act, h: Host) => string; check?: (a: Act, h: Host) => string | null; run: (a: Act, h: Host) => Promise<void>; }
 
 export const PAGE_PATH: Record<string, string> = { priorities: '/', upload: '/upload', visit: '/visit', teachers: '/connect', ask: '/ask', settings: '/settings' };
 const PAGE_LABEL: Record<string, string> = { priorities: 'Priorities', upload: 'Upload', visit: 'Visit', teachers: 'Teachers', ask: 'Ask', settings: 'Settings' };
@@ -43,6 +47,16 @@ async function officialChapter(h: Host, a: Act): Promise<string> {
   } catch { return topic; }
 }
 
+/** Reads six choices of the open dropdown aloud (from the n-th on) and remembers how far it got ("more" reads the next six). */
+export async function readChoices(h: Host, c: Choices, from = 0) {
+  const names = c.options.filter(Boolean); const batch = names.slice(from, from + 6); const rest = names.length - from - batch.length; const items = batch.join(', ');
+  setVoice({ choices: { ...c, shown: from + batch.length } });
+  await h.say?.(!names.length ? h.tr('The {name} list is empty.', { name: c.label })
+    : !batch.length ? h.tr('That was the whole list. Which one?')
+    : rest > 0 ? h.tr('{name}: {items}, and {n} more. Which one?', { name: c.label, items, n: rest })
+    : h.tr('{name}: {items}. Which one?', { name: c.label, items }));
+}
+
 export const DEFS: Record<string, Def> = {
   navigate: {
     risk: 'safe', check: (a) => (PAGE_PATH[a.page] ? null : 'That page does not exist.'),
@@ -63,12 +77,12 @@ export const DEFS: Record<string, Def> = {
     run: async (a, h) => { await goto(h, 'priorities'); await callPage('priorities', 'panel', { open: a.name !== 'close' }); },
   },
   priority_weight: {
-    risk: 'change', check: (a) => (a.code && typeof a.weight === 'number' ? null : 'Which priority, and how important?'),
+    risk: 'safe', check: (a) => (a.code && typeof a.weight === 'number' ? null : 'Which priority, and how important?'),
     describe: (a, h) => h.tr('Set the importance of “{code}” to {weight}', { code: a.code, weight: Math.round(a.weight) }),
     run: async (a, h) => { await goto(h, 'priorities'); await callPage('priorities', 'weight', a); },
   },
   priorities_reset: {
-    risk: 'change', describe: (_a, h) => h.tr('Reset the priorities to the five main ones (not saved until you say save)'),
+    risk: 'safe', describe: (_a, h) => h.tr('Reset the priorities to the five main ones (not saved until you say save)'),
     run: async (_a, h) => { await goto(h, 'priorities'); await callPage('priorities', 'reset', {}); },
   },
   priorities_save: {
@@ -85,7 +99,7 @@ export const DEFS: Record<string, Def> = {
     },
   },
   visit_start: {
-    risk: 'change', describe: (_a, h) => h.tr('Start the visit with what is filled in'),
+    risk: 'safe', describe: (_a, h) => h.tr('Start the visit with what is filled in'),
     run: async (_a, h) => { await goto(h, 'visit'); await callPage('visit', 'start', {}); },
   },
   visit_step: {
@@ -93,7 +107,7 @@ export const DEFS: Record<string, Def> = {
     run: async (a, h) => { await goto(h, 'visit'); await callPage('visit', 'step', a); },
   },
   visit_note: {
-    risk: 'change', check: (a) => (String(a.text ?? '').trim() ? null : 'What should the note say?'),
+    risk: 'safe', check: (a) => (String(a.text ?? '').trim() ? null : 'What should the note say?'),
     describe: (a, h) => h.tr('Add this note to the visit: “{text}”', { text: String(a.text ?? '').slice(0, 140) }),
     run: async (a, h) => { await goto(h, 'visit'); await callPage('visit', 'note', a); },
   },
@@ -106,19 +120,19 @@ export const DEFS: Record<string, Def> = {
     },
   },
   settings_theme: {
-    risk: 'change', check: (a) => (findTheme(a.name) >= 0 ? null : 'I do not know that colour theme.'),
+    risk: 'safe', check: (a) => (findTheme(a.name) >= 0 ? null : 'I do not know that colour theme.'),
     describe: (a, h) => h.tr('Change the colours to {name}', { name: THEMES[findTheme(a.name)]?.name ?? a.name }),
     run: async (a) => { saveTheme(findTheme(a.name)); window.dispatchEvent(new Event('crp-voice-prefs')); },
   },
   settings_layout: {
-    risk: 'change', check: (a) => (LAYOUT_LABEL[a.layout] ? null : 'I do not know that layout.'),
+    risk: 'safe', check: (a) => (LAYOUT_LABEL[a.layout] ? null : 'I do not know that layout.'),
     describe: (a, h) => h.tr('Change the priority list layout to {layout}', { layout: h.tr(LAYOUT_LABEL[a.layout] ?? a.layout) }),
     run: async (a) => { try { localStorage.setItem('crp-ui', a.layout); } catch { /* ignore */ } window.dispatchEvent(new Event('crp-voice-prefs')); },
   },
   settings_language: {
-    risk: 'change', check: (a) => (CODES.includes(a.language) ? null : 'I do not know that language.'),
+    risk: 'safe', check: (a) => (CODES.includes(a.language) ? null : a.language ? 'I do not know that language.' : 'Which language would you like? English, Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Urdu, Kannada, Odia or Malayalam?'),
     describe: (a, h) => h.tr('Change the language to {language}', { language: LANGS.find((l) => l.code === a.language)?.english ?? String(a.language) }),
-    run: async (a, h) => { h.setLang(a.language as Lang); },
+    run: async (a, h) => { if (h.switchLanguage) await h.switchLanguage(a.language); else h.setLang(a.language as Lang); },
   },
   logout: {
     risk: 'change', describe: (_a, h) => h.tr('Sign out'),
@@ -128,6 +142,52 @@ export const DEFS: Record<string, Def> = {
     risk: 'change', check: (a, h) => (!teacher(h, a.teacher_id) ? 'Which teacher?' : String(a.text ?? '').trim() ? null : 'What should the message say?'),
     describe: (a, h) => h.tr('Send a message to {name}: “{text}”', { name: teacher(h, a.teacher_id)?.name ?? '', text: String(a.text ?? '').slice(0, 140) }),
     run: async (a) => { await api.connect.send(String(a.teacher_id), String(a.text)); },
+  },
+  open_dropdown: {
+    risk: 'safe', check: (a) => (a.control ? null : 'Which dropdown?'),
+    describe: (a, h) => h.tr('Open the {name} list', { name: labelFor(a.control) }),
+    run: async (a, h) => {
+      const c = await openDropdown(a.control); setVoice({ choices: c });                            // the choices appear on screen ...
+      await readChoices(h, c, Math.max(0, (parseInt(String(a.value ?? ''), 10) || 1) - 1));          // ... and are read aloud, six at a time (value = where to continue)
+    },
+  },
+  set_field: {
+    risk: 'safe', check: (a) => (!a.control ? 'Which field?' : !String(a.value ?? '').trim() ? 'What should I put there?' : null),
+    describe: (a, h) => h.tr('Set {name} to “{value}”', { name: labelFor(a.control), value: String(a.value ?? '').slice(0, 80) }),
+    run: async (a) => { await setField(a.control, a.value); setVoice({ choices: null }); },
+  },
+  click_button: {
+    risk: 'safe', confirm: (a) => needsYes(a.control), check: (a) => (a.control ? null : 'Which button?'),
+    describe: (a, h) => h.tr('Press “{name}”', { name: labelFor(a.control) }),
+    run: async (a) => { await clickControl(a.control); },
+  },
+  voice_set: {
+    risk: 'safe', check: (a) => (['gender', 'accent', 'speed', 'volume', 'silent', 'confirm_all'].includes(String(a.name)) ? null : 'I could not tell what to change about my voice.'),
+    describe: (a, h) => h.tr('Change my voice: {what}', { what: `${String(a.name).replace('_', ' ')} ${String(a.value ?? '')}`.trim() }),
+    run: async (a, h) => {
+      const v = getVoice(); const name = String(a.name); const val = String(a.value ?? '').toLowerCase().trim(); const on = /^(on|yes|true|1|enable|enabled)$/.test(val);
+      if (name === 'silent') {                                                                    // silent mode: say it first, then fall silent; when it ends, speak again
+        if (on) { await h.say?.(h.tr('Silent mode is on. I will only listen and act.')); setVoice({ muted: true }); }
+        else { setVoice({ muted: false }); await h.say?.(h.tr('I will speak again.')); }
+        return;
+      }
+      if (name === 'confirm_all') { setVoice({ confirmAll: on }); await h.say?.(on ? h.tr('I will ask before every action.') : h.tr('I will not ask before every action, only before big ones.')); return; }
+      const p = { ...v.voice };
+      if (name === 'gender') p.gender = val === 'male' || val === 'female' ? val : (p.gender === 'male' ? 'female' : 'male');
+      else if (name === 'accent') { const order = ['gb', 'us', 'in'] as const; const want = (['gb', 'us', 'in'] as const).find((k) => k === val) ?? order[(order.indexOf(p.accent) + 1) % 3]; p.accent = want; }
+      else if (name === 'speed') {
+        const num = Number(val.replace(',', '.'));
+        p.rate = /^(slow|slower)/.test(val) ? Math.max(0.8, p.rate - 0.15) : /^(fast|faster|quick)/.test(val) ? Math.min(1.3, p.rate + 0.15) : /^(normal|usual|default|regular)/.test(val) ? 1 : Number.isFinite(num) && num > 0 ? Math.max(0.8, Math.min(1.3, num)) : p.rate;
+        p.rate = Math.round(p.rate * 100) / 100;
+      }
+      else if (name === 'volume') {
+        const num = Number(val.replace(',', '.')); const cur = p.volume ?? 1;
+        p.volume = /^(loud|louder|up|higher|increase|raise)/.test(val) ? Math.min(1.6, cur + 0.25) : /^(quiet|quieter|soft|softer|low|lower|down|decrease|reduce)/.test(val) ? Math.max(0.3, cur - 0.25) : /^(normal|usual|default|regular)/.test(val) ? 1 : Number.isFinite(num) && num > 0 ? Math.max(0.3, Math.min(1.6, num)) : cur;
+        p.volume = Math.round(p.volume * 100) / 100;
+      }
+      setVoice({ voice: p });
+      await h.say?.(name === 'accent' && h.lang !== 'en' ? h.tr('The accent changes only my English voice. This is how I sound now.') : h.tr('This is how I sound now.'));
+    },
   },
   stop_voice: { risk: 'safe', describe: (_a, h) => h.tr('Turn voice mode off'), run: async (_a, h) => { h.turnOff(); } },
 };

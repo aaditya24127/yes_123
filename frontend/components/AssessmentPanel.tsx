@@ -67,7 +67,7 @@ export default function AssessmentPanel({ teacher, classNo, subject, chapter }: 
           <Select value={count} onChange={(e) => setCount(e.target.value)}>{[5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{tr('{n} questions', { n })}</option>)}</Select></Field>
         <Field label={tr('AI to use')} hint={tr('Switches by itself if one is unavailable.')}>
           <Select value={ai} onChange={(e) => setAi(e.target.value as AiChoice)}>{(Object.keys(AI_WORD) as AiChoice[]).map((k) => <option key={k} value={k}>{tr(AI_WORD[k])}</option>)}</Select></Field>
-        <div className="flex flex-col justify-end"><Button onClick={start} busy={busy === 'start'} disabled={!can} icon={<Send size={16} />}>{tr('Start assessment')}</Button></div>
+        <div className="flex flex-col justify-end"><Button data-voice-confirm onClick={start} busy={busy === 'start'} disabled={!can} icon={<Send size={16} />}>{tr('Start assessment')}</Button></div>
       </div>
       <p className="mt-2 text-xs text-ink-500">{why || `${teacher!.name}${classNo ? ` · Class ${classNo}` : ''} · ${subject} · ${chapter}`}</p>
 
@@ -96,7 +96,7 @@ export default function AssessmentPanel({ teacher, classNo, subject, chapter }: 
                     <a href={api.assessments.pdfUrl(a.id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-float hover:bg-brand-700"><FileDown size={16} />{tr('PDF')}</a>
                   </>}
                   {(a.status === 'failed' || a.status === 'reported') && <Button variant="ghost" busy={busy === `re${a.id}`} onClick={() => run(`re${a.id}`, () => api.assessments.rebuild(a.id, ai))} icon={<RefreshCw size={15} />}>{tr('Write again')}</Button>}
-                  {ACTIVE.includes(a.status) && <Button variant="ghost" busy={busy === `c${a.id}`} onClick={() => run(`c${a.id}`, () => api.assessments.cancel(a.id))} icon={<X size={15} />}>{tr('Cancel')}</Button>}
+                  {ACTIVE.includes(a.status) && <Button data-voice-confirm variant="ghost" busy={busy === `c${a.id}`} onClick={() => run(`c${a.id}`, () => api.assessments.cancel(a.id))} icon={<X size={15} />}>{tr('Cancel')}</Button>}
                 </div>
               </div>
               {open === a.id && (full?.id === a.id && full.report ? <div className="mt-3"><AssessmentReport a={{ subject: full.subject, class_no: full.class_no, chapter: full.chapter, report: full.report, pdf_url: null }} who={teacher?.name} /></div> : <p className="mt-3 text-sm text-ink-500">{tr('Loading the report…')}</p>)}

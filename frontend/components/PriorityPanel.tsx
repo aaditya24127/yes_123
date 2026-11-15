@@ -31,7 +31,7 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
   const confirmRow = (code: string) => (
     <span className="flex items-center gap-1.5 text-xs">
       <span className="text-ink-700">{tr('Delete this priority?')}</span>
-      <button disabled={deleting} onClick={() => doDelete(code)} className="rounded-full bg-red-600 px-2.5 py-1 font-semibold text-white hover:bg-red-700 disabled:opacity-50">{deleting ? tr('Deleting…') : tr('Yes, delete')}</button>
+      <button data-voice-confirm disabled={deleting} onClick={() => doDelete(code)} className="rounded-full bg-red-600 px-2.5 py-1 font-semibold text-white hover:bg-red-700 disabled:opacity-50">{deleting ? tr('Deleting…') : tr('Yes, delete')}</button>
       <button disabled={deleting} onClick={() => { setAskDel(''); setDelErr(''); }} className="rounded-full px-2.5 py-1 font-semibold text-ink-700 hover:bg-brand-50">{tr('Keep')}</button>
     </span>
   );
@@ -127,7 +127,7 @@ export function PriorityBody({ onClose, categories, weights, onChange, onReset, 
         <button onClick={onReset} title={tr('Go back to the 5 main priorities we started with')} className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
           <RotateCcw size={16} /> {t('reset')}
         </button>
-        <button onClick={onApply} disabled={applying || total <= 0}
+        <button data-voice-confirm onClick={onApply} disabled={applying || total <= 0}
           className="ms-auto flex items-center gap-2 rounded-2xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-float transition hover:bg-brand-700 disabled:opacity-50">
           <Check size={16} /> {applying ? t('saving') : dirty ? t('savePrio') : t('savedBtn')}
         </button>

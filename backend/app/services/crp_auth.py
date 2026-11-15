@@ -1,9 +1,10 @@
 """CRP logins for the CRP app: email + password, then a signed token (the same method as the teacher app, with its own key).
 
-One demo account is created automatically (DEMO_CRP_EMAIL, default crp1@gmail.com, with the password in DEMO_CRP_PASSWORD,
-default pass123) so the prototype can be shown; set DEMO_CRP_LOGIN=0 to switch it off. Accounts people make themselves use
-exactly the same table, hashing, tokens and checks. Passwords are stored as salted scrypt hashes. The token is HMAC-signed and
-expires after 30 days. Failed logins are rate limited per email, new accounts per network address.
+Who can sign in is decided by the HOST SETTINGS, never by the code: CRP_LOGIN_MALE_EMAIL, CRP_LOGIN_FEMALE_EMAIL and CRP_LOGIN_PASSWORD
+(Render > Environment, and the private .env on the owner's computer). Nothing is written in the repository, so a copy of the code has no
+login. When those settings exist the accounts are created / updated at start-up, and the old shared demo account is closed.
+New accounts made on the sign-in page are off unless ALLOW_SIGNUP=1. Passwords are stored as salted scrypt hashes. The token is
+HMAC-signed and expires after 30 days. Failed logins are rate limited per email, new accounts per network address.
 """
 import hashlib, hmac, json, os, re, time
 
@@ -24,9 +25,19 @@ def _secret() -> bytes:
     return hashlib.sha256(b'crp-app|' + os.environ.get('TEACHER_AUTH_SECRET', 'dev-only-change-me').encode()).digest()
 
 
-def demo_enabled() -> bool: return os.environ.get('DEMO_CRP_LOGIN', '1').strip() not in ('0', 'false', 'off', 'no')
-def demo_email() -> str: return os.environ.get('DEMO_CRP_EMAIL', 'crp1@gmail.com').strip().lower()
-def demo_password() -> str: return os.environ.get('DEMO_CRP_PASSWORD', 'pass123')
+def signup_open() -> bool:
+    """New accounts can be made on the sign-in page only when the host says so (ALLOW_SIGNUP=1). Off by default."""
+    return os.environ.get('ALLOW_SIGNUP', '').strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def provisioned() -> list[dict]:
+    """The sign-ins named in the host settings: a man and a woman (the title decides how the assistant addresses them: sir / madam)."""
+    pw = os.environ.get('CRP_LOGIN_PASSWORD', '')
+    out = []
+    for key, title, name in (('MALE', 'Mr.', 'Rohan Deshmukh'), ('FEMALE', 'Mrs.', 'Anjali Kulkarni')):
+        email = os.environ.get(f'CRP_LOGIN_{key}_EMAIL', '').strip().lower()
+        if email and pw: out.append(dict(email=email, password=pw, title=title, name=os.environ.get(f'CRP_LOGIN_{key}_NAME', name).strip() or name))
+    return out
 
 
 def make_token(account_id: str) -> str:
@@ -70,17 +81,24 @@ def _split_title(full_name: str) -> tuple[str | None, str]:
     return (m.group(1), m.group(2)) if m else (None, full_name.strip())
 
 
-def ensure_demo(conn) -> bool:
-    """Create the demo account if it is missing (and demo login is on). Safe to run any number of times."""
-    if not demo_enabled(): return False
-    if conn.execute('select 1 from crp_accounts where email = %s', (demo_email(),)).fetchone(): return False
-    crp = conn.execute('select id, full_name from crps order by code limit 1').fetchone()
-    if not crp: return False
-    title, name = _split_title(crp['full_name'])
-    conn.execute('insert into crp_accounts (crp_id, email, password_hash, full_name, title, is_demo) values (%s,%s,%s,%s,%s,true)',
-                 (crp['id'], demo_email(), hash_password(demo_password()), name, title))
+def ensure_logins(conn) -> int:
+    """Make sure the sign-ins named in the host settings exist with the password given there (a changed password in the settings takes
+    effect at the next start), and close the old shared demo account. With no sign-ins in the settings nothing is touched."""
+    todo = provisioned()
+    if not todo: return 0
+    crp = conn.execute('select id from crps order by code limit 1').fetchone()
+    if not crp: return 0
+    changed = 0
+    for p in todo:
+        a = conn.execute('select id, password_hash, title, full_name from crp_accounts where email = %s', (p['email'],)).fetchone()
+        if not a:
+            conn.execute('insert into crp_accounts (crp_id, email, password_hash, full_name, title, is_demo) values (%s,%s,%s,%s,%s,false)', (crp['id'], p['email'], hash_password(p['password']), p['name'], p['title']))
+            changed += 1
+        elif not check_password(p['password'], a['password_hash']):
+            conn.execute('update crp_accounts set password_hash = %s where id = %s', (hash_password(p['password']), a['id'])); changed += 1
+    conn.execute('delete from crp_accounts where is_demo')          # the shared account of the earlier versions (everybody knew its password)
     conn.commit()
-    return True
+    return changed
 
 
 def login(email: str, password: str) -> dict:
@@ -100,6 +118,7 @@ def login(email: str, password: str) -> dict:
 
 
 def signup(email: str, password: str, full_name: str, title: str | None, client: str) -> dict:
+    if not signup_open(): raise HTTPException(403, 'New accounts are switched off. Please ask the owner for a sign-in.')
     email = email.strip().lower(); full_name = re.sub(r'\s+', ' ', full_name).strip()
     if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]{2,}', email): raise HTTPException(400, 'Please enter a correct email address.')
     if len(full_name) < 2: raise HTTPException(400, 'Please enter your name.')

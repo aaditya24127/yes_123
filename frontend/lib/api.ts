@@ -81,7 +81,7 @@ const qs = (o: Record<string, string | number | boolean | null | undefined>) =>
 export const api = {
   // signing in
   auth: {
-    demo: () => get<{ enabled: boolean; email?: string; password?: string }>('/api/auth/demo'),
+    options: () => get<{ signup: boolean }>('/api/auth/options'),
     login: (email: string, password: string) => post<{ token: string; user: CrpUser }>('/api/auth/login', { email, password }),
     signup: (body: { email: string; password: string; full_name: string; title: string | null }) => post<{ token: string; user: CrpUser }>('/api/auth/signup', body),
     me: () => get<CrpUser>('/api/auth/me'),
@@ -99,7 +99,11 @@ export const api = {
   preview: (fileId: string) => get<Preview>(`/api/files/${fileId}/preview`),
   voice: {
     warm: () => post<{ ok: boolean }>('/api/voice/warm'),
-    turn: (body: { utterance: string; language: string; page: string; page_state: unknown; history: { user: string; assistant: string }[] }) =>
+    hear: (wav: Blob, language: string) => {
+      const f = new FormData(); f.append('language', language); f.append('file', wav, 'speech.wav');
+      return run(apiUrl('/api/voice/hear'), { method: 'POST', body: f }, false).then(j<{ text: string; language: string | null }>);
+    },
+    turn: (body: { utterance: string; language: string; address?: string; page: string; page_state: unknown; history: { user: string; assistant: string }[] }) =>
       post<{ say: string; actions: Record<string, unknown>[]; took: number; by: string }>('/api/voice/turn', body),
   },
   publicReport: {

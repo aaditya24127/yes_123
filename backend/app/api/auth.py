@@ -1,4 +1,4 @@
-"""Signing in to the CRP app: demo account, own account, who am I, sign out."""
+"""Signing in to the CRP app: sign in, who am I, sign out (and, only when the host allows it, make an own account)."""
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 
@@ -33,11 +33,10 @@ def _signed_in(response: Response, request: Request, account) -> dict:
     return dict(token=token, user=crp_auth.public(account))
 
 
-@router.get('/demo')
-def demo():
-    """The demo account for showing the prototype (the sign-in page offers to fill it in). Off when DEMO_CRP_LOGIN=0."""
-    if not crp_auth.demo_enabled(): return dict(enabled=False)
-    return dict(enabled=True, email=crp_auth.demo_email(), password=crp_auth.demo_password())
+@router.get('/options')
+def options():
+    """What the sign-in page may offer: a 'New account' tab only when the host allows new accounts (ALLOW_SIGNUP=1)."""
+    return dict(signup=crp_auth.signup_open())
 
 
 @router.post('/login')

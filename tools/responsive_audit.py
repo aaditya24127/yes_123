@@ -2,14 +2,15 @@
 what makes a site awkward on a phone: the page scrolling sideways, things sticking out of the screen or out of their own card, tap targets under 32 px, text under 11 px, inputs under 16 px (iPhones zoom in on
 them), and console errors. It also saves screenshots of every page at 360, 768 and 1280 px wide and of any page that overflows.
 
-    python tools/responsive_audit.py crp [base_url]        (website, default http://localhost:3000, API on :8000, demo CRP account)
-    python tools/responsive_audit.py teacher [base_url]    (teacher app, default http://localhost:3001, demo teacher account)
+    python tools/responsive_audit.py crp [base_url]        (website, default http://localhost:3000, API on :8000, the CRP sign-in from .env)
+    python tools/responsive_audit.py teacher [base_url]    (teacher app, default http://localhost:3001, a demo teacher, password DEMO_TEACHER_PASSWORD from .env)
     python tools/responsive_audit.py landing [base_url]    (landing page, default http://localhost:5173)
 
 Needs Playwright for Python and Chrome (`pip install playwright`). Results: tools/out/responsive/<site>.json and <site>_shots/ (not committed). Prints one line per page and size.
 """
 import json, os, sys
 from playwright.sync_api import sync_playwright
+from private_login import crp_login, teacher_password
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, 'out', 'responsive')
 SCHOOL, TEACHER = '559b0369-823e-509c-b019-5501bee76656', 'c424ad79-f33a-5025-8faf-94b5f6926d4b'      # demo school and teacher (same ids on every database made from the seed data)
@@ -74,10 +75,8 @@ JS = r"""
 
 def login(page, site, base):
     page.goto(base + '/login', wait_until='domcontentloaded'); page.wait_for_timeout(3500)      # the page must have started (hydrated) before it is typed into, or the button stays disabled
-    if site == 'crp':
-        page.get_by_text('Fill in the demo account').click(); page.wait_for_timeout(300)
-    else:
-        page.locator('input[type=email]').fill('vaishali.kulkarni@crp.com'); page.locator('input[type=password]').fill('pass123')
+    email, password = crp_login() if site == 'crp' else ('vaishali.kulkarni@crp.com', teacher_password())      # private: read from .env, never written in the code
+    page.locator('input[type=email]').fill(email); page.locator('input[type=password]').fill(password)
     page.locator('button[type=submit]').click(); page.wait_for_url(lambda u: '/login' not in u, timeout=30000); page.wait_for_timeout(1500)
 
 

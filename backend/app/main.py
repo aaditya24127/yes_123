@@ -55,8 +55,10 @@ def _start_workers():
     from app.services import teacher_auth
     with get_conn() as conn:
         teacher_auth.ensure_accounts(conn)     # demo logins for every teacher (firstname.lastname@crp.com)
-        crp_auth.ensure_demo(conn)             # the demo CRP login (DEMO_CRP_EMAIL), unless DEMO_CRP_LOGIN=0
+        crp_auth.ensure_logins(conn)           # the private CRP sign-ins named in the host settings (CRP_LOGIN_*); the old shared demo account is closed
     jobs.start_in_api()     # background workers inside the API (WORKERS_IN_API, default 4); more can run separately: python -m app.jobs
+    from app.services import voice_assistant
+    voice_assistant.warm()  # the voice assistant's view of the schools is built in the background, so the first spoken sentence does not wait for it
 
 
 def today(): return dt.date.today()

@@ -106,7 +106,7 @@ export default function TeacherReportCard({ s, setError, onSent }: { s: Session;
         <p className="mb-2 text-sm font-semibold text-ink-900">{tr('Send to {name}', { name })}</p>
         <Field label={tr('Email (optional)')} hint={tr('The link is always sent in the teacher\'s chat in the teacher app, with an alert.')}><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr('teacher@example.com')} /></Field>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button data-tour="res-send" icon={<Send size={16} />} busy={sending} disabled={sending} onClick={send}>{email.trim() ? tr('Send link in chat and email') : tr('Send link in chat')}</Button>
+          <Button data-tour="res-send" data-voice-confirm icon={<Send size={16} />} busy={sending} disabled={sending} onClick={send}>{email.trim() ? tr('Send link in chat and email') : tr('Send link in chat')}</Button>
         </div>
         {result && (
           <p role="status" className="mt-2 text-sm text-emerald-700">{result.text}{result.link && <> <a href={result.link} target="_blank" rel="noreferrer" className="font-semibold underline">{tr('Open the link')}</a></>}</p>

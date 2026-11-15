@@ -1,10 +1,11 @@
 """Runs every classroom recording in `real_voices/` through the real app (a local API on port 8000): start a visit, upload the lesson, wait for the speech-to-text,
 compare the transcript with the script word by word (word error rate), then run the lesson evaluation. Prints a table and writes `real_voices/RESULTS.md`.
 
-    backend\\.venv\\Scripts\\python.exe tools/test_real_voices.py [file-stem ...]       (needs the API running locally, the demo CRP account, AI keys in .env)
+    backend\\.venv\\Scripts\\python.exe tools/test_real_voices.py [file-stem ...]       (needs the API running locally, the CRP sign-in and AI keys in .env)
 """
 import glob, json, os, re, sys, time
 import httpx
+from private_login import crp_login
 
 HERE = os.path.dirname(os.path.abspath(__file__)); VOICES = os.path.normpath(os.path.join(HERE, '..', 'real_voices'))
 BASE = os.environ.get('API', 'http://localhost:8000')
@@ -70,7 +71,7 @@ def main():
     if '--rescore' in sys.argv: return rescore()
     stems = sys.argv[1:] or sorted(os.path.basename(p)[:-4] for p in glob.glob(os.path.join(VOICES, '*.mp3')))
     c = httpx.Client(base_url=BASE, timeout=900)
-    tok = c.post('/api/auth/login', json=dict(email='crp1@gmail.com', password='pass123')).json()['token']; H = {'Authorization': 'Bearer ' + tok}
+    email, password = crp_login(); tok = c.post('/api/auth/login', json=dict(email=email, password=password)).json()['token']; H = {'Authorization': 'Bearer ' + tok}
     d = c.get('/api/directory', headers=H).json()
     keep_path = os.path.join(VOICES, '_work', 'results.json'); os.makedirs(os.path.dirname(keep_path), exist_ok=True)
     done = {r['file']: r for r in json.load(open(keep_path, encoding='utf-8'))} if os.path.exists(keep_path) else {}      # results of earlier runs stay in the table
