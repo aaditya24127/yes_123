@@ -100,8 +100,8 @@ function VisitPage() {
   const startOver = () => { setSession(null); setBrief(null); setStep(0); auto.current = ''; router.replace('/visit'); };
 
   // ---- Voice control (lib/voice): fill who / class / subject / chapter, start the visit, move between steps, add notes. The state tells the assistant what is on the screen.
-  const liveV = useRef({ dir, session, brief, step, pick });
-  liveV.current = { dir, session, brief, step, pick };
+  const liveV = useRef({ dir, session, brief, step, pick, busy, evaluating });
+  liveV.current = { dir, session, brief, step, pick, busy, evaluating };
   const waitFor = async (ok: () => boolean, ms = 8000) => { const end = Date.now() + ms; while (!ok() && Date.now() < end) await new Promise((r) => setTimeout(r, 100)); return ok(); };
   useVoicePage('visit', {
     fill: async (p: { school_id?: string; teacher_id?: string; class_no?: number; subject?: string; topic?: string }) => {
@@ -122,7 +122,8 @@ function VisitPage() {
       const s = liveV.current.session; if (!s) throw new Error('Start the visit first.');
       const cur = liveV.current.step; const n = p.step === 'next' ? cur + 1 : p.step === 'back' ? cur - 1 : Number(p.step) - 1;
       if (!Number.isFinite(n)) throw new Error('Which step?');
-      setStep(Math.max(0, Math.min(3, n)));
+      const k = Math.max(0, Math.min(3, n)); setStep(k);
+      if (k === 3 && !s.result?.overall && !liveV.current.evaluating) void run('eval', async () => setSession(await api.visits.evaluate(s.id)));      // moving to Results makes them, as the Next: results button does
     },
     note: async (p: { text: string }) => {
       if (!liveV.current.session) throw new Error('Start the visit first, then I can add notes.');
@@ -132,15 +133,40 @@ function VisitPage() {
       await new Promise((r) => setTimeout(r, 400));
     },
   }, () => {
-    const { brief: b, session: se, pick: pk } = liveV.current; const dd = liveV.current.dir;
-    const r = se?.result as { overall?: string; strengths?: { point: string }[]; growth?: { area: string }[] } | undefined;
+    const { brief: b, session: se, pick: pk, busy: bz, evaluating: ev0 } = liveV.current; const dd = liveV.current.dir;
+    const cut = (x: unknown, n = 260) => String(x ?? '').slice(0, n);
+    const r = se?.result as Partial<Evaluation> | undefined; const qs = se?.questions ?? [];
+    const results = r?.overall ? {
+      overall: cut(r.overall, 700), confidence: r.confidence, savedToRecords: se?.status === 'saved', followUpInDays: se?.followup_days, safetyFlag: r.safety_flag ?? null,
+      wentWell: (r.strengths ?? []).slice(0, 8).map((x) => cut(x.point, 200)),
+      toImprove: (r.growth ?? []).slice(0, 8).map((g) => ({ area: cut(g.area, 160), tryThis: cut(g.try_this, 220), size: SEVERITY[g.severity]?.label ?? g.severity })),
+      teachingPractices: (r.rubric ?? []).filter((x) => x.score != null).map((x) => `${PRACTICE[x.element] ?? x.element}: ${x.score} of 5`),
+      students: {
+        summary: cut(r.students?.summary, 400),
+        answers: (r.students?.per_question ?? []).slice(0, 8).map((q, i) => ({ n: i + 1, question: cut(q.question, 160), verdict: q.verdict, note: cut(q.note, 200), checkedByCrp: q.mentor?.verdict ?? null })),
+        mixedUp: (r.students?.misconceptions ?? []).slice(0, 6).map((x) => cut(x, 160)),
+        whyTheyFoundItHard: (r.students?.reasons ?? []).slice(0, 5).map((x) => ({ issue: cut(x.issue, 160), likelyReason: cut(x.likely_reason, 200), theTeacherCan: cut(x.teacher_action, 200) })),
+      },
+      comparedWithLastVisit: (r.compared_with_before ?? []).slice(0, 6).map((c) => `${cut(c.issue, 120)}: ${CHANGE[c.change]?.label ?? c.change}`),
+      agreedNextSteps: (r.next_steps ?? []).slice(0, 8).map((x) => cut(x.action, 200) + (x.who ? ` (${x.who})` : '')),
+    } : null;
     return {
-      page: 'visit', phase: se ? ['before class', 'in class', 'students', 'results'][liveV.current.step] : b ? 'briefing (before starting)' : 'choosing who to visit',
+      page: 'visit', visitSteps: ['1 Before class', '2 In class', '3 Students', '4 Results'], stepNumber: se ? liveV.current.step + 1 : b ? 1 : 0,
+      phase: se ? ['before class', 'in class', 'students', 'results'][liveV.current.step] : b ? 'briefing (before starting)' : 'choosing who to visit',
+      working: bz === 'q' ? 'making the questions' : bz === 'eval' || ev0 ? 'working out the results' : bz === 'brief' ? 'loading the briefing' : bz || null,
       school: dd?.schools.find((x) => x.id === (pk.school_id || b?.school.id))?.name ?? null, teacher: dd?.teachers.find((x) => x.id === pk.teacher_id)?.name ?? null,
       class: pk.class_no || null, subject: pk.subject || null, chapter: pk.topic || null, visitStarted: !!se, canStart: !!b && !se,
-      notes: se?.crp_notes ? se.crp_notes.slice(-300) : null,
-      results: r?.overall ? { overall: r.overall, wentWell: (r.strengths ?? []).slice(0, 4).map((x) => x.point), toImprove: (r.growth ?? []).slice(0, 4).map((x) => x.area) } : null,
-      briefing: b?.brief ? String(b.brief).slice(0, 600) : null,
+      notes: se?.crp_notes ? se.crp_notes.slice(-600) : null, changesSinceLastVisit: se?.changes_since_last ? cut(se.changes_since_last, 300) : null,
+      lessonRecordings: se ? se.media.filter((m) => m.kind === 'lesson_audio').length : 0,
+      questionCount: qs.length,
+      questions: qs.map((q, i) => ({ n: i + 1, level: LEVEL[q.level] ?? q.level, ask: q.ask_who, question: cut(q.question, 400), good_answer: cut(q.good_answer, 400), listen_for: cut(q.watch_for, 300),
+        answers_recorded: se ? se.media.filter((m) => m.kind === 'student_answer' && m.question_index === i).length : 0 })),
+      questionTips: (se?.question_tips ?? []).slice(0, 6).map((t) => cut(t, 200)),
+      studentAnswers: se ? se.media.filter((m) => m.kind === 'student_answer').map((m) => ({ question: (m.question_index ?? 0) + 1, student: m.student_label, said: m.transcript ? cut(m.transcript, 240) : null })) : [],
+      results,
+      briefing: b?.brief ? { summary: cut(b.brief.summary, 500), lookAt: (b.brief.focus_points ?? []).slice(0, 4).map((x) => cut(x, 200)), askTheTeacher: (b.brief.ask_teacher ?? []).slice(0, 4).map((x) => cut(x, 200)),
+        watchInClass: (b.brief.check_in_class ?? []).slice(0, 4).map((x) => cut(x, 200)) } : null,
+      alerts: (b?.alerts ?? []).slice(0, 4).map((x) => cut(x, 200)),
     };
   });
 
@@ -157,7 +183,7 @@ function VisitPage() {
               setPick({ ...pick, teacher_id: e.target.value, class_no: t?.classes_taught[0] ? String(t.classes_taught[0]) : '', subject: t?.subjects_taught[0] ?? '' });
             }}><option value="">{tr('The whole school')}</option>{dir?.teachers.filter((t) => t.school_id === pick.school_id).map((t) => <option key={t.id} value={t.id}>{tr(t.name)}</option>)}</Select></Field>
           </div>
-          <div className="mt-4"><Button onClick={() => loadBrief()} busy={busy === 'brief'} disabled={!pick.school_id}>{tr('Continue')}</Button></div>
+          <div className="mt-4"><Button data-voice-safe onClick={() => loadBrief()} busy={busy === 'brief'} disabled={!pick.school_id}>{tr('Continue')}</Button></div>
         </Card>
       )}
 
@@ -635,7 +661,7 @@ function Results({ s, evaluating, onEvaluate, onSaved, onPatch, setError }: {
 
         <div data-tour="res-save" className="mt-4 flex flex-wrap items-center gap-3">
           {locked ? <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} />{tr('Saved to your records')}</span>
-            : <><Button onClick={doSave} busy={busy} disabled={!daysOk}>{tr('Save to records')}</Button><Button variant="soft" onClick={onEvaluate}>{tr('Redo the results')}</Button></>}
+            : <><Button data-voice-confirm onClick={doSave} busy={busy} disabled={!daysOk}>{tr('Save to records')}</Button><Button variant="soft" onClick={onEvaluate}>{tr('Redo the results')}</Button></>}
           {saved && <span className="text-sm text-ink-700">{tr(saved)}</span>}
         </div>
       </Card>

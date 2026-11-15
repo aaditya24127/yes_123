@@ -122,7 +122,7 @@ function UploadPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Badge tone="good">{tr('{length} ready', { length: groups.ready.length })}</Badge><Badge tone="warn">{tr('{length} to check', { length: groups.attention.length })}</Badge>
             <Badge tone="neutral">{tr('{length} skipped', { length: groups.other.length })}</Badge><Badge tone="brand">{tr('{length} added', { length: groups.done.length })}</Badge>
-            <Button className="ms-auto" onClick={doImport} busy={busy || groups.working.length > 0} disabled={!groups.ready.length} title={groups.ready.length ? undefined : tr('Nothing is ready yet')}>
+            <Button data-voice-confirm className="ms-auto" onClick={doImport} busy={busy || groups.working.length > 0} disabled={!groups.ready.length} title={groups.ready.length ? undefined : tr('Nothing is ready yet')}>
               {groups.working.length ? tr('Adding {length}…', { length: groups.working.length }) : (groups.ready.length === 1 ? tr('Import 1 file') : tr('Import {n} files', { n: groups.ready.length }))}
             </Button>
           </div>

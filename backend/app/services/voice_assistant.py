@@ -7,6 +7,7 @@ One spoken sentence = one `turn`:
      calls the AI once more with the result (`data`), so every spoken fact comes from the records, never from memory.
 """
 import datetime as dt
+import re
 import threading
 import time
 
@@ -35,20 +36,29 @@ def _item_brief(i: dict) -> dict:
 _building = threading.Lock()
 
 
-def _fresh():
+def _any():
     with _lock:
-        hit = _cache.get('ctx')
-        return hit[1] if hit and time.time() - hit[0] < TTL else None
+        return _cache.get('ctx')
 
 
 def _context() -> dict:
-    """What the AI is told about the world. Kept for ten minutes (it is the same for every sentence of a conversation).
-    When the warm-up is still building it, a sentence that arrives waits for that build instead of starting a second one."""
-    hit = _fresh()
-    if hit is not None: return hit
+    """What the AI is told about the world. A copy that is a little old is still used at once (the ranking changes rarely) and renewed in the background, so a sentence never waits
+    for the ten seconds the ranking takes to build, except the very first one after the server started: that one waits for the build the warm-up has already begun."""
+    hit = _any()
+    if hit is not None:
+        if time.time() - hit[0] >= TTL: _refresh_in_background()
+        return hit[1]
     with _building:
-        hit = _fresh()
-        return hit if hit is not None else _build_context()
+        hit = _any()
+        return hit[1] if hit is not None else _build_context()
+
+
+def _refresh_in_background():
+    if _building.locked(): return
+    def work():
+        with _building:
+            _safe(_build_context)
+    threading.Thread(target=work, daemon=True).start()
 
 
 def _build_context() -> dict:
@@ -63,20 +73,43 @@ def _build_context() -> dict:
             res = engine.run(d, _today(), ent)
             rank[ent] = dict(summary=res.get('summary'), items=[_item_brief(i) for i in res['items'] if not i.get('insufficient')][:15 if ent == 'teacher' else 12],
                              unranked=[i['name'] for i in res['items'] if i.get('insufficient')][:8])
-    code_of = {str(s['id']): s['code'] for s in schools}
+    mine: dict = {}
+    for t in teachers:
+        mine.setdefault(str(t['school_id']), []).append(dict(id=str(t['id']), name=f"{t['title'] or ''} {t['full_name']}".strip(), role=t['designation'], classes=t['classes_taught'], subjects=t['subjects_taught']))
     ctx = dict(
         today=str(_today()),
-        schools=[dict(id=str(s['id']), code=s['code'], name=s['name'], board=s['board'], medium=s['medium'], village=s['village']) for s in schools],
-        teachers=[dict(id=str(t['id']), school=code_of.get(str(t['school_id'])), name=f"{t['title'] or ''} {t['full_name']}".strip(), role=t['designation'],
-                       classes=t['classes_taught'], subjects=t['subjects_taught']) for t in teachers],
+        schools=[dict(id=str(s['id']), code=s['code'], name=s['name'], board=s['board'], medium=s['medium'], village=s['village'], teacher_count=len(mine.get(str(s['id']), [])),
+                      teachers=mine.get(str(s['id']), [])) for s in schools],
         ranking=rank, factors=[f for f in factors if f['weight'] > 0] + [dict(f, off=True) for f in factors if f['weight'] <= 0][:12], themes=THEMES, pages=PAGES)
     with _lock: _cache['ctx'] = (time.time(), ctx)
     return ctx
 
 
+_primed = False
+
+
+def _prime():
+    """The first call to the AI and to the voice service of a freshly started server takes several seconds (libraries load, the secure connections open). It is made once, in the
+    background, with a tiny question and a one-word sentence, so that the first sentence the CRP speaks is as fast as the rest."""
+    global _primed
+    if _primed: return
+    _primed = True
+    try: ai.run('voice_turn', dict(language='English', address='', utterance='hello', page='/', page_state={}, history=[], context={}))
+    except Exception: pass
+    try:
+        import asyncio
+        from . import voice_audio
+        async def speak_once():
+            async for _ in await voice_audio.stream_speech('Ready.', 'en', 'male', 'gb', 1.0): pass
+        asyncio.run(speak_once())
+    except Exception: pass
+
+
 def warm():
-    """Builds the context in the background (called when voice mode is switched on), so the first sentence is not slow."""
-    threading.Thread(target=lambda: _safe(_context), daemon=True).start()
+    """Builds the context in the background (when the server starts, when voice mode is switched on, after the priorities changed), so the first sentence is not slow."""
+    def work():
+        _safe(_context); _prime()
+    threading.Thread(target=work, daemon=True).start()
 
 
 def _safe(fn):
@@ -85,8 +118,9 @@ def _safe(fn):
 
 
 def forget():
-    """Called when priorities change, so the next sentence sees the new ranking."""
+    """Called when priorities change, so the next sentence sees the new ranking (it is rebuilt at once, in the background)."""
     with _lock: _cache.clear()
+    warm()
 
 
 # ------------------------------------------------------------------ lookups the AI can ask for
@@ -191,6 +225,50 @@ def _subject(x):
     return SUBJECTS.get(str(x or '').strip().lower(), x)
 
 
+def _brief(text: str, words: int = 36) -> str:
+    """The answer is spoken aloud, so it must be short: whole sentences are kept while they fit in about 36 words (at least the first one). When the CRP asked to have something read out
+    or explained (`long`), about 110 words are allowed."""
+    import re
+    if len(text.split()) <= words: return text.strip()
+    parts = re.split(r'(?<=[.!?।۔])\s+', text.strip()); out = []
+    for p in parts:
+        if out and len(' '.join(out + [p]).split()) > words: break
+        out.append(p)
+    return ' '.join(out).strip()
+
+
+# The words of address (sir / madam) in the 11 languages, in their own scripts. The website hands one over only now and then; the AI sometimes adds one on its own: then it is removed.
+_ADDRESS_WORDS = ['sir', 'madam', "ma'am", 'maam', 'सर', 'मैडम', 'मॅडम', 'स्यार', 'স্যার', 'ম্যাডাম', 'సార్', 'సర్', 'మేడం', 'சார்', 'மேடம்', 'સર', 'મેડમ', 'سر', 'میڈم', 'ಸರ್', 'ಮೇಡಂ', 'ସାର୍', 'ମ୍ୟାଡାମ୍', 'ସାର', 'സർ', 'സാർ', 'മാഡം']
+_W = r'[\w\u0900-\u0DFF\u0600-\u06FF]'
+_ADDR = r'(?<!' + _W + r')(?:' + '|'.join(re.escape(w) for w in sorted(_ADDRESS_WORDS, key=len, reverse=True)) + r')(?!' + _W + r')'
+
+
+def _strip_address(text: str) -> str:
+    """Removes 'sir' / 'madam' (and their equivalents) from an answer: ', sir.' -> '.', 'Sir, open' -> 'open', 'yes sir I can' -> 'yes I can'."""
+    s = re.sub(_ADDR + r'\s*,\s*', '', text, flags=re.I)
+    s = re.sub(r'\s*,?\s*' + _ADDR + r'\s*(?=[.!?\u0964\u06D4,]|$)', '', s, flags=re.I)
+    s = re.sub(r'\s*' + _ADDR + r'\s*', ' ', s, flags=re.I)
+    s = re.sub(r'\s+', ' ', s).replace(' ,', ',').replace(' .', '.').replace(' !', '!').replace(' ?', '?').strip()
+    return s[:1].upper() + s[1:] if s and text[:1].isupper() else s
+
+
+# The website asks "Shall I go ahead?" itself, and only before something that needs a yes; the AI sometimes adds the question on its own (also after something already done): it is removed.
+_ASK_GO = ['क्या मैं आगे बढ़ूँ', 'क्या मैं आगे बढ़ूं', 'पुढे जाऊ का', 'আমি কি এগিয়ে যাব', 'ముందుకు వెళ్లనా', 'தொடரட்டுமா', 'હું આગળ વધું', 'کیا میں آگے بڑھوں', 'ಮುಂದುವರಿಯಲೇ', 'ମୁଁ ଆଗକୁ ବଢ଼ିବି କି', 'ഞാൻ തുടരട്ടെ',
+           'आगे बढ़ूँ', 'आगे बढ़ूं', 'पुढे जाऊ', 'पुढे जायचे का', 'पुढे चालू करू का']
+_ASK_RE = re.compile(r'[\s,;:.\-\u2013]*(?:(?:shall|should|may|can|could|do you want me to|would you like me to) i? ?(?:go ahead|proceed|do (?:it|that|this)|continue|carry on)(?: with (?:it|that|this))?|'
+                     + '|'.join(re.escape(x) for x in _ASK_GO) + r')\s*[?\u061F]?\s*$', re.I)
+
+
+_OFFER_RE = re.compile(r'(?:^|(?<=[.!?\u0964\u06D4]))\s*(?:shall|should) i\b[^.?!\u0964\u06D4]*\?\s*$|(?:^|(?<=[.!?\u0964\u06D4]))\s*(?:would you like me to|do you want me to)\b[^.?!\u0964\u06D4]*\?\s*$', re.I)
+
+
+def _strip_ask(text: str) -> str:
+    """'Opening the list, shall I go ahead?' -> 'Opening the list.'; 'It is on the Teachers page. Shall I open it?' -> 'It is on the Teachers page.'"""
+    t = _OFFER_RE.sub('', text or '')
+    t = _ASK_RE.sub('', t).rstrip(' ,;:-')
+    return t + ('.' if t and t[-1] not in '.!?\u0964\u06D4' else '')
+
+
 def _clean(d):
     """Drops the "unused" values (empty string, 0 class / count, -1 weight, null) that the schema needs, so only what the AI really meant is left."""
     if not isinstance(d, dict): return d
@@ -201,10 +279,17 @@ def _clean(d):
     return out
 
 
+def _state(ps):
+    """The screen the website sends can be long: the text of the page is kept to about 12 000 characters."""
+    if isinstance(ps, dict) and isinstance(ps.get('screen_text'), str) and len(ps['screen_text']) > 12000:
+        ps = dict(ps, screen_text=ps['screen_text'][:12000] + ' ... (the rest of the screen is not shown here)')
+    return ps
+
+
 def turn(body: dict) -> dict:
     """{utterance, language, page, page_state, history} -> {say, actions, took}."""
     t0 = time.time()
-    inp = dict(language=body.get('language') or 'English', utterance=(body.get('utterance') or '').strip()[:600], page=body.get('page'), page_state=body.get('page_state'),
+    inp = dict(language=body.get('language') or 'English', address=(body.get('address') or '').strip()[:8], utterance=(body.get('utterance') or '').strip()[:600], page=body.get('page'), page_state=_state(body.get('page_state')),
                history=(body.get('history') or [])[-6:], context=_context())
     r = ai.run('voice_turn', inp)
     out = r.data
@@ -218,4 +303,8 @@ def turn(body: dict) -> dict:
         r = ai.run('voice_turn', dict(inp, data=_clip(data), lookup=q['name']))
         out = r.data
     actions = [_clean(a) for a in (out.get('actions') or [])]
-    return dict(say=out.get('say') or '', actions=actions, took=round(time.time() - t0, 1), by=r.provider)
+    raw = _brief(out.get('say') or '', 170 if out.get('long') else 36)
+    said = _strip_ask(raw)
+    if not said and not actions: said = raw                             # a question that is the whole answer stays
+    if not inp['address']: said = _strip_address(said)                  # the website decides when the CRP is addressed, not the AI
+    return dict(say=said, actions=actions, took=round(time.time() - t0, 1), by=r.provider)

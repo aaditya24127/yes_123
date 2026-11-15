@@ -14,7 +14,7 @@ const VARIANT: Record<Variant, string> = {
 
 export function Button({ variant = 'primary', busy, icon, children, className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; busy?: boolean; icon?: ReactNode }) {
   return (
-    <button {...p} disabled={p.disabled || busy}
+    <button {...(variant === 'danger' ? { 'data-voice-confirm': '' } : {})} {...p} disabled={p.disabled || busy}
       className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT[variant]} ${className}`}>
       {busy ? <Loader2 size={16} className="animate-spin" /> : icon}{children}
     </button>
@@ -96,7 +96,7 @@ export function Stepper({ steps, current, onPick, maxReached }: { steps: string[
   // On a phone the bar scrolls sideways: keep the current step in view.
   useEffect(() => { box.current?.querySelector('[aria-current="step"]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); }, [current]);
   return (
-    <ol ref={box} data-tour="stepper" className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+    <ol ref={box} data-tour="stepper" data-voice-skip className="no-bar -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {steps.map((s, i) => {
         const done = i < current, here = i === current, can = onPick && i <= (maxReached ?? current);
         return (

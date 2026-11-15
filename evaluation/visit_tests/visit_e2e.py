@@ -1,11 +1,16 @@
 """End-to-end test of the 4-step visit and the CRP <-> teacher link against the running API (no audio, so no speech model download)."""
+import sys
 import time
+from pathlib import Path
 import httpx
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
+from private_login import crp_login          # the private CRP sign-in is read from .env
+
 API = 'http://127.0.0.1:8000/api'
-# The API needs a signed-in CRP: use the demo account (DEMO_CRP_EMAIL / DEMO_CRP_PASSWORD).
-_demo = httpx.get(f'{API}/auth/demo').json()
-_token = httpx.post(f'{API}/auth/login', json={'email': _demo['email'], 'password': _demo['password']}).json()['token']
+# The API needs a signed-in CRP: use the private sign-in of .env (CRP_LOGIN_MALE_EMAIL / CRP_LOGIN_PASSWORD).
+_email, _password = crp_login()
+_token = httpx.post(f'{API}/auth/login', json={'email': _email, 'password': _password}).json()['token']
 httpx = httpx.Client(headers={'Authorization': f'Bearer {_token}'}, timeout=120)
 d = httpx.get(f'{API}/directory').json()
 t = next(x for x in d['teachers'] if x['teacher_code'] == 'S01-T01')

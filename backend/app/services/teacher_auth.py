@@ -1,7 +1,7 @@
 """Teacher logins for the teacher app: email + password, then a signed token (no extra libraries).
 
-Demo accounts are created automatically for every teacher: firstname.lastname@crp.com with the password in DEMO_TEACHER_PASSWORD
-(default pass123). Passwords are stored as salted scrypt hashes. The token is HMAC-signed with TEACHER_AUTH_SECRET and expires after
+Accounts are created automatically for every teacher: firstname.lastname@crp.com with the password in DEMO_TEACHER_PASSWORD
+(a host setting: with none set, no account is created). Passwords are stored as salted scrypt hashes. The token is HMAC-signed with TEACHER_AUTH_SECRET and expires after
 30 days. Failed logins are rate limited per email.
 """
 import base64, hashlib, hmac, json, os, re, secrets, time
@@ -67,7 +67,9 @@ def ensure_accounts(conn) -> int:
     """Create the missing demo accounts (one per active teacher). Safe to run any number of times."""
     taken = {r['email'] for r in conn.execute('select email from teacher_accounts').fetchall()}
     todo = conn.execute('select t.id, t.full_name from teachers t where t.is_active and not exists (select 1 from teacher_accounts a where a.teacher_id = t.id) order by t.teacher_code').fetchall()
-    pw = hash_password(os.environ.get('DEMO_TEACHER_PASSWORD', 'pass123'))
+    plain = os.environ.get('DEMO_TEACHER_PASSWORD', '')
+    if not plain: return 0                                           # no password in the host settings: no accounts are made (the code holds no password)
+    pw = hash_password(plain)
     for t in todo:
         e = email_for(t['full_name'], taken)
         taken.add(e)
