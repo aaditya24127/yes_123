@@ -132,16 +132,28 @@ class RulesProvider(Provider):
         """No AI reachable: the texts stay in English (the page says so)."""
         return dict(items=list(i.get('items') or []))
 
+    # Words that name a page, in English and in the Indian languages the app speaks (Hindi, Marathi), and words that ask to go there.
+    VOICE_PAGES = [('priorit', 'priorities'), ('ranking', 'priorities'), ('rank list', 'priorities'), ('home', 'priorities'), ('main page', 'priorities'),
+                   ('प्राथमिक', 'priorities'), ('प्राधान्य', 'priorities'), ('upload', 'upload'), ('add file', 'upload'), ('अपलोड', 'upload'),
+                   ('visit', 'visit'), ('भेट', 'visit'), ('दौर', 'visit'), ('teacher', 'teachers'), ('connect', 'teachers'), ('शिक्षक', 'teachers'),
+                   ('ask', 'ask'), ('question', 'ask'), ('setting', 'settings'), ('सेटिंग', 'settings')]
+    VOICE_GO = ('open', 'go', 'show', 'take', 'see', 'display', 'bring', 'back to', 'switch to', 'खोल', 'दिखा', 'दाखव', 'उघड', 'चल', 'जा')
+
     def voice_turn(self, i):
-        """No AI reachable: only the simplest English commands (open a page), so the voice mode still moves around."""
+        """No AI reachable: only the simplest commands (open a page), so the voice mode still moves around.
+        The answer must have every field of the voice_turn schema (ai/tasks.py), or it is refused."""
         u = (i.get('utterance') or '').lower()
-        pages = {'priorit': 'priorities', 'home': 'priorities', 'upload': 'upload', 'add file': 'upload', 'visit': 'visit', 'teacher': 'teachers', 'connect': 'teachers', 'ask': 'ask', 'setting': 'settings'}
-        blank = dict(type='navigate', page='', entity='', id='', filter='', query='', school_id='', teacher_id='', class_no=0, subject='', topic='', text='', name='', code='', weight=-1, layout='', language='', step='', tab='', count=0)
+        blank = dict(type='navigate', page='', entity='', id='', filter='', query='', school_id='', teacher_id='', class_no=0, subject='', topic='', text='', name='', code='',
+                     weight=-1, layout='', language='', step='', tab='', count=0, control='', value='')
         none = dict(name='none', entity='', id='', school_id='', teacher_id='', class_no=0, subject='', text='')
-        for k, p in pages.items():
-            if k in u and any(w in u for w in ('open', 'go', 'show', 'take')):
-                return dict(say=f'Opening {p}.', actions=[dict(blank, page=p)], query=none)
-        return dict(say='The assistant brain is not reachable right now, so I can only open pages. Try saying: open settings.', actions=[], query=none)
+        label = {'priorities': 'the priority list', 'upload': 'Upload', 'visit': 'Visit', 'teachers': 'Teachers', 'ask': 'Ask', 'settings': 'Settings'}
+        words = set(re.findall(r'[a-z]+', u))
+        asks = any((w in u) if not w.isascii() else (all(x in words for x in w.split())) for w in self.VOICE_GO)
+        if asks or len(u.split()) <= 3:          # "open the priority list", or just "priority list"
+            for k, p in self.VOICE_PAGES:
+                if k in u:
+                    return dict(say=f'Opening {label[p]}.', actions=[dict(blank, page=p)], query=none, long=False)
+        return dict(say='I can only open pages right now. Try saying: open the priority list.', actions=[], query=none, long=False)
 
     def assessment_questions(self, i):
         ch = i.get('chapter') or 'this chapter'; cls = i.get('class_no') or ''; sub = i.get('subject') or 'the subject'
