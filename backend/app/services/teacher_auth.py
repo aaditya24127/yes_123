@@ -16,22 +16,25 @@ _fails: dict[str, list[float]] = {}
 
 
 _PLACEHOLDERS = ('', 'dev-only-change-me', 'change-me-to-a-long-random-text')      # values anyone can read in the public repository
-_random_secret: bytes | None = None
+_PRIVATE_SETTINGS = ('SUPABASE_SERVICE_KEY', 'SUPABASE_DATABASE_URL', 'DATABASE_URL', 'CRP_LOGIN_PASSWORD')   # private values every real server already has
+_stand_in: bytes | None = None
 
 
 def auth_secret() -> bytes:
     """The key that signs sign-in tokens and report links (TEACHER_AUTH_SECRET in the host settings). On a real server (TARGET is not
-    'local') a missing or placeholder value is never used, because anyone could then sign themselves in: a random key is made for this
-    run instead, so people are signed out and old report links stop working at every restart until a real value is set."""
-    global _random_secret
+    'local') a missing or placeholder value is never used, because anyone could then sign themselves in. A stand-in key is worked out
+    from another private host setting instead: it is the same after every restart, so nobody is signed out again and report links keep
+    working. (Only with no private setting at all is a random key made for the run.)"""
+    global _stand_in
     s = os.environ.get('TEACHER_AUTH_SECRET', '').strip()
     if s not in _PLACEHOLDERS: return s.encode()
     if os.environ.get('TARGET', 'local').strip().lower() in ('', 'local'): return (s or 'dev-only-change-me').encode()
-    if _random_secret is None:
-        _random_secret = secrets.token_bytes(32)
-        print('WARNING: TEACHER_AUTH_SECRET is missing or still the example value. A random key is used for this run: everyone is signed '
-              'out at each restart. Set a long random TEACHER_AUTH_SECRET in the host settings.', flush=True)
-    return _random_secret
+    if _stand_in is None:
+        private = next((os.environ[k].strip() for k in _PRIVATE_SETTINGS if os.environ.get(k, '').strip()), None)
+        _stand_in = hashlib.sha256(b'crp-token-key|' + private.encode()).digest() if private else secrets.token_bytes(32)
+        print('WARNING: TEACHER_AUTH_SECRET is missing or still the example value. A stand-in key is used. '
+              'Set a long random TEACHER_AUTH_SECRET in the host settings.', flush=True)
+    return _stand_in
 
 
 def _secret() -> bytes:
@@ -40,7 +43,7 @@ def _secret() -> bytes:
 
 # ---- wrong-password limit, shared by the teacher and the CRP sign-in
 FAIL_WINDOW = 300            # seconds
-FAILS_PER_PLACE = 5          # wrong passwords for one email from one network address
+FAILS_PER_PLACE = 10         # wrong passwords for one email from one network address (a hall full of people can share one address)
 FAILS_PER_EMAIL = 40         # wrong passwords for one email from everywhere (so one person cannot lock another out with 5 tries)
 
 
