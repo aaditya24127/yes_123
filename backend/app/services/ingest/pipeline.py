@@ -8,6 +8,12 @@ from ...core.storage import get_storage
 from ..prioritization.data import get_conn
 
 MAX_FILE = 200 * 1024 * 1024
+MAX_ZIP_FILES = 500                      # files inside the zips of one upload
+MAX_UNPACKED = 500 * 1024 * 1024         # all of them together, after unpacking
+
+
+class TooBig(ValueError):
+    """A zip that unpacks to more than the server can safely hold."""
 
 
 def _slug(s): return re.sub(r'[^A-Za-z0-9]+', '_', s).strip('_')[:60]
@@ -21,13 +27,20 @@ def _school_folder(conn, school):
 
 def _expand(files):
     """Unpacks .zip uploads; keeps the folder path inside the zip (it often names the school)."""
-    out = []
+    out, count, total = [], 0, 0
     for name, data in files:
         if name.lower().endswith('.zip'):
             with zipfile.ZipFile(io.BytesIO(data)) as z:
                 for info in z.infolist():
                     if info.is_dir() or info.file_size > MAX_FILE or '__MACOSX' in info.filename: continue
-                    out.append((info.filename, z.read(info)))
+                    count += 1
+                    if count > MAX_ZIP_FILES: raise TooBig(f'This zip holds more than {MAX_ZIP_FILES} files. Please upload it in smaller parts.')
+                    with z.open(info) as fh:
+                        part = fh.read(MAX_FILE + 1)        # the size written inside the zip is not trusted: reading stops at the limit
+                    if len(part) > MAX_FILE: continue
+                    total += len(part)
+                    if total > MAX_UNPACKED: raise TooBig('This zip is too big once unpacked (500 MB limit). Please upload it in smaller parts.')
+                    out.append((info.filename, part))
         else:
             out.append((name, data))
     return out

@@ -15,8 +15,57 @@ TOKEN_DAYS = 30
 _fails: dict[str, list[float]] = {}
 
 
+_PLACEHOLDERS = ('', 'dev-only-change-me', 'change-me-to-a-long-random-text')      # values anyone can read in the public repository
+_PRIVATE_SETTINGS = ('SUPABASE_SERVICE_KEY', 'SUPABASE_DATABASE_URL', 'DATABASE_URL', 'CRP_LOGIN_PASSWORD')   # private values every real server already has
+_stand_in: bytes | None = None
+
+
+def auth_secret() -> bytes:
+    """The key that signs sign-in tokens and report links (TEACHER_AUTH_SECRET in the host settings). On a real server (TARGET is not
+    'local') a missing or placeholder value is never used, because anyone could then sign themselves in. A stand-in key is worked out
+    from another private host setting instead: it is the same after every restart, so nobody is signed out again and report links keep
+    working. (Only with no private setting at all is a random key made for the run.)"""
+    global _stand_in
+    s = os.environ.get('TEACHER_AUTH_SECRET', '').strip()
+    if s not in _PLACEHOLDERS: return s.encode()
+    if os.environ.get('TARGET', 'local').strip().lower() in ('', 'local'): return (s or 'dev-only-change-me').encode()
+    if _stand_in is None:
+        private = next((os.environ[k].strip() for k in _PRIVATE_SETTINGS if os.environ.get(k, '').strip()), None)
+        _stand_in = hashlib.sha256(b'crp-token-key|' + private.encode()).digest() if private else secrets.token_bytes(32)
+        print('WARNING: TEACHER_AUTH_SECRET is missing or still the example value. A stand-in key is used. '
+              'Set a long random TEACHER_AUTH_SECRET in the host settings.', flush=True)
+    return _stand_in
+
+
 def _secret() -> bytes:
-    return os.environ.get('TEACHER_AUTH_SECRET', 'dev-only-change-me').encode()
+    return auth_secret()
+
+
+# ---- wrong-password limit, shared by the teacher and the CRP sign-in
+FAIL_WINDOW = 300            # seconds
+FAILS_PER_PLACE = 10         # wrong passwords for one email from one network address (a hall full of people can share one address)
+FAILS_PER_EMAIL = 40         # wrong passwords for one email from everywhere (so one person cannot lock another out with 5 tries)
+
+
+def client_of(request) -> str:
+    """The caller's network address (the first one in X-Forwarded-For when the request came through a proxy)."""
+    fwd = request.headers.get('x-forwarded-for')
+    return ((fwd or (request.client.host if request.client else '') or 'unknown').split(',')[0].strip())[:60]
+
+
+def check_fails(fails: dict, email: str, client: str):
+    now = time.time()
+    if len(fails) > 5000:                                           # keep the memory small: drop everything that has expired
+        for k in [k for k, v in fails.items() if not v or now - v[-1] >= FAIL_WINDOW]: fails.pop(k, None)
+    for key, cap in ((f'{email}|{client}', FAILS_PER_PLACE), (email, FAILS_PER_EMAIL)):
+        if len([x for x in fails.get(key, []) if now - x < FAIL_WINDOW]) >= cap:
+            raise HTTPException(429, 'Too many wrong attempts. Please wait a few minutes and try again.')
+
+
+def note_fail(fails: dict, email: str, client: str):
+    now = time.time()
+    for key in (f'{email}|{client}', email):
+        fails[key] = [x for x in fails.get(key, []) if now - x < FAIL_WINDOW] + [now]
 
 
 def hash_password(pw: str) -> str:
@@ -78,19 +127,17 @@ def ensure_accounts(conn) -> int:
     return len(todo)
 
 
-def login(email: str, password: str):
-    email = email.strip().lower()
-    now = time.time()
-    recent = [x for x in _fails.get(email, []) if now - x < 300]
-    if len(recent) >= 5: raise HTTPException(429, 'Too many wrong attempts. Please wait a few minutes and try again.')
+def login(email: str, password: str, client: str = 'unknown'):
+    email = email.strip().lower()[:200]
+    check_fails(_fails, email, client)
     with get_conn() as conn:
         a = conn.execute('select * from teacher_accounts where email = %s', (email,)).fetchone()
         if not a or not check_password(password, a['password_hash']):
-            _fails[email] = recent + [now]
+            note_fail(_fails, email, client)
             raise HTTPException(401, 'Email or password is not correct.')
         conn.execute('update teacher_accounts set last_login = now() where teacher_id = %s', (a['teacher_id'],))
         conn.commit()
-    _fails.pop(email, None)
+    _fails.pop(f'{email}|{client}', None)
     return str(a['teacher_id'])
 
 

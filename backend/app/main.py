@@ -22,7 +22,9 @@ from app.api import auth as auth_api
 from app.services import crp_auth
 from app import jobs
 
-app = FastAPI(title='CRP Mentor Copilot')
+# The pages that list every address of the API (/docs, /redoc, /openapi.json) are for developers: on only when TARGET=local.
+_DEV = os.environ.get('TARGET', 'local').strip().lower() in ('', 'local')
+app = FastAPI(title='CRP Mentor Copilot', docs_url='/docs' if _DEV else None, redoc_url='/redoc' if _DEV else None, openapi_url='/openapi.json' if _DEV else None)
 
 # Everything under /api needs a signed-in CRP, except: the health check, signing in itself, the teacher app (its own logins)
 # and the signed report link a teacher opens. Added first, so CORS (added below) still wraps the "please sign in" answer.
