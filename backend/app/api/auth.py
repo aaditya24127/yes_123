@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 
 from ..services import crp_auth
+from ..services.teacher_auth import client_of
 from ..services.prioritization.data import get_conn
 
 router = APIRouter(prefix='/api/auth', tags=['auth'])
@@ -41,13 +42,12 @@ def options():
 
 @router.post('/login')
 def login(req: LoginReq, request: Request, response: Response):
-    return _signed_in(response, request, crp_auth.login(req.email, req.password))
+    return _signed_in(response, request, crp_auth.login(req.email, req.password, client_of(request)))
 
 
 @router.post('/signup')
 def signup(req: SignupReq, request: Request, response: Response):
-    client = (request.headers.get('x-forwarded-for') or (request.client.host if request.client else '') or 'unknown').split(',')[0].strip()
-    return _signed_in(response, request, crp_auth.signup(req.email, req.password, req.full_name, req.title, client))
+    return _signed_in(response, request, crp_auth.signup(req.email, req.password, req.full_name, req.title, client_of(request)))
 
 
 @router.get('/me')

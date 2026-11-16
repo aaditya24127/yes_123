@@ -11,7 +11,7 @@ import hashlib, hmac, json, os, re, time
 from fastapi import HTTPException, Request
 
 from .prioritization.data import get_conn
-from .teacher_auth import _b64, _unb64, check_password, hash_password
+from .teacher_auth import _b64, _unb64, auth_secret, check_fails, check_password, hash_password, note_fail
 
 TOKEN_DAYS = 30
 COOKIE = 'crp_session'
@@ -22,7 +22,7 @@ _signups: dict[str, list[float]] = {}
 
 def _secret() -> bytes:
     # Its own key (derived), so a teacher's token can never be used as a CRP's.
-    return hashlib.sha256(b'crp-app|' + os.environ.get('TEACHER_AUTH_SECRET', 'dev-only-change-me').encode()).digest()
+    return hashlib.sha256(b'crp-app|' + auth_secret()).digest()
 
 
 def signup_open() -> bool:
@@ -101,19 +101,17 @@ def ensure_logins(conn) -> int:
     return changed
 
 
-def login(email: str, password: str) -> dict:
-    email = email.strip().lower()
-    now = time.time()
-    recent = [x for x in _fails.get(email, []) if now - x < 300]
-    if len(recent) >= 5: raise HTTPException(429, 'Too many wrong attempts. Please wait a few minutes and try again.')
+def login(email: str, password: str, client: str = 'unknown') -> dict:
+    email = email.strip().lower()[:200]
+    check_fails(_fails, email, client)
     with get_conn() as conn:
         a = conn.execute('select a.*, c.cluster, c.district from crp_accounts a join crps c on c.id = a.crp_id where a.email = %s', (email,)).fetchone()
         if not a or not check_password(password, a['password_hash']):
-            _fails[email] = recent + [now]
+            note_fail(_fails, email, client)
             raise HTTPException(401, 'Email or password is not correct.')
         conn.execute('update crp_accounts set last_login = now() where id = %s', (a['id'],))
         conn.commit()
-    _fails.pop(email, None)
+    _fails.pop(f'{email}|{client}', None)
     return a
 
 

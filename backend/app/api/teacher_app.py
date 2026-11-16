@@ -1,6 +1,6 @@
 """Teacher app API: sign in, see tasks and notifications from the CRP, upload what was asked, send concerns, see own visits.
 Everything is limited to the signed-in teacher (the id comes from the token, never from the request)."""
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
@@ -10,6 +10,14 @@ from ..services.prioritization.data import get_conn
 from .connect import KIND_LABEL, KIND_SECTION, _row
 
 router = APIRouter(prefix='/api/teacher', tags=['teacher app'])
+MAX_SUBMIT = 100 * 1024 * 1024        # all the files of one answer together
+
+
+def _batch(files, **kw):
+    try:
+        return pipeline.create_batch(files, **kw)
+    except pipeline.TooBig as e:
+        raise HTTPException(413, str(e))
 
 
 class LoginReq(BaseModel):
@@ -54,8 +62,8 @@ def _profile(t):
 
 
 @router.post('/login')
-def login(req: LoginReq):
-    tid = teacher_auth.login(req.email, req.password)
+def login(req: LoginReq, request: Request):
+    tid = teacher_auth.login(req.email, req.password, teacher_auth.client_of(request))
     with get_conn() as conn:
         return dict(token=teacher_auth.make_token(tid), teacher=_profile(_me(conn, tid)))
 
@@ -115,13 +123,18 @@ async def submit(task_id: str | None = Form(None), item_id: str | None = Form(No
         if task_id and not r: raise HTTPException(404, 'That task was not found.')
         if r and not it and r['kind'] != 'visit_notice':      # an older app version: answer the first task still waiting
             it = conn.execute("select * from task_items where request_id = %s and status in ('open', 'rejected') order by position limit 1", (task_id,)).fetchone()
-    got = [(f.filename or 'file', await f.read()) for f in files if f.filename]
+    got, total = [], 0
+    for f in files:
+        if not f.filename: continue
+        data = await f.read(MAX_SUBMIT + 1 - total); total += len(data)
+        if total > MAX_SUBMIT: raise HTTPException(413, 'These files are too big to send together (100 MB limit). Please send them in smaller groups.')
+        got.append((f.filename, data))
     if any(readers.format_of(n) in readers.AUDIO for n, _ in got): raise HTTPException(400, 'Audio recordings cannot be sent from this app. Send documents or photos instead.')
     if not got and not text: raise HTTPException(400, 'Add a file or write a note first.')
     kind = it['kind'] if it else (r['kind'] if r else None)
     bid = None
     if got:
-        bid = pipeline.create_batch(got, origin='teacher', created_by=t['full_name'], hint_school_id=t['school_id'], hint_teacher_id=tid,
+        bid = _batch(got, origin='teacher', created_by=t['full_name'], hint_school_id=t['school_id'], hint_teacher_id=tid,
                                     hint_section=KIND_SECTION.get(kind), note=f"From {t['full_name']}" + (f": Task {it['position']}, {it['title']}" if it else (f": {r['title']}" if r else '')))
     with get_conn() as conn:
         if bid and it: conn.execute('update upload_batches set task_item_id = %s where id = %s', (it['id'], bid))

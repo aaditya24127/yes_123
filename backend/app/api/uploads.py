@@ -22,7 +22,10 @@ async def upload(files: list[UploadFile] = File(...), school_id: str | None = Fo
         if total > MAX_TOTAL: raise HTTPException(413, 'Too much at once (500 MB limit). Upload in smaller groups.')
         got.append((f.filename or 'file', data))
     if not got: raise HTTPException(400, 'No files received')
-    bid = pipeline.create_batch(got, origin='crp', hint_school_id=school_id or None, hint_teacher_id=teacher_id or None, hint_section=section or None, note=note)
+    try:
+        bid = pipeline.create_batch(got, origin='crp', hint_school_id=school_id or None, hint_teacher_id=teacher_id or None, hint_section=section or None, note=note)
+    except pipeline.TooBig as e:
+        raise HTTPException(413, str(e))
     return pipeline.batch_view(bid)
 
 

@@ -43,8 +43,8 @@ LEVEL_NAME = {'recall': 'Remember', 'understand': 'Understand', 'apply': 'Use it
 
 def sig(sid: str) -> str:
     """Signed link code, so a teacher can open only the report that was sent to them."""
-    secret = os.environ.get('TEACHER_AUTH_SECRET', 'dev-only-change-me').encode()
-    return hmac.new(secret, f'report:{sid}'.encode(), hashlib.sha256).hexdigest()[:32]
+    from .teacher_auth import auth_secret
+    return hmac.new(auth_secret(), f'report:{sid}'.encode(), hashlib.sha256).hexdigest()[:32]
 
 
 def sig_ok(sid: str, given: str) -> bool:

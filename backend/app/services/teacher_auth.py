@@ -15,8 +15,54 @@ TOKEN_DAYS = 30
 _fails: dict[str, list[float]] = {}
 
 
+_PLACEHOLDERS = ('', 'dev-only-change-me', 'change-me-to-a-long-random-text')      # values anyone can read in the public repository
+_random_secret: bytes | None = None
+
+
+def auth_secret() -> bytes:
+    """The key that signs sign-in tokens and report links (TEACHER_AUTH_SECRET in the host settings). On a real server (TARGET is not
+    'local') a missing or placeholder value is never used, because anyone could then sign themselves in: a random key is made for this
+    run instead, so people are signed out and old report links stop working at every restart until a real value is set."""
+    global _random_secret
+    s = os.environ.get('TEACHER_AUTH_SECRET', '').strip()
+    if s not in _PLACEHOLDERS: return s.encode()
+    if os.environ.get('TARGET', 'local').strip().lower() in ('', 'local'): return (s or 'dev-only-change-me').encode()
+    if _random_secret is None:
+        _random_secret = secrets.token_bytes(32)
+        print('WARNING: TEACHER_AUTH_SECRET is missing or still the example value. A random key is used for this run: everyone is signed '
+              'out at each restart. Set a long random TEACHER_AUTH_SECRET in the host settings.', flush=True)
+    return _random_secret
+
+
 def _secret() -> bytes:
-    return os.environ.get('TEACHER_AUTH_SECRET', 'dev-only-change-me').encode()
+    return auth_secret()
+
+
+# ---- wrong-password limit, shared by the teacher and the CRP sign-in
+FAIL_WINDOW = 300            # seconds
+FAILS_PER_PLACE = 5          # wrong passwords for one email from one network address
+FAILS_PER_EMAIL = 40         # wrong passwords for one email from everywhere (so one person cannot lock another out with 5 tries)
+
+
+def client_of(request) -> str:
+    """The caller's network address (the first one in X-Forwarded-For when the request came through a proxy)."""
+    fwd = request.headers.get('x-forwarded-for')
+    return ((fwd or (request.client.host if request.client else '') or 'unknown').split(',')[0].strip())[:60]
+
+
+def check_fails(fails: dict, email: str, client: str):
+    now = time.time()
+    if len(fails) > 5000:                                           # keep the memory small: drop everything that has expired
+        for k in [k for k, v in fails.items() if not v or now - v[-1] >= FAIL_WINDOW]: fails.pop(k, None)
+    for key, cap in ((f'{email}|{client}', FAILS_PER_PLACE), (email, FAILS_PER_EMAIL)):
+        if len([x for x in fails.get(key, []) if now - x < FAIL_WINDOW]) >= cap:
+            raise HTTPException(429, 'Too many wrong attempts. Please wait a few minutes and try again.')
+
+
+def note_fail(fails: dict, email: str, client: str):
+    now = time.time()
+    for key in (f'{email}|{client}', email):
+        fails[key] = [x for x in fails.get(key, []) if now - x < FAIL_WINDOW] + [now]
 
 
 def hash_password(pw: str) -> str:
@@ -78,19 +124,17 @@ def ensure_accounts(conn) -> int:
     return len(todo)
 
 
-def login(email: str, password: str):
-    email = email.strip().lower()
-    now = time.time()
-    recent = [x for x in _fails.get(email, []) if now - x < 300]
-    if len(recent) >= 5: raise HTTPException(429, 'Too many wrong attempts. Please wait a few minutes and try again.')
+def login(email: str, password: str, client: str = 'unknown'):
+    email = email.strip().lower()[:200]
+    check_fails(_fails, email, client)
     with get_conn() as conn:
         a = conn.execute('select * from teacher_accounts where email = %s', (email,)).fetchone()
         if not a or not check_password(password, a['password_hash']):
-            _fails[email] = recent + [now]
+            note_fail(_fails, email, client)
             raise HTTPException(401, 'Email or password is not correct.')
         conn.execute('update teacher_accounts set last_login = now() where teacher_id = %s', (a['teacher_id'],))
         conn.commit()
-    _fails.pop(email, None)
+    _fails.pop(f'{email}|{client}', None)
     return str(a['teacher_id'])
 
 
